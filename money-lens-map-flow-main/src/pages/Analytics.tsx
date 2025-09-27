@@ -75,6 +75,16 @@ const spendingVsCaps = [
   { category: "Utilities", spent: 187, cap: 200, target: 180 },
 ];
 
+// Spending projection data for next 6 months
+const spendingProjection = [
+  { month: "Jul", actual: null, projected: 2847, trend: "increasing" },
+  { month: "Aug", actual: null, projected: 2923, trend: "increasing" },
+  { month: "Sep", actual: null, projected: 2987, trend: "increasing" },
+  { month: "Oct", actual: null, projected: 3054, trend: "increasing" },
+  { month: "Nov", actual: null, projected: 3121, trend: "increasing" },
+  { month: "Dec", actual: null, projected: 3289, trend: "holiday_spike" },
+];
+
 const chartConfig = {
   dining: { label: "Dining", color: "#3B82F6" },
   shopping: { label: "Shopping", color: "#10B981" },
@@ -84,6 +94,11 @@ const chartConfig = {
 
 const merchantsChartConfig = {
   amount: { label: "Amount Spent", color: "#3B82F6" },
+};
+
+const projectionChartConfig = {
+  projected: { label: "Projected Spending", color: "#8B5CF6" },
+  actual: { label: "Actual Spending", color: "#3B82F6" },
 };
 
 export default function Analytics() {
@@ -533,6 +548,81 @@ export default function Analytics() {
                 />
               </ComposedChart>
             </ChartContainer>
+          </CardContent>
+        </Card>
+
+        {/* Spending Projection */}
+        <Card className="card-gradient lg:col-span-2">
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="w-5 h-5" />
+              Spending Projection (Next 6 Months)
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <ChartContainer config={projectionChartConfig} className="h-[300px] w-full">
+              <AreaChart data={spendingProjection} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                <XAxis 
+                  dataKey="month"
+                  tick={{ fontSize: 12 }}
+                  axisLine={{ stroke: '#e5e7eb' }}
+                  tickLine={{ stroke: '#e5e7eb' }}
+                />
+                <YAxis 
+                  tick={{ fontSize: 12 }}
+                  axisLine={{ stroke: '#e5e7eb' }}
+                  tickLine={{ stroke: '#e5e7eb' }}
+                  domain={[2500, 3500]}
+                />
+                <ChartTooltip 
+                  content={<ChartTooltipContent />}
+                  labelStyle={{ color: '#374151' }}
+                  contentStyle={{ 
+                    backgroundColor: '#ffffff',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                  }}
+                  formatter={(value, name) => [`$${value}`, name === 'projected' ? 'Projected' : 'Actual']}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="projected"
+                  stroke={projectionChartConfig.projected.color}
+                  fill={projectionChartConfig.projected.color}
+                  fillOpacity={0.3}
+                  strokeWidth={3}
+                  name="Projected Spending"
+                  dot={{ fill: projectionChartConfig.projected.color, strokeWidth: 2, r: 4 }}
+                />
+              </AreaChart>
+            </ChartContainer>
+            <div className="mt-4 p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-200">
+              <div className="flex items-center gap-2 mb-2">
+                <TrendingUp className="w-4 h-4 text-purple-600" />
+                <h4 className="font-semibold text-purple-800">Projection Insights</h4>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                <div>
+                  <p className="text-gray-600">Current Monthly Average</p>
+                  <p className="font-semibold text-lg">$2,847</p>
+                </div>
+                <div>
+                  <p className="text-gray-600">Projected Year-End</p>
+                  <p className="font-semibold text-lg">$3,289</p>
+                </div>
+                <div>
+                  <p className="text-gray-600">Growth Rate</p>
+                  <p className="font-semibold text-lg text-green-600">+15.5%</p>
+                </div>
+              </div>
+              <div className="mt-3 p-3 bg-white/50 rounded border">
+                <p className="text-sm text-gray-700">
+                  <strong>Forecast:</strong> Based on current spending trends, your monthly expenses are projected to increase gradually, 
+                  with a notable spike in December due to holiday spending patterns. Consider adjusting your budget caps accordingly.
+                </p>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
