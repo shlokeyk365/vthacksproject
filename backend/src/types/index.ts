@@ -132,6 +132,8 @@ export interface MapMerchant {
     lat: number;
     lng: number;
   };
+  averageSpent: number;
+  pricingLevel: 'low' | 'medium' | 'high';
 }
 
 export interface HeatmapData {

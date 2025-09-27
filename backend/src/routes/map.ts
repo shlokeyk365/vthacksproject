@@ -3,9 +3,34 @@ import { PrismaClient } from '@prisma/client';
 import { authenticate } from '../middleware/auth';
 import { AppError } from '../middleware/errorHandler';
 import { ApiResponse, AuthenticatedRequest, MapMerchant, HeatmapData } from '../types';
+import { realMerchants, RealMerchant } from '../data/merchants';
 
 const router = express.Router();
 const prisma = new PrismaClient();
+
+// Helper function to determine pricing level based on average spending
+function getPricingLevel(averageSpent: number, category: string): 'low' | 'medium' | 'high' {
+  // Category-specific thresholds
+  const thresholds = {
+    'Food & Dining': { low: 15, high: 35 },
+    'Shopping': { low: 50, high: 150 },
+    'Grocery': { low: 30, high: 80 },
+    'Transportation': { low: 20, high: 60 },
+    'Entertainment': { low: 25, high: 75 },
+    'Healthcare': { low: 40, high: 120 },
+    'Other': { low: 20, high: 60 }
+  };
+
+  const categoryThresholds = thresholds[category as keyof typeof thresholds] || thresholds['Other'];
+  
+  if (averageSpent <= categoryThresholds.low) {
+    return 'low';
+  } else if (averageSpent <= categoryThresholds.high) {
+    return 'medium';
+  } else {
+    return 'high';
+  }
+}
 
 // Get merchants with coordinates
 router.get('/merchants', authenticate, async (req: AuthenticatedRequest, res, next) => {
@@ -17,33 +42,98 @@ router.get('/merchants', authenticate, async (req: AuthenticatedRequest, res, ne
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
 
-    // Get merchants with spending data
-    const merchantData = await prisma.transaction.groupBy({
-      by: ['merchant', 'latitude', 'longitude'],
+    // Get transaction data grouped by merchant
+    const transactionData = await prisma.transaction.groupBy({
+      by: ['merchant', 'category'],
       where: {
         userId,
         date: { gte: startDate },
-        status: 'COMPLETED',
-        latitude: { not: null },
-        longitude: { not: null }
+        status: 'COMPLETED'
       },
       _sum: { amount: true },
       _count: { merchant: true },
       orderBy: { _sum: { amount: 'desc' } }
     });
 
-    const merchants: MapMerchant[] = merchantData.map((item: any) => ({
-      id: `${item.merchant}-${item.latitude}-${item.longitude}`,
-      name: item.merchant,
-      address: 'Address not available', // This would be enriched with geocoding
-      totalSpent: Number(item._sum.amount || 0),
-      visits: item._count.merchant,
-      category: 'Unknown', // This would be determined from transaction categories
-      coordinates: {
-        lat: Number(item.latitude),
-        lng: Number(item.longitude)
+    // Create a map of merchant names to transaction data
+    const merchantTransactionMap = new Map();
+    transactionData.forEach((item: any) => {
+      const merchantName = item.merchant.toLowerCase();
+      if (!merchantTransactionMap.has(merchantName)) {
+        merchantTransactionMap.set(merchantName, {
+          totalSpent: 0,
+          visits: 0,
+          categories: new Set()
+        });
       }
-    }));
+      const data = merchantTransactionMap.get(merchantName);
+      data.totalSpent += Number(item._sum.amount || 0);
+      data.visits += item._count.merchant;
+      data.categories.add(item.category);
+    });
+
+    // Match transaction data with real merchant data
+    const merchants: MapMerchant[] = [];
+    
+    // First, add all real merchants (with or without transaction data)
+    realMerchants.forEach(realMerchant => {
+      const merchantName = realMerchant.name.toLowerCase();
+      const transactionData = merchantTransactionMap.get(merchantName);
+      
+      const totalSpent = transactionData?.totalSpent || 0;
+      const visits = transactionData?.visits || 0;
+      const averageSpent = visits > 0 ? totalSpent / visits : 0;
+      const pricingLevel = getPricingLevel(averageSpent, realMerchant.category);
+      
+      // Always add real merchants, use transaction data if available
+      merchants.push({
+        id: realMerchant.id,
+        name: realMerchant.name,
+        address: realMerchant.address,
+        totalSpent,
+        visits,
+        category: realMerchant.category,
+        coordinates: realMerchant.coordinates,
+        averageSpent,
+        pricingLevel
+      });
+    });
+
+    // Only add merchants from transactions that have real data or similar merchants
+    // Skip unknown merchants to avoid "Address to be geocoded" placeholders
+    for (const [merchantName, data] of merchantTransactionMap.entries()) {
+      const hasRealData = realMerchants.some(m => m.name.toLowerCase() === merchantName);
+      
+      if (!hasRealData) {
+        // Try to find a similar merchant name
+        const similarMerchant = realMerchants.find(m => 
+          m.name.toLowerCase().includes(merchantName) || 
+          merchantName.includes(m.name.toLowerCase())
+        );
+
+        if (similarMerchant) {
+          // Use similar merchant's data but with transaction amounts
+          const averageSpent = data.visits > 0 ? data.totalSpent / data.visits : 0;
+          const pricingLevel = getPricingLevel(averageSpent, similarMerchant.category);
+          
+          merchants.push({
+            id: `${merchantName}-similar-${similarMerchant.id}`,
+            name: merchantName,
+            address: similarMerchant.address,
+            totalSpent: data.totalSpent,
+            visits: data.visits,
+            category: similarMerchant.category,
+            coordinates: similarMerchant.coordinates,
+            averageSpent,
+            pricingLevel
+          });
+        }
+        // Skip unknown merchants entirely - no more "Address to be geocoded" merchants
+      }
+    }
+
+    // Sort by total spent
+    merchants.sort((a, b) => b.totalSpent - a.totalSpent);
 
     const response: ApiResponse = {
       success: true,
@@ -53,7 +143,7 @@ router.get('/merchants', authenticate, async (req: AuthenticatedRequest, res, ne
 
     res.status(200).json(response);
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
@@ -121,7 +211,7 @@ router.get('/heatmap-data', authenticate, async (req: AuthenticatedRequest, res,
 
     res.status(200).json(response);
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
@@ -164,11 +254,11 @@ router.get('/locations', authenticate, async (req: AuthenticatedRequest, res, ne
 
     res.status(200).json(response);
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
-// Geocode address (placeholder for Mapbox integration)
+// Geocode address using Mapbox Geocoding API
 router.post('/geocode', authenticate, async (req: AuthenticatedRequest, res, next) => {
   try {
     const { address } = req.body;
@@ -177,28 +267,61 @@ router.post('/geocode', authenticate, async (req: AuthenticatedRequest, res, nex
       throw new AppError('Address is required', 400);
     }
 
-    // This is a placeholder - in production, you'd integrate with Mapbox Geocoding API
-    const mockCoordinates = {
-      lat: 37.2296 + (Math.random() - 0.5) * 0.1,
-      lng: -80.4139 + (Math.random() - 0.5) * 0.1
-    };
+    const mapboxToken = process.env.MAPBOX_ACCESS_TOKEN;
+    
+    if (!mapboxToken) {
+      // Fallback to mock coordinates if no Mapbox token
+      const mockCoordinates = {
+        lat: 37.2296 + (Math.random() - 0.5) * 0.1,
+        lng: -80.4139 + (Math.random() - 0.5) * 0.1
+      };
 
-    const response: ApiResponse = {
-      success: true,
-      data: {
-        address,
-        coordinates: mockCoordinates
-      },
-      message: 'Address geocoded successfully'
-    };
+      const response: ApiResponse = {
+        success: true,
+        data: {
+          address,
+          coordinates: mockCoordinates
+        },
+        message: 'Address geocoded successfully (mock)'
+      };
 
-    res.status(200).json(response);
+      return res.status(200).json(response);
+    }
+
+    // Use Mapbox Geocoding API
+    const encodedAddress = encodeURIComponent(address);
+    const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodedAddress}.json?access_token=${mapboxToken}&limit=1`;
+
+    const geocodeResponse = await fetch(url);
+    
+    if (!geocodeResponse.ok) {
+      throw new AppError('Geocoding service unavailable', 503);
+    }
+
+    const geocodeData = await geocodeResponse.json() as any;
+
+    if (geocodeData.features && geocodeData.features.length > 0) {
+      const [lng, lat] = geocodeData.features[0].center;
+      
+      const response: ApiResponse = {
+        success: true,
+        data: {
+          address: geocodeData.features[0].place_name,
+          coordinates: { lat, lng }
+        },
+        message: 'Address geocoded successfully'
+      };
+
+      return res.status(200).json(response);
+    } else {
+      throw new AppError('Address not found', 404);
+    }
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
-// Reverse geocode coordinates (placeholder for Mapbox integration)
+// Reverse geocode coordinates using Mapbox Geocoding API
 router.post('/reverse-geocode', authenticate, async (req: AuthenticatedRequest, res, next) => {
   try {
     const { lat, lng } = req.body;
@@ -207,21 +330,53 @@ router.post('/reverse-geocode', authenticate, async (req: AuthenticatedRequest, 
       throw new AppError('Latitude and longitude are required', 400);
     }
 
-    // This is a placeholder - in production, you'd integrate with Mapbox Geocoding API
-    const mockAddress = `Mock Address for ${lat}, ${lng}`;
+    const mapboxToken = process.env.MAPBOX_ACCESS_TOKEN;
+    
+    if (!mapboxToken) {
+      // Fallback to mock address if no Mapbox token
+      const mockAddress = `Mock Address for ${lat}, ${lng}`;
 
-    const response: ApiResponse = {
-      success: true,
-      data: {
-        address: mockAddress,
-        coordinates: { lat: Number(lat), lng: Number(lng) }
-      },
-      message: 'Coordinates reverse geocoded successfully'
-    };
+      const response: ApiResponse = {
+        success: true,
+        data: {
+          address: mockAddress,
+          coordinates: { lat: Number(lat), lng: Number(lng) }
+        },
+        message: 'Coordinates reverse geocoded successfully (mock)'
+      };
 
-    res.status(200).json(response);
+      return res.status(200).json(response);
+    }
+
+    // Use Mapbox Reverse Geocoding API
+    const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${mapboxToken}&limit=1`;
+
+    const reverseGeocodeResponse = await fetch(url);
+    
+    if (!reverseGeocodeResponse.ok) {
+      throw new AppError('Reverse geocoding service unavailable', 503);
+    }
+
+    const reverseGeocodeData = await reverseGeocodeResponse.json() as any;
+
+    if (reverseGeocodeData.features && reverseGeocodeData.features.length > 0) {
+      const address = reverseGeocodeData.features[0].place_name;
+      
+      const response: ApiResponse = {
+        success: true,
+        data: {
+          address,
+          coordinates: { lat: Number(lat), lng: Number(lng) }
+        },
+        message: 'Coordinates reverse geocoded successfully'
+      };
+
+      return res.status(200).json(response);
+    } else {
+      throw new AppError('Location not found', 404);
+    }
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 

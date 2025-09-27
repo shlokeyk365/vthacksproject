@@ -7,11 +7,12 @@ import {
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, CartesianGrid } from "recharts";
 import { useDashboardStats } from "@/hooks/useApi";
 import { Skeleton } from "@/components/ui/skeleton";
+import { getCategoryBrandColor } from "@/lib/brandColors";
 
 const chartConfig = {
   amount: {
     label: "Spending",
-    color: "hsl(var(--primary))",
+    color: getCategoryBrandColor("Shopping"), // Use brand color for spending trend
   },
 };
 
@@ -106,11 +107,11 @@ export function SpendingChart() {
                     content={({ active, payload, label }) => {
                       if (active && payload && payload.length) {
                         return (
-                          <div className="bg-background border border-border rounded-lg shadow-lg p-3">
-                            <p className="text-sm font-medium text-foreground">
+                          <div className="bg-background border border-border rounded-lg shadow-lg p-4" style={{ lineHeight: '1.5' }}>
+                            <p className="text-sm font-semibold text-foreground mb-1" style={{ fontSize: '14px', fontWeight: '600' }}>
                               {formatDate(label)}
                             </p>
-                            <p className="text-sm text-primary">
+                            <p className="text-sm text-primary font-medium" style={{ fontSize: '14px' }}>
                               {formatCurrency(payload[0].value as number)}
                             </p>
                           </div>

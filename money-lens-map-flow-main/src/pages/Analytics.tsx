@@ -44,6 +44,7 @@ import {
   Line,
   LineChart
 } from "recharts";
+import { getBrandColor, getCategoryBrandColor } from "@/lib/brandColors";
 
 const monthlyData = [
   { month: "Jan", dining: 486, shopping: 329, transport: 245, utilities: 187 },
@@ -55,11 +56,11 @@ const monthlyData = [
 ];
 
 const topMerchants = [
-  { name: "Amazon", amount: 892, visits: 12, category: "Shopping", color: "#3B82F6" },
-  { name: "Target", amount: 523, visits: 8, category: "Shopping", color: "#10B981" },
-  { name: "Shell", amount: 356, visits: 15, category: "Transport", color: "#F59E0B" },
-  { name: "Starbucks", amount: 247, visits: 18, category: "Dining", color: "#EF4444" },
-  { name: "McDonald's", amount: 189, visits: 14, category: "Dining", color: "#8B5CF6" },
+  { name: "Amazon", amount: 892, visits: 12, category: "Shopping", color: getBrandColor("Amazon", "Shopping") },
+  { name: "Target", amount: 523, visits: 8, category: "Shopping", color: getBrandColor("Target", "Shopping") },
+  { name: "Shell", amount: 356, visits: 15, category: "Transport", color: getBrandColor("Shell", "Transport") },
+  { name: "Starbucks", amount: 247, visits: 18, category: "Dining", color: getBrandColor("Starbucks", "Dining") },
+  { name: "McDonald's", amount: 189, visits: 14, category: "Dining", color: getBrandColor("McDonald's", "Dining") },
 ];
 
 // Ensure data is properly formatted for charts
@@ -87,10 +88,10 @@ const spendingProjection = [
 ];
 
 const chartConfig = {
-  dining: { label: "Dining", color: "#3B82F6" },
-  shopping: { label: "Shopping", color: "#10B981" },
-  transport: { label: "Transport", color: "#F59E0B" },
-  utilities: { label: "Utilities", color: "#EF4444" },
+  dining: { label: "Dining", color: getCategoryBrandColor("Dining") },
+  shopping: { label: "Shopping", color: getCategoryBrandColor("Shopping") },
+  transport: { label: "Transport", color: getCategoryBrandColor("Transport") },
+  utilities: { label: "Utilities", color: getCategoryBrandColor("Utilities") },
 };
 
 const merchantsChartConfig = {
@@ -580,12 +581,13 @@ export default function Analytics() {
                 />
                 <ChartTooltip 
                   content={<ChartTooltipContent />}
-                  labelStyle={{ color: '#374151' }}
+                  labelStyle={{ color: '#374151', fontSize: '14px', fontWeight: '600', lineHeight: '1.5' }}
                   contentStyle={{ 
                     backgroundColor: '#ffffff',
                     border: '1px solid #e5e7eb',
                     borderRadius: '8px',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                    padding: '8px 12px'
                   }}
                 />
                 <Area
@@ -653,12 +655,13 @@ export default function Analytics() {
                 />
                 <ChartTooltip 
                   content={<ChartTooltipContent />}
-                  labelStyle={{ color: '#374151' }}
+                  labelStyle={{ color: '#374151', fontSize: '14px', fontWeight: '600', lineHeight: '1.5' }}
                   contentStyle={{ 
                     backgroundColor: '#ffffff',
                     border: '1px solid #e5e7eb',
                     borderRadius: '8px',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                    padding: '8px 12px'
                   }}
                   formatter={(value, name) => [`$${value}`, 'Amount Spent']}
                 />
@@ -697,12 +700,13 @@ export default function Analytics() {
                 />
                 <ChartTooltip 
                   content={<ChartTooltipContent />}
-                  labelStyle={{ color: '#374151' }}
+                  labelStyle={{ color: '#374151', fontSize: '14px', fontWeight: '600', lineHeight: '1.5' }}
                   contentStyle={{ 
                     backgroundColor: '#ffffff',
                     border: '1px solid #e5e7eb',
                     borderRadius: '8px',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                    padding: '8px 12px'
                   }}
                 />
                 <Bar 
@@ -754,15 +758,28 @@ export default function Analytics() {
                   domain={[2500, 3500]}
                 />
                 <ChartTooltip 
-                  content={<ChartTooltipContent />}
-                  labelStyle={{ color: '#374151' }}
-                  contentStyle={{ 
-                    backgroundColor: '#ffffff',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '8px',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                  content={({ active, payload, label }) => {
+                    if (active && payload && payload.length) {
+                      return (
+                        <div style={{
+                          backgroundColor: '#ffffff',
+                          border: '1px solid #e5e7eb',
+                          borderRadius: '8px',
+                          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                          padding: '8px 12px',
+                          lineHeight: '1.5'
+                        }}>
+                          <p style={{ color: '#374151', fontSize: '14px', fontWeight: '600', margin: '0 0 4px 0' }}>
+                            {label} 2024
+                          </p>
+                          <p style={{ color: '#374151', fontSize: '14px', margin: '0' }}>
+                            ${payload[0].value} Actual
+                          </p>
+                        </div>
+                      );
+                    }
+                    return null;
                   }}
-                  formatter={(value, name) => [`$${value}`, name === 'projected' ? 'Projected' : 'Actual']}
                 />
                 <Area
                   type="monotone"

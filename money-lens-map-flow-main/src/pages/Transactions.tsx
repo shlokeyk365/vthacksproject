@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import { useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -32,11 +32,8 @@ import {
 } from "@/components/ui/table";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
-import { useSimulateTransaction, useTransactions } from "@/hooks/useApi";
-import { useDebouncedSearch } from "@/hooks/useDebouncedSearch";
-import { useAutocomplete } from "@/hooks/useAutocomplete";
-import { HighlightText } from "@/components/ui/highlight-text";
-import { Autocomplete } from "@/components/ui/autocomplete";
+import { useSimulateTransaction } from "@/hooks/useApi";
+import { getBrandColor, getCategoryBrandColor } from "@/lib/brandColors";
 
 // Merchant logo mapping for real app logos
 const getMerchantLogo = (merchantName: string) => {
@@ -183,64 +180,14 @@ const mockTransactions = [
     status: "completed",
     location: "South Main St"
   },
-  {
-    id: "6",
-    merchant: "Netflix",
-    amount: 15.99,
-    date: "2024-01-12",
-    category: "Entertainment",
-    icon: Play,
-    status: "completed",
-    location: "Subscription"
-  },
-  {
-    id: "7",
-    merchant: "Target",
-    amount: 78.45,
-    date: "2024-01-12",
-    category: "Shopping",
-    icon: ShoppingBag,
-    status: "completed",
-    location: "Downtown Mall"
-  },
-  {
-    id: "8",
-    merchant: "Uber",
-    amount: 23.50,
-    date: "2024-01-11",
-    category: "Transportation",
-    icon: Car,
-    status: "completed",
-    location: "Ride Share"
-  },
-  {
-    id: "9",
-    merchant: "Chipotle",
-    amount: 8.75,
-    date: "2024-01-11",
-    category: "Food & Dining",
-    icon: Utensils,
-    status: "completed",
-    location: "Campus Center"
-  },
-  {
-    id: "10",
-    merchant: "Spotify",
-    amount: 9.99,
-    date: "2024-01-10",
-    category: "Entertainment",
-    icon: Play,
-    status: "completed",
-    location: "Subscription"
-  },
 ];
 
 const categoryData = [
-  { name: "Food & Dining", value: 486, color: "#3B82F6" },
-  { name: "Shopping", value: 329, color: "#10B981" },
-  { name: "Transportation", value: 245, color: "#F59E0B" },
-  { name: "Utilities", value: 187, color: "#EF4444" },
-  { name: "Entertainment", value: 156, color: "#8B5CF6" },
+  { name: "Food & Dining", value: 486, color: getCategoryBrandColor("Food & Dining") },
+  { name: "Shopping", value: 329, color: getCategoryBrandColor("Shopping") },
+  { name: "Transportation", value: 245, color: getCategoryBrandColor("Transportation") },
+  { name: "Utilities", value: 187, color: getCategoryBrandColor("Utilities") },
+  { name: "Entertainment", value: 156, color: getCategoryBrandColor("Entertainment") },
 ];
 
 const chartConfig = {
@@ -251,62 +198,35 @@ const chartConfig = {
 };
 
 export default function Transactions() {
+  const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [isExporting, setIsExporting] = useState(false);
   
-  // Use debounced search hook
-  const {
-    query: searchQuery,
-    setQuery: setSearchQuery,
-    results: searchResults,
-    searchTerms,
-    filters,
-    isLoading: isSearching,
-    isError: searchError
-  } = useDebouncedSearch({
-    debounceMs: 300,
-    minQueryLength: 1,
-    limit: 50
-  });
-
-  // Use autocomplete hook
-  const { suggestions, saveRecentSearch } = useAutocomplete();
-
-  // Handle autocomplete selection
-  const handleAutocompleteSelect = (item: any) => {
-    setSearchQuery(item.value);
-    saveRecentSearch(item.value);
-  };
-
-  // Handle clear search
-  const handleClearSearch = () => {
-    setSearchQuery('');
-  };
-
-  // Get all transactions for fallback and category filtering
-  const { data: allTransactionsData, isLoading: isLoadingTransactions } = useTransactions({
-    limit: 100
-  });
-
-  const allTransactions = allTransactionsData?.transactions || mockTransactions;
-
-  // Determine which transactions to display
-  const displayTransactions = useMemo(() => {
-    // If user is searching and we have search results, use those
-    if (searchQuery.trim().length > 0 && searchResults.length > 0) {
-      return searchResults;
-    }
+  // Filter transactions based on search query and selected category
+  const filteredTransactions = mockTransactions.filter((transaction) => {
+    const matchesSearch = transaction.merchant.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         transaction.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         transaction.location.toLowerCase().includes(searchQuery.toLowerCase());
     
-    // If user is searching but no results, return empty array
-    if (searchQuery.trim().length > 0 && !isSearching) {
-      return [];
-    }
+    const matchesCategory = selectedCategory === "all" || transaction.category === selectedCategory;
     
-    // Otherwise, use all transactions and filter by category
-    return allTransactions.filter((transaction) => {
-      return selectedCategory === "all" || transaction.category === selectedCategory;
-    });
-  }, [searchQuery, searchResults, isSearching, allTransactions, selectedCategory]);
+    return matchesSearch && matchesCategory;
+  });
+  
+  // Create filtered category data for pie chart
+  const filteredCategoryData = filteredTransactions.reduce((acc, transaction) => {
+    const existing = acc.find(item => item.name === transaction.category);
+    if (existing) {
+      existing.value += transaction.amount;
+    } else {
+      acc.push({
+        name: transaction.category,
+        value: transaction.amount,
+        color: categoryData.find(cat => cat.name === transaction.category)?.color || "#6B7280"
+      });
+    }
+    return acc;
+  }, [] as Array<{name: string, value: number, color: string}>);
   
   // Debug logging
   console.log("Category data:", categoryData);
@@ -389,20 +309,20 @@ export default function Transactions() {
       drawLine(yPosition);
       yPosition += 5;
       
-      // Calculate totals
-      const totalAmount = mockTransactions.reduce((sum, transaction) => sum + transaction.amount, 0);
-      const categoryTotals = mockTransactions.reduce((acc, transaction) => {
+      // Calculate totals from filtered transactions
+      const totalAmount = filteredTransactions.reduce((sum, transaction) => sum + transaction.amount, 0);
+      const categoryTotals = filteredTransactions.reduce((acc, transaction) => {
         acc[transaction.category] = (acc[transaction.category] || 0) + transaction.amount;
         return acc;
       }, {} as Record<string, number>);
       
       pdf.setFontSize(12);
       pdf.setFont('helvetica', 'normal');
-      pdf.text(`Total Transactions: ${mockTransactions.length}`, 20, yPosition);
+      pdf.text(`Total Transactions: ${filteredTransactions.length}`, 20, yPosition);
       yPosition += 8;
       pdf.text(`Total Amount: $${totalAmount.toFixed(2)}`, 20, yPosition);
       yPosition += 8;
-      pdf.text(`Average Transaction: $${(totalAmount / mockTransactions.length).toFixed(2)}`, 20, yPosition);
+      pdf.text(`Average Transaction: $${filteredTransactions.length > 0 ? (totalAmount / filteredTransactions.length).toFixed(2) : '0.00'}`, 20, yPosition);
       yPosition += 15;
       
       // Category breakdown
@@ -462,7 +382,7 @@ export default function Transactions() {
       pdf.setFont('helvetica', 'normal');
       pdf.setFontSize(9);
       
-      mockTransactions.forEach((transaction) => {
+      filteredTransactions.forEach((transaction) => {
         if (checkNewPage(15)) {
           yPosition = 20;
           // Redraw headers on new page
@@ -553,34 +473,13 @@ export default function Transactions() {
         <CardContent className="p-6">
           <div className="flex items-center gap-4">
             <div className="relative flex-1 max-w-md">
-              <div className="relative">
-                {isSearching && (
-                  <Loader2 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4 animate-spin z-10" />
-                )}
-                <Autocomplete
-                  value={searchQuery}
-                  onChange={setSearchQuery}
-                  onSelect={handleAutocompleteSelect}
-                  suggestions={suggestions}
-                  isLoading={isSearching}
-                  placeholder="Search transactions... (e.g., merchant:Starbucks, amount>50, food)"
-                  disabled={isLoadingTransactions}
-                  className="pl-10"
-                />
-                {!isSearching && (
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4 pointer-events-none" />
-                )}
-                {searchQuery && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0 z-10"
-                    onClick={handleClearSearch}
-                  >
-                    <XCircle className="w-4 h-4" />
-                  </Button>
-                )}
-              </div>
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+              <Input
+                placeholder="Search transactions..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
             </div>
             
             <Button variant="outline" size="sm">
@@ -616,42 +515,7 @@ export default function Transactions() {
         <div className="lg:col-span-2">
           <Card className="card-gradient">
             <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>
-                {searchQuery.trim().length > 0 ? 'Search Results' : 'Recent Transactions'}
-              </CardTitle>
-              {searchQuery.trim().length > 0 && !isSearching && (
-                <div className="flex items-center gap-2">
-                  <Badge variant="secondary" className="text-sm">
-                    {displayTransactions.length} result{displayTransactions.length !== 1 ? 's' : ''}
-                  </Badge>
-                </div>
-              )}
-            </div>
-            {searchQuery.trim().length > 0 && (
-              <div className="mt-2 p-3 bg-muted/20 rounded-lg">
-                <div className="flex items-center gap-2 text-sm">
-                  <Search className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-muted-foreground">Search:</span>
-                  <code className="px-2 py-1 bg-muted rounded text-xs font-mono">
-                    {searchQuery}
-                  </code>
-                </div>
-                {filters && Object.keys(filters).length > 0 && (
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    <span className="text-xs text-muted-foreground">Active filters:</span>
-                    {Object.entries(filters).map(([key, value]) => (
-                      <Badge key={key} variant="secondary" className="text-xs">
-                        {key}: {typeof value === 'object' && value.contains ? value.contains : String(value)}
-                      </Badge>
-                    ))}
-                  </div>
-                )}
-                <div className="mt-2 text-xs text-muted-foreground">
-                  <strong>Examples:</strong> merchant:Starbucks, amount&gt;50, category:food, status:completed
-                </div>
-              </div>
-            )}
+              <CardTitle>Recent Transactions</CardTitle>
             </CardHeader>
             <CardContent>
               <Table>
@@ -665,133 +529,63 @@ export default function Transactions() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {isSearching ? (
+                  {filteredTransactions.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={5} className="text-center py-8">
                         <div className="flex flex-col items-center gap-2">
-                          <Loader2 className="w-8 h-8 text-muted-foreground animate-spin" />
-                          <p className="text-muted-foreground">Searching transactions...</p>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ) : displayTransactions.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={5} className="text-center py-12">
-                        <div className="flex flex-col items-center gap-4">
-                          <div className="p-4 bg-muted/20 rounded-full">
-                            <Search className="w-8 h-8 text-muted-foreground" />
+                          <div className="w-12 h-12 rounded-full bg-muted/20 flex items-center justify-center">
+                            <Search className="w-6 h-6 text-muted-foreground" />
                           </div>
-                          <div className="space-y-2">
-                            <h3 className="text-lg font-semibold text-foreground">
-                              {searchQuery.trim().length > 0 
-                                ? "No transactions found"
-                                : "No transactions available"
-                              }
-                            </h3>
-                            <p className="text-muted-foreground max-w-md">
-                              {searchQuery.trim().length > 0 
-                                ? `No transactions match your search "${searchQuery}". Try adjusting your search terms or filters.`
-                                : "There are no transactions to display. Try adjusting your category filter or add some transactions."
-                              }
-                            </p>
-                          </div>
-                          {searchQuery.trim().length > 0 && (
-                            <div className="flex flex-col gap-2 text-sm text-muted-foreground">
-                              <p className="font-medium">Search tips:</p>
-                              <ul className="text-left space-y-1">
-                                <li>• Try general terms like "food" or "coffee"</li>
-                                <li>• Use specific filters: merchant:Starbucks</li>
-                                <li>• Search by amount: amount&gt;50</li>
-                                <li>• Check your spelling</li>
-                              </ul>
-                            </div>
-                          )}
+                          <p className="text-muted-foreground">No transactions found</p>
+                          <p className="text-sm text-muted-foreground">
+                            Try adjusting your search or filter criteria
+                          </p>
                         </div>
                       </TableCell>
                     </TableRow>
                   ) : (
-                    displayTransactions.map((transaction) => {
-                      // Map category to icon
-                      const getCategoryIcon = (category: string) => {
-                        switch (category.toLowerCase()) {
-                          case 'food & dining':
-                          case 'food':
-                            return Utensils;
-                          case 'shopping':
-                            return ShoppingBag;
-                          case 'transportation':
-                            return Car;
-                          case 'utilities':
-                            return Home;
-                          case 'entertainment':
-                            return Play;
-                          default:
-                            return Coffee;
-                        }
-                      };
-
-                      const IconComponent = getCategoryIcon(transaction.category);
-                      const statusIcon = transaction.status === 'COMPLETED' ? CheckCircle : 
-                                        transaction.status === 'PENDING' ? Loader2 : XCircle;
-                      const statusColor = transaction.status === 'COMPLETED' ? 'text-green-600' : 
-                                        transaction.status === 'PENDING' ? 'text-yellow-600' : 'text-red-600';
-
-                      return (
-                        <TableRow key={transaction.id} className="hover:bg-muted/20">
-                          <TableCell>
-                            <div className="flex items-center gap-3">
+                    filteredTransactions.map((transaction) => {
+                    const merchantLogo = getMerchantLogo(transaction.merchant);
+                    const IconComponent = transaction.icon;
+                    return (
+                      <TableRow key={transaction.id} className="hover:bg-muted/20">
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            {merchantLogo ? (
+                              <div className={`p-2 rounded-lg ${merchantLogo.bgColor} ${merchantLogo.textColor} flex items-center justify-center w-8 h-8`}>
+                                <span className="text-lg">{merchantLogo.icon}</span>
+                              </div>
+                            ) : (
                               <div className="p-2 bg-primary/10 rounded-lg">
                                 <IconComponent className="w-4 h-4 text-primary" />
                               </div>
-                              <div>
-                                <p className="font-medium">
-                                  <HighlightText 
-                                    text={transaction.merchant} 
-                                    searchTerms={searchTerms}
-                                  />
-                                </p>
-                                <p className="text-xs text-muted-foreground">
-                                  <HighlightText 
-                                    text={transaction.location || 'No location'} 
-                                    searchTerms={searchTerms}
-                                  />
-                                </p>
-                                {transaction.description && (
-                                  <p className="text-xs text-muted-foreground mt-1">
-                                    <HighlightText 
-                                      text={transaction.description} 
-                                      searchTerms={searchTerms}
-                                    />
-                                  </p>
-                                )}
-                              </div>
+                            )}
+                            <div>
+                              <p className="font-medium">{transaction.merchant}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {transaction.location}
+                              </p>
                             </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="outline">
-                              <HighlightText 
-                                text={transaction.category} 
-                                searchTerms={searchTerms}
-                              />
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="font-semibold">
-                            ${Number(transaction.amount).toFixed(2)}
-                          </TableCell>
-                          <TableCell className="text-muted-foreground">
-                            {new Date(transaction.date).toLocaleDateString()}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              {React.createElement(statusIcon, { className: `w-4 h-4 ${statusColor}` })}
-                              <span className={`text-sm ${statusColor}`}>
-                                {transaction.status}
-                              </span>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{transaction.category}</Badge>
+                        </TableCell>
+                        <TableCell className="font-semibold">
+                          ${transaction.amount.toFixed(2)}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {new Date(transaction.date).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <CheckCircle className="w-4 h-4 text-success" />
+                            <span className="text-sm text-success">Completed</span>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
                   )}
                 </TableBody>
               </Table>
@@ -951,26 +745,36 @@ export default function Transactions() {
             </CardHeader>
             <CardContent>
               <div className="h-[200px] w-full flex items-center justify-center">
-                <PieChart width={200} height={200}>
-                  <Pie
-                    data={categoryData}
-                    cx={100}
-                    cy={100}
-                    innerRadius={40}
-                    outerRadius={80}
-                    paddingAngle={2}
-                    dataKey="value"
-                  >
-                    {categoryData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <ChartTooltip />
-                </PieChart>
+                {filteredCategoryData.length === 0 ? (
+                  <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                    <div className="w-12 h-12 rounded-full bg-muted/20 flex items-center justify-center">
+                      <Search className="w-6 h-6" />
+                    </div>
+                    <p className="text-sm">No data available</p>
+                    <p className="text-xs">Try adjusting your filters</p>
+                  </div>
+                ) : (
+                  <PieChart width={200} height={200}>
+                    <Pie
+                      data={filteredCategoryData}
+                      cx={100}
+                      cy={100}
+                      innerRadius={40}
+                      outerRadius={80}
+                      paddingAngle={2}
+                      dataKey="value"
+                    >
+                      {filteredCategoryData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <ChartTooltip />
+                  </PieChart>
+                )}
               </div>
               
               <div className="legend-container-responsive space-y-2 mt-4">
-                {categoryData.map((category) => (
+                {filteredCategoryData.map((category) => (
                   <div key={category.name} className="flex items-center justify-between text-sm legend-item">
                     <div className="flex items-center gap-2 min-w-0 flex-1">
                       <div 
