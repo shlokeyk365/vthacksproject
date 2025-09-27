@@ -87,7 +87,7 @@ export function NotificationDropdown() {
         </Button>
       </DropdownMenuTrigger>
       
-      <DropdownMenuContent align="end" className="w-80 p-0">
+      <DropdownMenuContent align="end" className="w-96 p-0">
         <div className="flex items-center justify-between p-4 border-b border-border/50">
           <div className="space-y-1">
             <h3 className="font-semibold text-sm">Notifications</h3>
@@ -101,7 +101,7 @@ export function NotificationDropdown() {
                 variant="ghost"
                 size="sm"
                 onClick={handleMarkAllAsRead}
-                className="h-7 px-3 text-xs hover:bg-muted/50"
+                className="h-8 px-3 text-xs hover:bg-green-500/20 hover:text-green-400 border border-green-500/30"
               >
                 <Check className="w-3 h-3 mr-1.5" />
                 Mark all read
@@ -109,10 +109,10 @@ export function NotificationDropdown() {
             )}
             {notifications.length > 0 && (
               <Button
-                variant="ghost"
+                variant="destructive"
                 size="sm"
                 onClick={handleClearAll}
-                className="h-7 px-3 text-xs hover:bg-muted/50"
+                className="h-8 px-3 text-xs hover:bg-red-600 hover:text-white border border-red-500/50 bg-red-500/10 text-red-400"
               >
                 <X className="w-3 h-3 mr-1.5" />
                 Clear all
