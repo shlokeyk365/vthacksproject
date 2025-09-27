@@ -504,15 +504,17 @@ export default function Analytics() {
                     };
                     
                     const getImpactBadge = (impact: string) => {
+                      const baseClasses = "inline-flex items-center px-2 py-1 rounded-full text-xs font-medium";
+                      
                       switch (impact) {
                         case "High":
-                          return <Badge variant="destructive">High Impact</Badge>;
+                          return <span className={`${baseClasses} bg-red-500 text-white`}>High Impact</span>;
                         case "Medium":
-                          return <Badge variant="secondary">Medium Impact</Badge>;
+                          return <span className={`${baseClasses} bg-yellow-500 text-white`}>Medium Impact</span>;
                         case "Positive":
-                          return <Badge variant="default" className="bg-green-500">Positive</Badge>;
+                          return <span className={`${baseClasses} bg-green-500 text-white`}>Positive</span>;
                         default:
-                          return <Badge variant="outline">{impact}</Badge>;
+                          return <span className={`${baseClasses} bg-gray-100 text-gray-700 border border-gray-300`}>{impact}</span>;
                       }
                     };
 
@@ -523,8 +525,8 @@ export default function Analytics() {
                             <IconComponent className="w-5 h-5" />
                             <h4 className="font-semibold">{insight.title}</h4>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <Badge variant="outline">{insight.category}</Badge>
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700 border border-gray-300">{insight.category}</span>
                             {getImpactBadge(insight.impact)}
                           </div>
                         </div>
