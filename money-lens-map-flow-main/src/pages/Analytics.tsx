@@ -4,6 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { toast } from "sonner";
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -75,6 +77,8 @@ const chartConfig = {
 
 export default function Analytics() {
   const [isInsightsDialogOpen, setIsInsightsDialogOpen] = useState(false);
+  const [selectedPeriod, setSelectedPeriod] = useState("6months");
+  const [isExporting, setIsExporting] = useState(false);
 
   // Comprehensive insights data
   const allInsights = [
@@ -160,6 +164,68 @@ export default function Analytics() {
     }
   ];
 
+  // Handler functions
+  const handlePeriodChange = (period: string) => {
+    setSelectedPeriod(period);
+    toast.success(`Analytics updated for ${getPeriodLabel(period)}`);
+  };
+
+  const getPeriodLabel = (period: string) => {
+    switch (period) {
+      case "1month": return "Last Month";
+      case "3months": return "Last 3 Months";
+      case "6months": return "Last 6 Months";
+      case "1year": return "Last Year";
+      case "all": return "All Time";
+      default: return "Last 6 Months";
+    }
+  };
+
+  const handleExportReport = async () => {
+    setIsExporting(true);
+    try {
+      // Simulate export process
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Create a mock report data
+      const reportData = {
+        period: getPeriodLabel(selectedPeriod),
+        generatedAt: new Date().toISOString(),
+        summary: {
+          totalSpending: 2847.50,
+          averageMonthly: 474.58,
+          topCategory: "Dining",
+          topMerchant: "Starbucks Coffee",
+          savingsRate: 12.5
+        },
+        insights: allInsights.slice(0, 5), // Top 5 insights
+        charts: {
+          monthlySpending: monthlyData,
+          topMerchants: topMerchants,
+          spendingVsCaps: spendingVsCaps
+        }
+      };
+
+      // Create and download the report
+      const dataStr = JSON.stringify(reportData, null, 2);
+      const dataBlob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(dataBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `analytics-report-${selectedPeriod}-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast.success("Analytics report exported successfully!");
+    } catch (error) {
+      toast.error("Failed to export report. Please try again.");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <motion.div
       className="h-full min-h-screen space-y-6 p-6"
@@ -179,15 +245,31 @@ export default function Analytics() {
         </div>
         
         <div className="flex flex-wrap items-center gap-2 lg:gap-3">
-          <Button variant="outline" size="sm" className="h-9">
-            <Calendar className="w-4 h-4 mr-2" />
-            <span className="hidden sm:inline">Last 6 Months</span>
-            <span className="sm:hidden">6M</span>
-          </Button>
-          <Button size="sm" className="h-9">
+          <Select value={selectedPeriod} onValueChange={handlePeriodChange}>
+            <SelectTrigger className="w-[140px] h-9">
+              <SelectValue placeholder="Select period" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="1month">Last Month</SelectItem>
+              <SelectItem value="3months">Last 3 Months</SelectItem>
+              <SelectItem value="6months">Last 6 Months</SelectItem>
+              <SelectItem value="1year">Last Year</SelectItem>
+              <SelectItem value="all">All Time</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button 
+            size="sm" 
+            className="h-9"
+            onClick={handleExportReport}
+            disabled={isExporting}
+          >
             <Download className="w-4 h-4 mr-2" />
-            <span className="hidden sm:inline">Export Report</span>
-            <span className="sm:hidden">Export</span>
+            <span className="hidden sm:inline">
+              {isExporting ? "Exporting..." : "Export Report"}
+            </span>
+            <span className="sm:hidden">
+              {isExporting ? "..." : "Export"}
+            </span>
           </Button>
         </div>
       </div>
