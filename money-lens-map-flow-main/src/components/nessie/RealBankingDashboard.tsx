@@ -75,6 +75,13 @@ export function RealBankingDashboard() {
   const { data: customers, isLoading: customersLoading } = useNessieCustomers();
   const { customer, accounts, spendingAnalysis, isLoading, error } = useNessieCustomerData(selectedCustomerId);
   
+  // Debug logging
+  console.log('Customers:', customers);
+  console.log('Selected Customer ID:', selectedCustomerId);
+  console.log('Customer data:', customer);
+  console.log('Accounts data:', accounts);
+  console.log('Spending analysis:', spendingAnalysis);
+  
   const transferMoney = useTransferMoney();
   const createTransaction = useCreateNessieTransaction();
 

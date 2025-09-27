@@ -233,7 +233,9 @@ class NessieApiClient {
 
   // Customer Endpoints
   async getCustomers(): Promise<NessieCustomer[]> {
+    console.log('API Key:', this.apiKey);
     if (this.apiKey === 'demo-key') {
+      console.log('Using demo customers:', demoCustomers);
       return Promise.resolve(demoCustomers);
     }
     return this.request<NessieCustomer[]>('/customers');
@@ -258,7 +260,9 @@ class NessieApiClient {
   // Account Endpoints
   async getAccounts(customerId: string): Promise<NessieAccount[]> {
     if (this.apiKey === 'demo-key') {
-      return Promise.resolve(demoAccounts.filter(account => account.customer_id === customerId));
+      const filteredAccounts = demoAccounts.filter(account => account.customer_id === customerId);
+      console.log('Demo accounts for customer', customerId, ':', filteredAccounts);
+      return Promise.resolve(filteredAccounts);
     }
     return this.request<NessieAccount[]>(`/customers/${customerId}/accounts`);
   }
