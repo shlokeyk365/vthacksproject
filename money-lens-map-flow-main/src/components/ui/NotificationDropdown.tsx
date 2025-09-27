@@ -31,14 +31,14 @@ const getNotificationIcon = (type: Notification['type']) => {
 const getNotificationColor = (type: Notification['type']) => {
   switch (type) {
     case 'error':
-      return 'border-red-200 bg-red-50';
+      return 'border-red-200 bg-red-50 hover:border-red-300 hover:bg-red-100 hover:ring-1 hover:ring-red-200';
     case 'warning':
-      return 'border-yellow-200 bg-yellow-50';
+      return 'border-yellow-200 bg-yellow-50 hover:border-yellow-300 hover:bg-yellow-100 hover:ring-1 hover:ring-yellow-200';
     case 'success':
-      return 'border-green-200 bg-green-50';
+      return 'border-green-200 bg-green-50 hover:border-green-300 hover:bg-green-100 hover:ring-1 hover:ring-green-200';
     case 'info':
     default:
-      return 'border-blue-200 bg-blue-50';
+      return 'border-blue-200 bg-blue-50 hover:border-blue-300 hover:bg-blue-100 hover:ring-1 hover:ring-blue-200';
   }
 };
 
@@ -137,7 +137,7 @@ export function NotificationDropdown() {
               {notifications.map((notification) => (
                 <DropdownMenuItem
                   key={notification.id}
-                  className={`p-3 cursor-pointer ${getNotificationColor(notification.type)} ${
+                  className={`p-3 cursor-pointer transition-all duration-200 ${getNotificationColor(notification.type)} ${
                     !notification.read ? 'font-medium' : ''
                   }`}
                   onClick={() => handleNotificationClick(notification)}
