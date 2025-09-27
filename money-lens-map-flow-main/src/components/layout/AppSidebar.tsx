@@ -10,6 +10,9 @@ import {
   Settings,
   Target,
   TrendingUp,
+  Moon,
+  Sun,
+  Monitor,
 } from "lucide-react";
 
 import {
@@ -24,6 +27,8 @@ import {
   SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { Button } from "@/components/ui/button";
+import { useTheme } from "@/contexts/ThemeContext";
 
 const navigationItems = [
   {
@@ -69,12 +74,30 @@ export function AppSidebar() {
   const location = useLocation();
   const currentPath = location.pathname;
   const collapsed = state === "collapsed";
+  const { theme, setTheme, resolvedTheme } = useTheme();
 
   const isActive = (path: string) => currentPath === path;
   const getNavCls = ({ isActive }: { isActive: boolean }) =>
     isActive
       ? "bg-primary text-primary-foreground font-medium shadow-md"
       : "hover:bg-accent hover:text-accent-foreground transition-colors";
+
+  const cycleTheme = () => {
+    if (theme === "light") {
+      setTheme("dark");
+    } else if (theme === "dark") {
+      setTheme("system");
+    } else {
+      setTheme("light");
+    }
+  };
+
+  const getThemeIcon = () => {
+    if (theme === "system") {
+      return <Monitor className="w-4 h-4" />;
+    }
+    return resolvedTheme === "dark" ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />;
+  };
 
   return (
     <Sidebar
@@ -147,6 +170,24 @@ export function AppSidebar() {
             </div>
           </div>
         )}
+
+        {/* Theme Toggle */}
+        <div className="px-3 pb-3">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={cycleTheme}
+            className="w-full justify-start gap-3 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+            title={`Current theme: ${resolvedTheme} ${theme === "system" ? "(system)" : ""}`}
+          >
+            {getThemeIcon()}
+            {!collapsed && (
+              <span className="text-sm">
+                {theme === "system" ? "System" : resolvedTheme === "dark" ? "Dark" : "Light"}
+              </span>
+            )}
+          </Button>
+        </div>
       </SidebarContent>
     </Sidebar>
   );

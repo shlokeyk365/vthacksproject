@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,6 +6,11 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+import { useProfile } from "@/hooks/useApi";
+import { useAuth } from "@/contexts/AuthContext";
+import { useTheme } from "@/contexts/ThemeContext";
+import { toast } from "sonner";
+import { apiClient } from "@/lib/api";
 import { 
   User, 
   Bell, 
@@ -18,10 +23,23 @@ import {
   Sun,
   Palette,
   Database,
-  Key
+  Key,
+  Monitor
 } from "lucide-react";
 
 export default function Settings() {
+  const { user } = useAuth();
+  const { data: profileData, isLoading: profileLoading } = useProfile();
+  const { theme, setTheme, resolvedTheme } = useTheme();
+  
+  // Profile form state
+  const [profileForm, setProfileForm] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    monthlyBudgetGoal: 0,
+  });
+
   const [notifications, setNotifications] = useState({
     capAlerts: true,
     weeklyReports: true,
@@ -36,7 +54,51 @@ export default function Settings() {
     showMerchantPins: true,
   });
 
-  const [theme, setTheme] = useState("light");
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Load user data into form
+  useEffect(() => {
+    if (profileData) {
+      setProfileForm({
+        firstName: profileData.firstName || "",
+        lastName: profileData.lastName || "",
+        email: profileData.email || "",
+        monthlyBudgetGoal: profileData.monthlyBudgetGoal || 0,
+      });
+    }
+  }, [profileData]);
+
+  // Handle profile form changes
+  const handleProfileChange = (field: string, value: string | number) => {
+    setProfileForm(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  // Save profile changes
+  const handleSaveProfile = async () => {
+    if (!profileData) return;
+    
+    setIsSaving(true);
+    try {
+      // Include email in profile update (backend now supports email changes)
+      const response = await apiClient.updateProfile(profileForm);
+      
+      if (response.success) {
+        toast.success('Profile updated successfully!');
+        // Refresh profile data
+        window.location.reload();
+      } else {
+        toast.error(response.message || 'Failed to update profile');
+      }
+    } catch (error: any) {
+      console.error('Profile update error:', error);
+      toast.error(error.message || 'Failed to update profile');
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   return (
     <motion.div
@@ -68,17 +130,30 @@ export default function Settings() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium">First Name</label>
-                  <Input defaultValue="John" />
+                  <Input 
+                    value={profileForm.firstName}
+                    onChange={(e) => handleProfileChange('firstName', e.target.value)}
+                    disabled={profileLoading}
+                  />
                 </div>
                 <div>
                   <label className="text-sm font-medium">Last Name</label>
-                  <Input defaultValue="Doe" />
+                  <Input 
+                    value={profileForm.lastName}
+                    onChange={(e) => handleProfileChange('lastName', e.target.value)}
+                    disabled={profileLoading}
+                  />
                 </div>
               </div>
               
               <div>
                 <label className="text-sm font-medium">Email Address</label>
-                <Input defaultValue="john.doe@example.com" type="email" />
+                <Input 
+                  value={profileForm.email}
+                  onChange={(e) => handleProfileChange('email', e.target.value)}
+                  type="email"
+                  disabled={profileLoading}
+                />
               </div>
               
               <div>
@@ -87,11 +162,25 @@ export default function Settings() {
                   <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">
                     $
                   </span>
-                  <Input defaultValue="3500" className="pl-8" />
+                  <Input 
+                    value={profileForm.monthlyBudgetGoal}
+                    onChange={(e) => handleProfileChange('monthlyBudgetGoal', parseFloat(e.target.value) || 0)}
+                    className="pl-8"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    disabled={profileLoading}
+                  />
                 </div>
               </div>
               
-              <Button>Save Profile Changes</Button>
+              <Button 
+                onClick={handleSaveProfile}
+                disabled={isSaving || profileLoading}
+                className="w-full"
+              >
+                {isSaving ? 'Saving...' : 'Save Profile Changes'}
+              </Button>
             </CardContent>
           </Card>
 
@@ -291,7 +380,7 @@ export default function Settings() {
             <CardContent className="space-y-4">
               <div>
                 <label className="text-sm font-medium mb-3 block">Theme</label>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-3 gap-2">
                   <Button
                     variant={theme === "light" ? "default" : "outline"}
                     size="sm"
@@ -310,7 +399,19 @@ export default function Settings() {
                     <Moon className="w-4 h-4" />
                     Dark
                   </Button>
+                  <Button
+                    variant={theme === "system" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setTheme("system")}
+                    className="flex items-center gap-2"
+                  >
+                    <Monitor className="w-4 h-4" />
+                    System
+                  </Button>
                 </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Current theme: {resolvedTheme} {theme === "system" && "(follows system)"}
+                </p>
               </div>
               
               <Separator />

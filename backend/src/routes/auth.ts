@@ -143,14 +143,26 @@ router.get('/profile', authenticate, async (req: AuthenticatedRequest, res, next
 // Update user profile
 router.put('/profile', authenticate, async (req: AuthenticatedRequest, res, next) => {
   try {
-    const { firstName, lastName, monthlyBudgetGoal, preferences } = req.body;
+    const { firstName, lastName, email, monthlyBudgetGoal, preferences } = req.body;
     const userId = req.user!.id;
+
+    // Check if email is being changed and if it already exists
+    if (email && email !== req.user!.email) {
+      const existingUser = await prisma.user.findUnique({
+        where: { email }
+      });
+
+      if (existingUser) {
+        throw new AppError('Email already exists', 400);
+      }
+    }
 
     const updatedUser = await prisma.user.update({
       where: { id: userId },
       data: {
         ...(firstName && { firstName }),
         ...(lastName && { lastName }),
+        ...(email && { email }),
         ...(monthlyBudgetGoal !== undefined && { monthlyBudgetGoal }),
         ...(preferences && { preferences })
       },
