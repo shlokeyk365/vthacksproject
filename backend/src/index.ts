@@ -25,7 +25,7 @@ const app = express();
 const server = createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: process.env.CORS_ORIGIN || "http://localhost:8080",
+    origin: process.env.CORS_ORIGIN || "http://localhost:8082",
     methods: ["GET", "POST", "PUT", "DELETE"]
   }
 });
@@ -35,7 +35,7 @@ const PORT = process.env.PORT || 3001;
 // Middleware
 app.use(helmet());
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || "http://localhost:8080",
+  origin: process.env.CORS_ORIGIN || "http://localhost:8082",
   credentials: true
 }));
 app.use(morgan('combined'));
