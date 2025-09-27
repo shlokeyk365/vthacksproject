@@ -150,15 +150,19 @@ export default function MapView() {
 
     const newMarkers: mapboxgl.Marker[] = [];
 
+    // Filter out merchants with placeholder addresses first
+    const validMerchants = merchants.filter(merchant => 
+      merchant.address !== 'Address to be geocoded' &&
+      merchant.address !== 'Address not available'
+    );
+
     // Process merchants - use backend coordinates directly for known merchants
     const processedMerchants = await Promise.all(
-      merchants.map(async (merchant) => {
+      validMerchants.map(async (merchant) => {
         // Check if this is a known merchant with accurate coordinates
         const isKnownMerchant = merchant.id.includes('-') && 
           !merchant.id.includes('-similar-') && 
-          !merchant.id.includes('-mock') &&
-          merchant.address !== 'Address to be geocoded' &&
-          merchant.address !== 'Address not available';
+          !merchant.id.includes('-mock');
 
         if (isKnownMerchant) {
           // Use backend coordinates directly for known merchants
@@ -391,8 +395,12 @@ export default function MapView() {
   };
 
   const filteredMerchants = merchants.filter(merchant =>
-    merchant.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    merchant.address.toLowerCase().includes(searchQuery.toLowerCase())
+    // Filter out merchants with placeholder addresses
+    merchant.address !== 'Address to be geocoded' &&
+    merchant.address !== 'Address not available' &&
+    // Apply search filter
+    (merchant.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    merchant.address.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   const getCategoryIcon = (category: string) => {

@@ -68,8 +68,8 @@ router.get('/merchants', authenticate, async (req: AuthenticatedRequest, res, ne
       });
     });
 
-    // Then add merchants from transactions that don't have real data
-    // Use geocoding to get coordinates for unknown merchants
+    // Only add merchants from transactions that have real data or similar merchants
+    // Skip unknown merchants to avoid "Address to be geocoded" placeholders
     for (const [merchantName, data] of merchantTransactionMap.entries()) {
       const hasRealData = realMerchants.some(m => m.name.toLowerCase() === merchantName);
       
@@ -91,23 +91,8 @@ router.get('/merchants', authenticate, async (req: AuthenticatedRequest, res, ne
             category: similarMerchant.category,
             coordinates: similarMerchant.coordinates
           });
-        } else {
-          // Generate mock coordinates for unknown merchants
-          const mockCoordinates = {
-            lat: 37.2296 + (Math.random() - 0.5) * 0.1, // Blacksburg area
-            lng: -80.4139 + (Math.random() - 0.5) * 0.1
-          };
-
-          merchants.push({
-            id: `${merchantName}-mock`,
-            name: merchantName,
-            address: 'Address to be geocoded',
-            totalSpent: data.totalSpent,
-            visits: data.visits,
-            category: (Array.from(data.categories)[0] as string) || 'Other',
-            coordinates: mockCoordinates
-          });
         }
+        // Skip unknown merchants entirely - no more "Address to be geocoded" merchants
       }
     }
 
