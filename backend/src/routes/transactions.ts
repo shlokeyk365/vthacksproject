@@ -86,9 +86,9 @@ router.get('/', authenticate, async (req: AuthenticatedRequest, res, next) => {
       message: 'Transactions retrieved successfully'
     };
 
-    res.status(200).json(response);
+    return res.status(200).json(response);
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
@@ -115,9 +115,9 @@ router.get('/:id', authenticate, async (req: AuthenticatedRequest, res, next) =>
       message: 'Transaction retrieved successfully'
     };
 
-    res.status(200).json(response);
+    return res.status(200).json(response);
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
@@ -157,9 +157,9 @@ router.post('/', authenticate, async (req: AuthenticatedRequest, res, next) => {
       message: 'Transaction created successfully'
     };
 
-    res.status(201).json(response);
+    return res.status(201).json(response);
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
@@ -344,9 +344,9 @@ router.post('/simulate', authenticate, async (req: AuthenticatedRequest, res, ne
         : 'Transaction would be rejected due to budget/cap violations'
     };
 
-    res.status(200).json(response);
+    return res.status(200).json(response);
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
@@ -382,9 +382,9 @@ router.put('/:id', authenticate, async (req: AuthenticatedRequest, res, next) =>
       message: 'Transaction updated successfully'
     };
 
-    res.status(200).json(response);
+    return res.status(200).json(response);
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
@@ -413,9 +413,203 @@ router.delete('/:id', authenticate, async (req: AuthenticatedRequest, res, next)
       message: 'Transaction deleted successfully'
     };
 
-    res.status(200).json(response);
+    return res.status(200).json(response);
   } catch (error) {
-    next(error);
+    return next(error);
+  }
+});
+
+// Search transactions with advanced filters
+router.get('/search', authenticate, async (req: AuthenticatedRequest, res, next) => {
+  try {
+    const userId = req.user!.id;
+    const { q: query, limit = 50 } = req.query as { q?: string; limit?: string };
+
+    if (!query || query.trim().length === 0) {
+      const response: ApiResponse = {
+        success: true,
+        data: { transactions: [] },
+        message: 'No search query provided'
+      };
+      return res.status(200).json(response);
+    }
+
+    const searchLimit = Math.min(Number(limit), 100); // Cap at 100 results
+    const searchQuery = query.trim();
+
+    // Parse advanced search query
+    const parseSearchQuery = (query: string): { filters: any; generalTerms: string[] } => {
+      const filters: any = {};
+      const generalTerms: string[] = [];
+      
+      // Split by spaces but preserve quoted strings
+      const tokens = query.match(/(?:[^\s"]+|"[^"]*")+/g) || [];
+      
+      for (const token of tokens) {
+        const trimmedToken = token.trim();
+        
+        // Check for field-specific filters
+        if (trimmedToken.includes(':')) {
+          const [field, value] = trimmedToken.split(':', 2);
+          const cleanValue = value.replace(/^["']|["']$/g, ''); // Remove quotes
+          
+          switch (field.toLowerCase()) {
+            case 'merchant':
+              filters.merchant = { contains: cleanValue, mode: 'insensitive' };
+              break;
+            case 'category':
+              filters.category = { contains: cleanValue, mode: 'insensitive' };
+              break;
+            case 'description':
+              filters.description = { contains: cleanValue, mode: 'insensitive' };
+              break;
+            case 'location':
+              filters.location = { contains: cleanValue, mode: 'insensitive' };
+              break;
+            case 'status':
+              filters.status = cleanValue.toUpperCase();
+              break;
+          }
+        } else if (trimmedToken.includes('amount')) {
+          // Handle amount filters: amount>50, amount<100, amount>=25, amount<=75, amount=50
+          const amountMatch = trimmedToken.match(/amount\s*([><=]+)\s*(\d+(?:\.\d+)?)/);
+          if (amountMatch) {
+            const operator = amountMatch[1];
+            const value = parseFloat(amountMatch[2]);
+            
+            switch (operator) {
+              case '>':
+                filters.amount = { ...filters.amount, gt: value };
+                break;
+              case '>=':
+                filters.amount = { ...filters.amount, gte: value };
+                break;
+              case '<':
+                filters.amount = { ...filters.amount, lt: value };
+                break;
+              case '<=':
+                filters.amount = { ...filters.amount, lte: value };
+                break;
+              case '=':
+              case '==':
+                filters.amount = { ...filters.amount, equals: value };
+                break;
+            }
+          }
+        } else {
+          // General search term
+          generalTerms.push(trimmedToken.replace(/^["']|["']$/g, ''));
+        }
+      }
+      
+      return { filters, generalTerms };
+    };
+
+    const { filters, generalTerms } = parseSearchQuery(searchQuery);
+
+    // Build where clause
+    const where: any = { userId };
+
+    // Apply specific field filters
+    Object.keys(filters).forEach(key => {
+      where[key] = filters[key];
+    });
+
+    // If we have general search terms, add OR conditions
+    if (generalTerms.length > 0) {
+      const generalConditions = [];
+      
+      for (const term of generalTerms) {
+        const termConditions: any[] = [
+          // Search by merchant name (case-insensitive)
+          {
+            merchant: {
+              contains: term,
+              mode: 'insensitive'
+            }
+          },
+          // Search by category (case-insensitive)
+          {
+            category: {
+              contains: term,
+              mode: 'insensitive'
+            }
+          },
+          // Search by description (case-insensitive)
+          {
+            description: {
+              contains: term,
+              mode: 'insensitive'
+            }
+          },
+          // Search by location (case-insensitive)
+          {
+            location: {
+              contains: term,
+              mode: 'insensitive'
+            }
+          }
+        ];
+
+        // If the term is a number, also search for amounts
+        if (!isNaN(Number(term))) {
+          termConditions.push({
+            amount: {
+              equals: Number(term)
+            }
+          });
+        }
+
+        generalConditions.push({
+          OR: termConditions
+        });
+      }
+
+      // If we have specific filters, combine them with AND
+      if (Object.keys(filters).length > 0) {
+        where.AND = [
+          ...Object.keys(filters).map(key => ({ [key]: filters[key] })),
+          { OR: generalConditions }
+        ];
+      } else {
+        where.OR = generalConditions;
+      }
+    }
+
+    const transactions = await prisma.transaction.findMany({
+      where,
+      take: searchLimit,
+      orderBy: { date: 'desc' },
+      select: {
+        id: true,
+        merchant: true,
+        amount: true,
+        category: true,
+        description: true,
+        location: true,
+        latitude: true,
+        longitude: true,
+        date: true,
+        status: true,
+        isSimulated: true,
+        createdAt: true
+      }
+    });
+
+    const response: ApiResponse = {
+      success: true,
+      data: { 
+        transactions,
+        searchQuery,
+        filters: Object.keys(filters).length > 0 ? filters : null,
+        generalTerms: generalTerms.length > 0 ? generalTerms : null
+      },
+      message: `Found ${transactions.length} transactions matching "${searchQuery}"`
+    };
+
+    return res.status(200).json(response);
+  } catch (error) {
+    return next(error);
   }
 });
 
@@ -447,9 +641,9 @@ router.get('/export/csv', authenticate, async (req: AuthenticatedRequest, res, n
 
     res.setHeader('Content-Type', 'text/csv');
     res.setHeader('Content-Disposition', 'attachment; filename=transactions.csv');
-    res.status(200).send(csv);
+    return res.status(200).send(csv);
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
