@@ -68,7 +68,7 @@ export const useLogout = () => {
     mutationFn: apiClient.logout,
     onSuccess: () => {
       queryClient.clear();
-      toast.success('Logged out successfully');
+      // Don't show toast here - let AuthContext handle it
     },
     onError: (error: any) => {
       toast.error(error.message || 'Logout failed');
