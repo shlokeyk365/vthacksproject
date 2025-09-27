@@ -240,7 +240,8 @@ class ApiClient {
       console.log('Logout request failed (non-critical):', error);
     } finally {
       // Always clear the token regardless of request success/failure
-      this.clearToken();
+      this.token = null;
+      localStorage.removeItem('authToken');
     }
     
     // Return a successful response since logout is primarily client-side
