@@ -1,10 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
-import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   MapPin, 
@@ -13,15 +11,20 @@ import {
   Coffee,
   ShoppingBag,
   Car,
-  TrendingUp,
   Calendar,
-  RefreshCw
+  RefreshCw,
+  Brain,
+  ZoomIn,
+  ZoomOut,
+  RotateCcw,
+  Layers
 } from "lucide-react";
 import { apiClient } from "@/lib/api";
 import { toast } from "sonner";
+import { useMapbox } from "@/contexts/MapboxContext";
+import { LocationIntelligenceAgent } from "@/agents/LocationIntelligenceAgent";
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { LocationIntelligenceAgent } from "@/agents/LocationIntelligenceAgent";
 
 interface MapMerchant {
   id: string;
@@ -33,36 +36,31 @@ interface MapMerchant {
   coordinates: { lat: number; lng: number };
 }
 
-interface HeatmapData {
-  lat: number;
-  lng: number;
-  intensity: number;
-  amount: number;
-}
-
 const categoryIcons: { [key: string]: any } = {
   'Food & Dining': Coffee,
   'Shopping': ShoppingBag,
   'Transportation': Car,
   'Grocery': DollarSign,
   'Other': DollarSign,
-  'Entertainment': TrendingUp,
+  'Entertainment': DollarSign,
   'Healthcare': MapPin,
 };
 
 export default function MapView() {
-  const mapContainer = useRef<HTMLDivElement>(null);
-  const map = useRef<mapboxgl.Map | null>(null);
-  const markers = useRef<mapboxgl.Marker[]>([]);
-  const locationAgentRef = useRef<LocationIntelligenceAgent | null>(null);
-  
+  const { mapboxToken, isMapboxConfigured, isLoading: mapboxLoading } = useMapbox();
   const [merchants, setMerchants] = useState<MapMerchant[]>([]);
-  const [heatmapData, setHeatmapData] = useState<HeatmapData[]>([]);
   const [selectedMerchant, setSelectedMerchant] = useState<MapMerchant | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [period, setPeriod] = useState("30");
   const [isLoading, setIsLoading] = useState(true);
+  const [map, setMap] = useState<mapboxgl.Map | null>(null);
+  const [markers, setMarkers] = useState<mapboxgl.Marker[]>([]);
+  const [showHeatmap, setShowHeatmap] = useState(false);
   const [locationIntelligence, setLocationIntelligence] = useState<any>(null);
+  const [isNavigating, setIsNavigating] = useState(false);
+  
+  const mapContainer = useRef<HTMLDivElement>(null);
+  const locationAgentRef = useRef<LocationIntelligenceAgent | null>(null);
 
   // Initialize Location Intelligence Agent
   useEffect(() => {
@@ -83,163 +81,245 @@ export default function MapView() {
     };
   }, []);
 
-  // Initialize map
-  useEffect(() => {
-    if (map.current) return; // Initialize map only once
-
-    mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN || 'pk.eyJ1Ijoic2hsb2tleWsiLCJhIjoiY21nMXV0dzMzMHNnNjJscHRjeWtramV0dSJ9.G_oGQ6qXclMTJz3T-BacPg';
-
-    map.current = new mapboxgl.Map({
-      container: mapContainer.current!,
-      style: 'mapbox://styles/mapbox/streets-v11',
-      center: [-80.4139, 37.2296], // Centered around Blacksburg, VA
-      zoom: 12,
-      attributionControl: false,
-    });
-
-    map.current.on('load', () => {
-      // Add navigation control
-      map.current!.addControl(new mapboxgl.NavigationControl(), 'top-right');
-      // Initial load of data
-      loadMapData();
-    });
-
-    // Cleanup function
-    return () => {
-      if (map.current) {
-        map.current.remove();
-        map.current = null;
-      }
-    };
-  }, []);
-
   // Load map data
   useEffect(() => {
     loadMapData();
   }, [period]);
 
-  // Render merchant markers
+  // Initialize map when Mapbox is configured
   useEffect(() => {
-    if (!map.current) return;
+    if (isMapboxConfigured && mapboxToken && mapContainer.current && !map) {
+      initializeMap();
+    }
+  }, [isMapboxConfigured, mapboxToken]);
+
+  // Update map when merchants change
+  useEffect(() => {
+    if (map && merchants.length > 0) {
+      updateMapMarkers();
+    }
+  }, [map, merchants]);
+
+  const initializeMap = () => {
+    if (!mapContainer.current || !mapboxToken) return;
+
+    mapboxgl.accessToken = mapboxToken;
+
+    const newMap = new mapboxgl.Map({
+      container: mapContainer.current,
+      style: 'mapbox://styles/mapbox/streets-v12',
+      center: [-80.4139, 37.2296], // Blacksburg, VA
+      zoom: 12,
+      attributionControl: false
+    });
+
+    // Add navigation controls
+    newMap.addControl(new mapboxgl.NavigationControl(), 'top-right');
+
+    // Add geolocate control
+    newMap.addControl(new mapboxgl.GeolocateControl({
+      positionOptions: {
+        enableHighAccuracy: true
+      },
+      trackUserLocation: true,
+      showUserHeading: true
+    }), 'top-right');
+
+    newMap.on('load', () => {
+      setMap(newMap);
+      console.log('Map initialized successfully');
+      console.log('Map center:', newMap.getCenter());
+      console.log('Map zoom:', newMap.getZoom());
+    });
+
+    newMap.on('error', (e) => {
+      console.error('Map error:', e);
+      toast.error('Map failed to load', {
+        description: 'Please check your Mapbox token',
+        duration: 5000,
+      });
+    });
+  };
+
+  const updateMapMarkers = async () => {
+    if (!map || !locationAgentRef.current) return;
 
     // Clear existing markers
-    markers.current.forEach(marker => marker.remove());
-    markers.current = [];
+    markers.forEach(marker => marker.remove());
+    setMarkers([]);
 
-    merchants.forEach(merchant => {
-      if (merchant.coordinates && merchant.coordinates.lat && merchant.coordinates.lng) {
+    const newMarkers: mapboxgl.Marker[] = [];
+
+    // Process merchants - use backend coordinates directly for known merchants
+    const processedMerchants = await Promise.all(
+      merchants.map(async (merchant) => {
+        // Check if this is a known merchant with accurate coordinates
+        const isKnownMerchant = merchant.id.includes('-') && 
+          !merchant.id.includes('-similar-') && 
+          !merchant.id.includes('-mock') &&
+          merchant.address !== 'Address to be geocoded' &&
+          merchant.address !== 'Address not available';
+
+        if (isKnownMerchant) {
+          // Use backend coordinates directly for known merchants
+          console.log(`Using backend coordinates for known merchant: ${merchant.name}`, merchant.coordinates);
+          return merchant;
+        } else {
+          // Use Location Intelligence Agent for unknown merchants
+          try {
+            const stableCoordinates = await locationAgentRef.current!.resolveMerchantLocation(
+              merchant.id,
+              merchant.name,
+              merchant.address,
+              merchant.coordinates // Pass existing coordinates for accuracy check
+            );
+            
+            return {
+              ...merchant,
+              coordinates: stableCoordinates
+            };
+          } catch (error) {
+            console.warn(`Failed to resolve location for ${merchant.name}:`, error);
+            return merchant; // Use original coordinates as fallback
+          }
+        }
+      })
+    );
+
+    // Create markers for each merchant
+    processedMerchants.forEach((merchant) => {
+      if (merchant.coordinates.lat && merchant.coordinates.lng) {
+        console.log(`Creating marker for ${merchant.name} at:`, merchant.coordinates);
         const el = document.createElement('div');
         el.className = 'merchant-marker';
-        el.style.width = '32px';
-        el.style.height = '32px';
-        el.style.borderRadius = '50%';
-        el.style.backgroundColor = '#3b82f6';
-        el.style.border = '3px solid white';
-        el.style.cursor = 'pointer';
-        el.style.transition = 'all 0.2s ease-in-out';
-        el.style.boxShadow = '0 2px 8px rgba(0,0,0,0.3)';
-        el.style.position = 'relative';
+        el.style.cssText = `
+          width: 30px;
+          height: 30px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+          border: 3px solid white;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.2s ease;
+        `;
 
-        // Add confidence indicator (small dot)
-        const confidenceDot = document.createElement('div');
-        confidenceDot.style.position = 'absolute';
-        confidenceDot.style.top = '-2px';
-        confidenceDot.style.right = '-2px';
-        confidenceDot.style.width = '12px';
-        confidenceDot.style.height = '12px';
-        confidenceDot.style.borderRadius = '50%';
-        confidenceDot.style.backgroundColor = '#10b981'; // Green for verified
-        confidenceDot.style.border = '2px solid white';
-        confidenceDot.style.boxShadow = '0 1px 3px rgba(0,0,0,0.2)';
-        el.appendChild(confidenceDot);
+        // Add category icon (using Lucide React icon)
+        const IconComponent = getCategoryIcon(merchant.category);
+        const iconElement = document.createElement('div');
+        iconElement.style.cssText = `
+          color: white;
+          font-size: 12px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        `;
+        
+        // Create a simple SVG icon based on category
+        const iconSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        iconSvg.setAttribute('width', '12');
+        iconSvg.setAttribute('height', '12');
+        iconSvg.setAttribute('viewBox', '0 0 24 24');
+        iconSvg.setAttribute('fill', 'none');
+        iconSvg.setAttribute('stroke', 'currentColor');
+        iconSvg.setAttribute('stroke-width', '2');
+        iconSvg.setAttribute('stroke-linecap', 'round');
+        iconSvg.setAttribute('stroke-linejoin', 'round');
+        
+        // Add appropriate path based on category
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        if (merchant.category === 'Food & Dining') {
+          path.setAttribute('d', 'M3 2v7c0 1.1.9 2 2 2h4v2H5c-1.1 0-2 .9-2 2v3h18v-3c0-1.1-.9-2-2-2h-4v-2h4c1.1 0 2-.9 2-2V2H3z');
+        } else if (merchant.category === 'Shopping') {
+          path.setAttribute('d', 'M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5M7 13l2.5 5m6-5v6a2 2 0 01-2 2H9a2 2 0 01-2-2v-6m8 0V9a2 2 0 00-2-2H9a2 2 0 00-2 2v4.01');
+        } else if (merchant.category === 'Transportation') {
+          path.setAttribute('d', 'M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16.5 10 14 10s-4.7.6-6.5 1.1C6.7 11.3 6 12.1 6 13v3c0 .6.4 1 1 1h2m-3-4h.01M9 17h.01M15 17h.01M21 17h.01');
+        } else {
+          // Default dollar sign icon
+          path.setAttribute('d', 'M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6');
+        }
+        
+        iconSvg.appendChild(path);
+        iconElement.appendChild(iconSvg);
+        el.appendChild(iconElement);
 
         // Add hover effect
-        el.onmouseenter = () => {
-          el.style.transform = 'scale(1.1)';
-          el.style.opacity = '0.9';
-        };
-        el.onmouseleave = () => {
+        el.addEventListener('mouseenter', () => {
+          el.style.transform = 'scale(1.2)';
+          el.style.zIndex = '1000';
+        });
+
+        el.addEventListener('mouseleave', () => {
           el.style.transform = 'scale(1)';
-          el.style.opacity = '1';
-        };
+          el.style.zIndex = '1';
+        });
 
         const marker = new mapboxgl.Marker(el)
           .setLngLat([merchant.coordinates.lng, merchant.coordinates.lat])
-          .setPopup(new mapboxgl.Popup({ offset: 25 })
-            .setHTML(`
-              <div class="p-2">
-                <h3 class="font-semibold text-base">${merchant.name}</h3>
-                <p class="text-sm text-muted-foreground">${merchant.address}</p>
-                <div class="mt-2 space-y-1">
-                  <p class="text-xs text-muted-foreground">💰 Spent: $${merchant.totalSpent.toFixed(2)}</p>
-                  <p class="text-xs text-muted-foreground">📍 Visits: ${merchant.visits}</p>
-                  <p class="text-xs text-green-600">🤖 AI-Verified Location</p>
+          .addTo(map);
+        
+        console.log(`Marker added for ${merchant.name} at [${merchant.coordinates.lng}, ${merchant.coordinates.lat}]`);
+
+        // Add click handler
+        el.addEventListener('click', () => {
+          handleMerchantClick(merchant);
+          
+          // Create popup
+          const popup = new mapboxgl.Popup({
+            offset: 25,
+            closeButton: true,
+            closeOnClick: false
+          }).setHTML(`
+            <div class="p-3">
+              <h3 class="font-semibold text-lg">${merchant.name}</h3>
+              <p class="text-sm text-gray-600 mb-2">${merchant.address}</p>
+              <div class="flex items-center gap-2 mb-2">
+                <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">${merchant.category}</span>
+              </div>
+              <div class="text-sm">
+                <div class="flex justify-between">
+                  <span>Total Spent:</span>
+                  <span class="font-medium">$${merchant.totalSpent.toFixed(2)}</span>
+                </div>
+                <div class="flex justify-between">
+                  <span>Visits:</span>
+                  <span class="font-medium">${merchant.visits}</span>
                 </div>
               </div>
-            `))
-          .addTo(map.current!);
+            </div>
+          `);
 
-        el.addEventListener('click', () => {
-          setSelectedMerchant(merchant);
-          map.current!.flyTo({ center: [merchant.coordinates.lng, merchant.coordinates.lat], zoom: 14 });
+          marker.setPopup(popup);
         });
 
-        markers.current.push(marker);
+        newMarkers.push(marker);
       }
     });
-  }, [merchants]);
+
+    setMarkers(newMarkers);
+
+    // Update location intelligence stats
+    if (locationAgentRef.current) {
+      const intelligence = locationAgentRef.current.getLocationIntelligence();
+      setLocationIntelligence(intelligence);
+    }
+  };
 
   const loadMapData = async () => {
     try {
       setIsLoading(true);
       
-      const [merchantsResponse, heatmapResponse] = await Promise.all([
-        apiClient.getMapMerchants(period),
-        apiClient.getHeatmapData(period)
-      ]);
+      const merchantsResponse = await apiClient.getMapMerchants(period);
 
       if (merchantsResponse.success) {
         const merchantsData = merchantsResponse.data as MapMerchant[];
-        
-        // 🤖 AGENTIC AI WORKFLOW: Use Location Intelligence Agent to geocode addresses
-        const merchantsWithAccurateLocations = await Promise.all(
-          merchantsData.map(async (merchant) => {
-            try {
-              if (locationAgentRef.current) {
-                const accurateCoordinates = await locationAgentRef.current.resolveMerchantLocation(
-                  merchant.id,
-                  merchant.name,
-                  merchant.address
-                );
-                
-                return {
-                  ...merchant,
-                  coordinates: accurateCoordinates
-                };
-              }
-              return merchant;
-            } catch (error) {
-              console.warn(`Failed to geocode ${merchant.name}:`, error);
-              return merchant; // Fallback to original coordinates
-            }
-          })
-        );
-
-        setMerchants(merchantsWithAccurateLocations);
-        if (merchantsWithAccurateLocations.length > 0 && !selectedMerchant) {
-          setSelectedMerchant(merchantsWithAccurateLocations[0]);
+        console.log('Loaded merchants from backend:', merchantsData);
+        setMerchants(merchantsData);
+        if (merchantsData.length > 0 && !selectedMerchant) {
+          setSelectedMerchant(merchantsData[0]);
         }
-
-        // Update location intelligence stats
-        if (locationAgentRef.current) {
-          const intelligence = locationAgentRef.current.getLocationIntelligence();
-          setLocationIntelligence(intelligence);
-        }
-      }
-
-      if (heatmapResponse.success) {
-        const heatmapData = heatmapResponse.data as HeatmapData[];
-        setHeatmapData(heatmapData);
       }
     } catch (error) {
       console.error('Failed to load map data:', error);
@@ -260,6 +340,56 @@ export default function MapView() {
     });
   };
 
+  const handleZoomIn = () => {
+    if (map) {
+      map.zoomIn();
+    }
+  };
+
+  const handleZoomOut = () => {
+    if (map) {
+      map.zoomOut();
+    }
+  };
+
+  const handleResetNorth = () => {
+    if (map) {
+      map.easeTo({ bearing: 0, pitch: 0 });
+    }
+  };
+
+  const handleMerchantClick = (merchant: MapMerchant) => {
+    setSelectedMerchant(merchant);
+    setIsNavigating(true);
+    
+    // Navigate to merchant location on map
+    if (map && merchant.coordinates.lat && merchant.coordinates.lng) {
+      map.easeTo({
+        center: [merchant.coordinates.lng, merchant.coordinates.lat],
+        zoom: 15, // Zoom in closer to show the merchant location
+        duration: 1000 // Smooth animation over 1 second
+      });
+
+      // Reset navigation state after animation completes
+      setTimeout(() => {
+        setIsNavigating(false);
+      }, 1100);
+    } else {
+      setIsNavigating(false);
+    }
+
+    // Scroll to the selected merchant in the sidebar
+    setTimeout(() => {
+      const selectedElement = document.querySelector(`[data-merchant-id="${merchant.id}"]`);
+      if (selectedElement) {
+        selectedElement.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center'
+        });
+      }
+    }, 100);
+  };
+
   const filteredMerchants = merchants.filter(merchant =>
     merchant.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     merchant.address.toLowerCase().includes(searchQuery.toLowerCase())
@@ -270,12 +400,7 @@ export default function MapView() {
   };
 
   return (
-    <motion.div
-      className="h-full min-h-screen space-y-6 p-6"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.5 }}
-    >
+    <div className="h-full min-h-screen space-y-6 p-6">
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
         <div className="space-y-1">
@@ -330,108 +455,159 @@ export default function MapView() {
         {/* Map Container */}
         <div className="lg:col-span-3 order-1 lg:order-1">
           <Card className="h-full min-h-[400px] lg:min-h-[500px] border-0 shadow-lg bg-gradient-to-br from-background to-muted/20">
-            <CardContent className="p-0 h-full">
+            <CardContent className="p-0 h-full relative">
+              {/* Map Controls */}
+              <div className="absolute top-4 left-4 z-10 flex flex-col gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleZoomIn}
+                  className="h-8 w-8 p-0 bg-white/90 hover:bg-white"
+                >
+                  <ZoomIn className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleZoomOut}
+                  className="h-8 w-8 p-0 bg-white/90 hover:bg-white"
+                >
+                  <ZoomOut className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleResetNorth}
+                  className="h-8 w-8 p-0 bg-white/90 hover:bg-white"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                </Button>
+              </div>
+
               {/* Map Visualization */}
-              <div ref={mapContainer} className="h-full w-full rounded-xl" />
+              {!isMapboxConfigured ? (
+                <div className="h-full w-full rounded-xl bg-muted/20 flex items-center justify-center">
+                  <div className="text-center space-y-4">
+                    <MapPin className="w-16 h-16 text-muted-foreground mx-auto" />
+                    <h3 className="text-lg font-semibold">Mapbox Not Configured</h3>
+                    <p className="text-muted-foreground text-sm">
+                      Please configure your Mapbox token in Settings to view the map
+                    </p>
+                    <Button asChild>
+                      <a href="/settings">Go to Settings</a>
+                    </Button>
+                  </div>
+                </div>
+              ) : mapboxLoading ? (
+                <div className="h-full w-full rounded-xl bg-muted/20 flex items-center justify-center">
+                  <div className="text-center space-y-4">
+                    <RefreshCw className="w-8 h-8 text-muted-foreground mx-auto animate-spin" />
+                    <h3 className="text-lg font-semibold">Loading Map...</h3>
+                    <p className="text-muted-foreground text-sm">
+                      Initializing Mapbox integration
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div 
+                  ref={mapContainer} 
+                  className="h-full w-full rounded-xl"
+                  style={{ minHeight: '400px' }}
+                />
+              )}
+
+              {/* Location Intelligence Status */}
+              {locationIntelligence && (
+                <div className="absolute bottom-4 left-4 z-10">
+                  <Card className="border-l-4 border-l-purple-500 bg-purple-50/90 backdrop-blur-sm">
+                    <CardContent className="p-3">
+                      <div className="flex items-center space-x-2">
+                        <Brain className="w-4 h-4 text-purple-600" />
+                        <div className="text-sm">
+                          <div className="font-medium">Location Intelligence Active</div>
+                          <div className="text-xs text-muted-foreground">
+                            {locationIntelligence.verifiedLocations}/{locationIntelligence.totalLocations} verified
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+
+              {/* Navigation Indicator */}
+              {isNavigating && (
+                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20">
+                  <Card className="bg-blue-50/90 backdrop-blur-sm border-blue-200">
+                    <CardContent className="p-4">
+                      <div className="flex items-center space-x-2">
+                        <RefreshCw className="w-4 h-4 text-blue-600 animate-spin" />
+                        <span className="text-sm font-medium text-blue-800">Navigating to location...</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
 
         {/* Sidebar Panel */}
         <div className="space-y-4 lg:space-y-6 overflow-y-auto max-h-[400px] lg:max-h-[600px] order-2 lg:order-2">
-          {/* Location Intelligence Agent Status Widget */}
-          {locationIntelligence && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20">
-                <CardHeader className="pb-4">
-                  <CardTitle className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
-                      <MapPin className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                    </div>
-                    <div>
-                      <div className="text-lg font-semibold">Location Intelligence Agent</div>
-                      <div className="text-sm text-muted-foreground">AI-powered geocoding active</div>
-                    </div>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                      <span className="text-muted-foreground">Verified:</span>
-                    </div>
-                    <span className="font-medium text-right">{locationIntelligence.verifiedLocations}/{locationIntelligence.totalLocations}</span>
-                    
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                      <span className="text-muted-foreground">Confidence:</span>
-                    </div>
-                    <span className="font-medium text-right">{locationIntelligence.averageConfidence}%</span>
-                  </div>
-                  
-                  <div className="text-xs text-muted-foreground">
-                    🤖 Agentic AI is continuously learning and verifying merchant locations for accuracy
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          )}
-
           {/* Selected Merchant Details */}
           {selectedMerchant && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              <Card className="border-0 shadow-lg bg-gradient-to-br from-background to-muted/20">
-                <CardHeader className="pb-4">
-                  <CardTitle className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-                      {React.createElement(getCategoryIcon(selectedMerchant.category), { className: "w-5 h-5 text-primary" })}
-                    </div>
-                    <div>
-                      <div className="text-lg font-semibold">Merchant Details</div>
-                      <div className="text-sm text-muted-foreground">Selected location</div>
-                    </div>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="space-y-3">
-                    <div>
-                      <h3 className="font-semibold text-lg">{selectedMerchant.name}</h3>
-                      <p className="text-sm text-muted-foreground flex items-center gap-2">
-                        <MapPin className="w-4 h-4" />
-                        {selectedMerchant.address}
-                      </p>
-                    </div>
-                    <Badge variant="secondary" className="flex items-center gap-1 w-fit">
-                      {React.createElement(getCategoryIcon(selectedMerchant.category), { className: "w-3 h-3" })}
-                      {selectedMerchant.category}
-                    </Badge>
+            <Card className="border-0 shadow-lg bg-gradient-to-br from-background to-muted/20">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                    {React.createElement(getCategoryIcon(selectedMerchant.category), { className: "w-5 h-5 text-primary" })}
                   </div>
-                  <Separator />
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div className="flex items-center gap-2">
-                      <DollarSign className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-muted-foreground">Total Spent:</span>
-                    </div>
-                    <span className="font-medium text-right">${selectedMerchant.totalSpent.toFixed(2)}</span>
-                    
-                    <div className="flex items-center gap-2">
-                      <Calendar className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-muted-foreground">Visits:</span>
-                    </div>
-                    <span className="font-medium text-right">{selectedMerchant.visits}</span>
+                  <div>
+                    <div className="text-lg font-semibold">Merchant Details</div>
+                    <div className="text-sm text-muted-foreground">Selected location</div>
                   </div>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-3">
+                  <div>
+                    <h3 className="font-semibold text-lg">{selectedMerchant.name}</h3>
+                    <p className="text-sm text-muted-foreground flex items-center gap-2">
+                      <MapPin className="w-4 h-4" />
+                      {selectedMerchant.address}
+                    </p>
+                  </div>
+                  <Badge variant="secondary" className="flex items-center gap-1 w-fit">
+                    {React.createElement(getCategoryIcon(selectedMerchant.category), { className: "w-3 h-3" })}
+                    {selectedMerchant.category}
+                  </Badge>
+                </div>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div className="flex items-center gap-2">
+                    <DollarSign className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-muted-foreground">Total Spent:</span>
+                  </div>
+                  <span className="font-medium text-right">${selectedMerchant.totalSpent.toFixed(2)}</span>
+                  
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-muted-foreground">Visits:</span>
+                  </div>
+                  <span className="font-medium text-right">{selectedMerchant.visits}</span>
+                </div>
+                <div className="space-y-2">
+                  <Button 
+                    variant="outline" 
+                    className="w-full"
+                    onClick={() => handleMerchantClick(selectedMerchant)}
+                  >
+                    <MapPin className="w-4 h-4 mr-2" />
+                    Center on Map
+                  </Button>
                   <Button variant="outline" className="w-full">View Transactions</Button>
-                </CardContent>
-              </Card>
-            </motion.div>
+                </div>
+              </CardContent>
+            </Card>
           )}
 
           {/* All Merchants List */}
@@ -455,21 +631,15 @@ export default function MapView() {
               ) : filteredMerchants.length > 0 ? (
                 <div className="space-y-3">
                   {filteredMerchants.map((merchant) => (
-                    <motion.div
+                    <div
                       key={merchant.id}
+                      data-merchant-id={merchant.id}
                       className={`p-3 lg:p-4 rounded-xl cursor-pointer transition-all duration-200 hover:shadow-md ${
                         selectedMerchant?.id === merchant.id
-                          ? 'bg-primary/10 border border-primary/20 shadow-md'
-                          : 'bg-muted/20 hover:bg-muted/50'
+                          ? 'bg-primary/10 border-2 border-primary/30 shadow-lg ring-2 ring-primary/20'
+                          : 'bg-muted/20 hover:bg-muted/50 border border-transparent'
                       }`}
-                      onClick={() => {
-                        setSelectedMerchant(merchant);
-                        if (map.current) {
-                          map.current.flyTo({ center: [merchant.coordinates.lng, merchant.coordinates.lat], zoom: 14 });
-                        }
-                      }}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
+                      onClick={() => handleMerchantClick(merchant)}
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
@@ -481,7 +651,7 @@ export default function MapView() {
                         </div>
                         <span className="font-medium text-sm">${merchant.totalSpent.toFixed(2)}</span>
                       </div>
-                    </motion.div>
+                    </div>
                   ))}
                 </div>
               ) : (
@@ -491,6 +661,6 @@ export default function MapView() {
           </Card>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }

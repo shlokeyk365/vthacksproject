@@ -75,17 +75,17 @@ async function main() {
   // Create sample transactions with recent dates and location data
   const now = new Date();
   const transactions = await Promise.all([
-    // Recent transactions with location data
+    // Recent transactions with location data - using exact merchant names
     prisma.transaction.create({
       data: {
         userId: user.id,
-        merchant: 'Starbucks Coffee',
+        merchant: 'Starbucks',
         amount: 5.47,
         category: 'Food & Dining',
         description: 'Morning coffee',
-        location: 'Main St, Blacksburg',
-        latitude: 37.2296,
-        longitude: -80.4139,
+        location: '880 University City Blvd, Blacksburg, VA 24060',
+        latitude: 37.235581,
+        longitude: -80.433307,
         date: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000) // 2 days ago
       }
     }),
@@ -96,9 +96,9 @@ async function main() {
         amount: 45.20,
         category: 'Transportation',
         description: 'Gas fill-up',
-        location: 'University Blvd, Blacksburg',
-        latitude: 37.2431,
-        longitude: -80.4242,
+        location: '1000 S Main St, Blacksburg, VA 24060',
+        latitude: 37.218901,
+        longitude: -80.401234,
         date: new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000) // 3 days ago
       }
     }),
@@ -109,9 +109,9 @@ async function main() {
         amount: 12.34,
         category: 'Food & Dining',
         description: 'Lunch',
-        location: 'South Main St, Blacksburg',
-        latitude: 37.2176,
-        longitude: -80.4118,
+        location: '900 University City Blvd, Blacksburg, VA 24060',
+        latitude: 37.234567,
+        longitude: -80.432109,
         date: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000) // 5 days ago
       }
     }),
@@ -122,22 +122,22 @@ async function main() {
         amount: 89.45,
         category: 'Shopping',
         description: 'Groceries and household items',
-        location: 'University Blvd, Blacksburg',
-        latitude: 37.2431,
-        longitude: -80.4242,
+        location: '195 Conston Ave NW, Christiansburg, VA 24073',
+        latitude: 37.156681,
+        longitude: -80.422609,
         date: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000) // 7 days ago
       }
     }),
     prisma.transaction.create({
       data: {
         userId: user.id,
-        merchant: 'Chipotle',
-        amount: 15.67,
-        category: 'Food & Dining',
-        description: 'Burrito bowl',
-        location: 'North Main St, Blacksburg',
-        latitude: 37.2350,
-        longitude: -80.4200,
+        merchant: 'Kroger',
+        amount: 67.89,
+        category: 'Grocery',
+        description: 'Grocery shopping',
+        location: '1322 S Main St, Blacksburg, VA 24060',
+        latitude: 37.216801,
+        longitude: -80.402687,
         date: new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000) // 10 days ago
       }
     }),
@@ -148,9 +148,9 @@ async function main() {
         amount: 67.89,
         category: 'Shopping',
         description: 'Household supplies',
-        location: 'South Main St, Blacksburg',
-        latitude: 37.2176,
-        longitude: -80.4118,
+        location: '2400 N Franklin St, Christiansburg, VA 24073',
+        latitude: 37.145123,
+        longitude: -80.408456,
         date: new Date(now.getTime() - 12 * 24 * 60 * 60 * 1000) // 12 days ago
       }
     }),
@@ -161,9 +161,9 @@ async function main() {
         amount: 8.99,
         category: 'Food & Dining',
         description: 'Sandwich',
-        location: 'University Blvd, Blacksburg',
-        latitude: 37.2431,
-        longitude: -80.4242,
+        location: '200 College Ave, Blacksburg, VA 24060',
+        latitude: 37.228456,
+        longitude: -80.413789,
         date: new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000) // 15 days ago
       }
     }),
@@ -174,9 +174,9 @@ async function main() {
         amount: 23.45,
         category: 'Healthcare',
         description: 'Prescription and toiletries',
-        location: 'Main St, Blacksburg',
-        latitude: 37.2296,
-        longitude: -80.4139,
+        location: '300 S Main St, Blacksburg, VA 24060',
+        latitude: 37.227890,
+        longitude: -80.412345,
         date: new Date(now.getTime() - 18 * 24 * 60 * 60 * 1000) // 18 days ago
       }
     }),
@@ -187,22 +187,22 @@ async function main() {
         amount: 24.99,
         category: 'Food & Dining',
         description: 'Pizza delivery',
-        location: 'North Main St, Blacksburg',
-        latitude: 37.2350,
-        longitude: -80.4200,
+        location: '400 University City Blvd, Blacksburg, VA 24060',
+        latitude: 37.233456,
+        longitude: -80.431234,
         date: new Date(now.getTime() - 20 * 24 * 60 * 60 * 1000) // 20 days ago
       }
     }),
     prisma.transaction.create({
       data: {
         userId: user.id,
-        merchant: 'Best Buy',
-        amount: 299.99,
-        category: 'Shopping',
-        description: 'Electronics',
-        location: 'University Blvd, Blacksburg',
-        latitude: 37.2431,
-        longitude: -80.4242,
+        merchant: 'Domino\'s Pizza',
+        amount: 18.99,
+        category: 'Food & Dining',
+        description: 'Pizza delivery',
+        location: '500 S Main St, Blacksburg, VA 24060',
+        latitude: 37.226789,
+        longitude: -80.411567,
         date: new Date(now.getTime() - 25 * 24 * 60 * 60 * 1000) // 25 days ago
       }
     }),
