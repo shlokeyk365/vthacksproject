@@ -11,8 +11,12 @@ import { StatsCard } from "@/components/dashboard/StatsCard";
 import { RecentTransactions } from "@/components/dashboard/RecentTransactions";
 import { SpendingChart } from "@/components/dashboard/SpendingChart";
 import { QuickActions } from "@/components/dashboard/QuickActions";
+import { useDashboardStats } from "@/hooks/useApi";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Dashboard() {
+  const { data: dashboardData, isLoading, error } = useDashboardStats();
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -27,6 +31,48 @@ export default function Dashboard() {
   const itemVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: { opacity: 1, y: 0 },
+  };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-8">
+        <div className="hero-gradient rounded-xl p-8 text-center">
+          <Skeleton className="h-8 w-64 mx-auto mb-2" />
+          <Skeleton className="h-6 w-96 mx-auto" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="card-gradient p-6 rounded-lg">
+              <Skeleton className="h-20 w-full" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-8">
+        <div className="hero-gradient rounded-xl p-8 text-center">
+          <h1 className="text-3xl font-bold mb-2">Welcome back to MoneyLens</h1>
+          <p className="text-lg opacity-90">
+            Unable to load dashboard data. Please try again later.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  const stats = dashboardData || {
+    totalSpent: 0,
+    monthlyBudget: 3500,
+    budgetRemaining: 3500,
+    activeCaps: 0,
+    lockedCards: 0,
+    topCategory: 'None',
+    recentTransactions: [],
+    spendingTrend: []
   };
 
   return (
@@ -54,17 +100,17 @@ export default function Dashboard() {
       >
         <StatsCard
           title="Total Spent This Month"
-          value="$2,847"
-          change="+12%"
-          changeType="negative"
+          value={`$${stats.totalSpent.toLocaleString()}`}
+          change={`${((stats.totalSpent / stats.monthlyBudget) * 100).toFixed(0)}% of budget`}
+          changeType={stats.totalSpent > stats.monthlyBudget ? "negative" : "positive"}
           icon={<DollarSign className="w-6 h-6" />}
           variant="primary"
         />
         
         <StatsCard
           title="Active Spending Caps"
-          value="8"
-          change="2 new"
+          value={stats.activeCaps.toString()}
+          change="Active limits"
           changeType="positive"
           icon={<Target className="w-6 h-6" />}
           variant="default"
@@ -72,7 +118,7 @@ export default function Dashboard() {
         
         <StatsCard
           title="Locked Cards"
-          value="0"
+          value={stats.lockedCards.toString()}
           change="All active"
           changeType="positive"
           icon={<CheckCircle className="w-6 h-6" />}
@@ -81,8 +127,8 @@ export default function Dashboard() {
         
         <StatsCard
           title="Top Category"
-          value="Dining"
-          change="$486 spent"
+          value={stats.topCategory}
+          change="This month"
           changeType="neutral"
           icon={<TrendingUp className="w-6 h-6" />}
           variant="default"
@@ -105,17 +151,17 @@ export default function Dashboard() {
             <div className="space-y-4">
               <div className="flex justify-between items-center">
                 <span className="text-sm">Monthly Budget</span>
-                <span className="font-semibold">$3,500</span>
+                <span className="font-semibold">${stats.monthlyBudget.toLocaleString()}</span>
               </div>
               <div className="w-full bg-muted rounded-full h-2">
                 <div 
                   className="bg-primary h-2 rounded-full" 
-                  style={{ width: '81%' }}
+                  style={{ width: `${Math.min((stats.totalSpent / stats.monthlyBudget) * 100, 100)}%` }}
                 ></div>
               </div>
               <div className="flex justify-between text-sm text-muted-foreground">
-                <span>$2,847 spent</span>
-                <span>$653 remaining</span>
+                <span>${stats.totalSpent.toLocaleString()} spent</span>
+                <span>${stats.budgetRemaining.toLocaleString()} remaining</span>
               </div>
             </div>
           </div>

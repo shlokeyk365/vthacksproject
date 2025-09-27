@@ -1,0 +1,144 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id                String   @id @default(cuid())
+  email             String   @unique
+  password          String
+  firstName         String
+  lastName          String
+  monthlyBudgetGoal Float? @default(3500)
+  preferences       String?  @default("{}")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  transactions      Transaction[]
+  spendingCaps      SpendingCap[]
+  notifications     Notification[]
+  sessions          Session[]
+
+  @@map("users")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model Transaction {
+  id          String   @id @default(cuid())
+  userId      String
+  merchant    String
+  amount      Float
+  category    String
+  description String?
+  location    String?
+  latitude    Float?
+  longitude   Float?
+  date        DateTime @default(now())
+  status      TransactionStatus @default(COMPLETED)
+  isSimulated Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("transactions")
+}
+
+model SpendingCap {
+  id        String   @id @default(cuid())
+  userId    String
+  type      CapType
+  name      String
+  limit     Float
+  period    CapPeriod
+  enabled   Boolean  @default(true)
+  category  String?
+  merchant  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("spending_caps")
+}
+
+model Merchant {
+  id           String   @id @default(cuid())
+  name         String
+  category     String
+  address      String?
+  latitude     Float?
+  longitude    Float?
+  averageSpent Float  @default(0)
+  visitCount   Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("merchants")
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  title     String
+  message   String
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+// Enums
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum CapType {
+  MERCHANT
+  CATEGORY
+  GLOBAL
+}
+
+enum CapPeriod {
+  DAILY
+  WEEKLY
+  MONTHLY
+  YEARLY
+}
+
+enum NotificationType {
+  CAP_ALERT
+  BUDGET_WARNING
+  TRANSACTION_ALERT
+  WEEKLY_REPORT
+  SYSTEM_UPDATE
+}
