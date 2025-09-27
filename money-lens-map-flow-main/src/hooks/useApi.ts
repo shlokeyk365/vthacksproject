@@ -63,7 +63,7 @@ export const useRegister = () => {
 
 export const useLogout = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: apiClient.logout,
     onSuccess: () => {
@@ -71,7 +71,10 @@ export const useLogout = () => {
       // Don't show toast here - let AuthContext handle it
     },
     onError: (error: any) => {
-      toast.error(error.message || 'Logout failed');
+      // Don't show error toast for logout since it's primarily client-side
+      // Just clear the cache and let AuthContext handle the success message
+      queryClient.clear();
+      console.log('Logout API error (non-critical):', error.message);
     },
   });
 };
