@@ -758,17 +758,28 @@ export default function Analytics() {
                   domain={[2500, 3500]}
                 />
                 <ChartTooltip 
-                  content={<ChartTooltipContent />}
-                  labelStyle={{ color: '#374151', fontSize: '14px', fontWeight: '600', lineHeight: '1.5' }}
-                  contentStyle={{ 
-                    backgroundColor: '#ffffff',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '8px',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                    padding: '8px 12px'
+                  content={({ active, payload, label }) => {
+                    if (active && payload && payload.length) {
+                      return (
+                        <div style={{
+                          backgroundColor: '#ffffff',
+                          border: '1px solid #e5e7eb',
+                          borderRadius: '8px',
+                          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                          padding: '8px 12px',
+                          lineHeight: '1.5'
+                        }}>
+                          <p style={{ color: '#374151', fontSize: '14px', fontWeight: '600', margin: '0 0 4px 0' }}>
+                            {label} 2024
+                          </p>
+                          <p style={{ color: '#374151', fontSize: '14px', margin: '0' }}>
+                            ${payload[0].value} Actual
+                          </p>
+                        </div>
+                      );
+                    }
+                    return null;
                   }}
-                  formatter={(value, name) => [`$${value}`, name === 'projected' ? 'Projected' : 'Actual']}
-                  labelFormatter={(label) => `${label} 2024`}
                 />
                 <Area
                   type="monotone"
