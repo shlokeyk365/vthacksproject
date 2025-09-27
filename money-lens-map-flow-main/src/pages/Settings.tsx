@@ -27,13 +27,16 @@ import {
   Palette,
   Database,
   Key,
-  Monitor
+  Monitor,
+  Settings as SettingsIcon
 } from "lucide-react";
+import { ColorPicker } from "@/components/ui/ColorPicker";
 
 export default function Settings() {
   const { user } = useAuth();
   const { data: profileData, isLoading: profileLoading } = useProfile();
   const { theme, setTheme, resolvedTheme, primaryColor, setPrimaryColor, colorSchemes } = useTheme();
+  
   
   // Profile form state
   const [profileForm, setProfileForm] = useState({
@@ -1063,7 +1066,7 @@ export default function Settings() {
               
               <div>
                 <label className="text-sm font-medium mb-3 block">Primary Color</label>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 gap-2 mb-4">
                   {colorSchemes.map((scheme) => (
                     <button
                       key={scheme.primary}
@@ -1089,10 +1092,27 @@ export default function Settings() {
                     </button>
                   ))}
                 </div>
+                
+                {/* Custom Color Picker */}
+                <div className="mb-4">
+                  <ColorPicker
+                    value={primaryColor}
+                    onChange={(color) => {
+                      setPrimaryColor(color);
+                      toast.success('Custom color applied!', {
+                        description: 'Primary color updated with custom selection',
+                        duration: 2000,
+                      });
+                    }}
+                    label="Custom Primary Color"
+                  />
+                </div>
+                
                 <p className="text-xs text-muted-foreground mt-2">
-                  Current: {colorSchemes.find(s => s.primary === primaryColor)?.name || 'Financial Blue'}
+                  Current: {colorSchemes.find(s => s.primary === primaryColor)?.name || 'Custom Color'}
                 </p>
               </div>
+              
             </CardContent>
           </Card>
 
