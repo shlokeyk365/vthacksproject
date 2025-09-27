@@ -71,7 +71,10 @@ export const useLogout = () => {
       toast.success('Logged out successfully');
     },
     onError: (error: any) => {
-      toast.error(error.message || 'Logout failed');
+      // Don't show error popup for logout - it's client-side operation
+      // Just clear the cache and continue
+      queryClient.clear();
+      console.log('Logout completed with error (non-critical):', error.message);
     },
   });
 };

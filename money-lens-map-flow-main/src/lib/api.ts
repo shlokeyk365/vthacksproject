@@ -233,14 +233,21 @@ class ApiClient {
 
   async logout() {
     try {
-      const response = await this.request('/auth/logout', { method: 'POST' });
-      this.clearToken();
-      return response;
+      // Try to make the logout request, but don't fail if it doesn't work
+      await this.request('/auth/logout', { method: 'POST' });
     } catch (error) {
-      // Even if the logout request fails, clear the token locally
+      // Log the error but don't throw it - logout is primarily client-side
+      console.log('Logout request failed (non-critical):', error);
+    } finally {
+      // Always clear the token regardless of request success/failure
       this.clearToken();
-      throw error;
     }
+    
+    // Return a successful response since logout is primarily client-side
+    return {
+      success: true,
+      message: 'Logout successful'
+    };
   }
 
   // Transactions
