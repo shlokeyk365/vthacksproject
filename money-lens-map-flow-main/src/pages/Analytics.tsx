@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
+import jsPDF from 'jspdf';
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -210,42 +211,209 @@ export default function Analytics() {
   const handleExportReport = async () => {
     setIsExporting(true);
     try {
-      // Simulate export process
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      let yPosition = 20;
       
-      // Create a mock report data
-      const reportData = {
-        period: getPeriodLabel(selectedPeriod),
-        generatedAt: new Date().toISOString(),
-        summary: {
-          totalSpending: 2847.50,
-          averageMonthly: 474.58,
-          topCategory: "Dining",
-          topMerchant: "Starbucks Coffee",
-          savingsRate: 12.5
-        },
-        insights: allInsights.slice(0, 5), // Top 5 insights
-        charts: {
-          monthlySpending: monthlyData,
-          topMerchants: topMerchants,
-          spendingVsCaps: spendingVsCaps
+      // Helper function to add new page if needed
+      const checkNewPage = (requiredSpace: number) => {
+        if (yPosition + requiredSpace > pageHeight - 20) {
+          pdf.addPage();
+          yPosition = 20;
+          return true;
         }
+        return false;
       };
-
-      // Create and download the report
-      const dataStr = JSON.stringify(reportData, null, 2);
-      const dataBlob = new Blob([dataStr], { type: 'application/json' });
-      const url = URL.createObjectURL(dataBlob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `analytics-report-${selectedPeriod}-${new Date().toISOString().split('T')[0]}.json`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-
+      
+      // Helper function to draw a line
+      const drawLine = (y: number) => {
+        pdf.setLineWidth(0.5);
+        pdf.setDrawColor(200, 200, 200);
+        pdf.line(20, y, pageWidth - 20, y);
+      };
+      
+      // Header
+      pdf.setFontSize(24);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(50, 50, 50);
+      pdf.text('Financial Analytics Report', 20, yPosition);
+      yPosition += 15;
+      
+      // Date and time
+      pdf.setFontSize(10);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(100, 100, 100);
+      const reportDate = new Date().toLocaleDateString();
+      const currentTime = new Date().toLocaleTimeString();
+      pdf.text(`Generated on ${reportDate} at ${currentTime}`, 20, yPosition);
+      yPosition += 8;
+      pdf.text(`Report Period: ${getPeriodLabel(selectedPeriod)}`, 20, yPosition);
+      yPosition += 20;
+      
+      // Executive Summary
+      pdf.setFontSize(16);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(50, 50, 50);
+      pdf.text('Executive Summary', 20, yPosition);
+      yPosition += 10;
+      
+      drawLine(yPosition);
+      yPosition += 5;
+      
+      // Summary metrics
+      const summaryData = {
+        totalSpending: 2847.50,
+        averageMonthly: 474.58,
+        topCategory: "Dining",
+        topMerchant: "Starbucks Coffee",
+        savingsRate: 12.5
+      };
+      
+      pdf.setFontSize(12);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text(`Total Spending: $${summaryData.totalSpending.toFixed(2)}`, 20, yPosition);
+      yPosition += 8;
+      pdf.text(`Average Monthly Spending: $${summaryData.averageMonthly.toFixed(2)}`, 20, yPosition);
+      yPosition += 8;
+      pdf.text(`Top Spending Category: ${summaryData.topCategory}`, 20, yPosition);
+      yPosition += 8;
+      pdf.text(`Top Merchant: ${summaryData.topMerchant}`, 20, yPosition);
+      yPosition += 8;
+      pdf.text(`Savings Rate: ${summaryData.savingsRate}%`, 20, yPosition);
+      yPosition += 15;
+      
+      // Key Insights
+      pdf.setFontSize(16);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Key Insights & Recommendations', 20, yPosition);
+      yPosition += 10;
+      
+      drawLine(yPosition);
+      yPosition += 5;
+      
+      // Add top insights
+      const topInsights = allInsights.slice(0, 5);
+      topInsights.forEach((insight, index) => {
+        if (checkNewPage(20)) {
+          yPosition = 20;
+        }
+        
+        pdf.setFontSize(11);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setTextColor(50, 50, 50);
+        pdf.text(`${index + 1}. ${insight.title}`, 20, yPosition);
+        yPosition += 6;
+        
+        pdf.setFontSize(9);
+        pdf.setFont('helvetica', 'normal');
+        pdf.setTextColor(80, 80, 80);
+        const description = insight.description.length > 80 
+          ? insight.description.substring(0, 77) + '...' 
+          : insight.description;
+        pdf.text(description, 20, yPosition);
+        yPosition += 5;
+        
+        pdf.setFontSize(8);
+        pdf.setTextColor(100, 100, 100);
+        pdf.text(`Category: ${insight.category} | Impact: ${insight.impact}`, 20, yPosition);
+        yPosition += 4;
+        pdf.text(`Recommendation: ${insight.recommendation}`, 20, yPosition);
+        yPosition += 8;
+      });
+      
+      yPosition += 10;
+      
+      // Spending Analysis
+      if (checkNewPage(30)) {
+        yPosition = 20;
+      }
+      
+      pdf.setFontSize(16);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Spending Analysis', 20, yPosition);
+      yPosition += 10;
+      
+      drawLine(yPosition);
+      yPosition += 5;
+      
+      // Monthly spending data
+      pdf.setFontSize(12);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Monthly Spending Trends:', 20, yPosition);
+      yPosition += 8;
+      
+      pdf.setFontSize(9);
+      pdf.setFont('helvetica', 'normal');
+      monthlyData.forEach((month, index) => {
+        if (yPosition > pageHeight - 30) {
+          pdf.addPage();
+          yPosition = 20;
+        }
+        pdf.text(`${month.month}: $${month.amount.toFixed(2)}`, 30, yPosition);
+        yPosition += 5;
+      });
+      
+      yPosition += 10;
+      
+      // Top Merchants
+      if (checkNewPage(20)) {
+        yPosition = 20;
+      }
+      
+      pdf.setFontSize(12);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Top Merchants:', 20, yPosition);
+      yPosition += 8;
+      
+      pdf.setFontSize(9);
+      pdf.setFont('helvetica', 'normal');
+      topMerchants.forEach((merchant, index) => {
+        if (yPosition > pageHeight - 30) {
+          pdf.addPage();
+          yPosition = 20;
+        }
+        pdf.text(`${index + 1}. ${merchant.name}: $${merchant.amount.toFixed(2)}`, 30, yPosition);
+        yPosition += 5;
+      });
+      
+      yPosition += 10;
+      
+      // Spending vs Caps Analysis
+      if (checkNewPage(20)) {
+        yPosition = 20;
+      }
+      
+      pdf.setFontSize(12);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Spending vs Budget Caps:', 20, yPosition);
+      yPosition += 8;
+      
+      pdf.setFontSize(9);
+      pdf.setFont('helvetica', 'normal');
+      spendingVsCaps.forEach((category, index) => {
+        if (yPosition > pageHeight - 30) {
+          pdf.addPage();
+          yPosition = 20;
+        }
+        const percentage = ((category.spent / category.cap) * 100).toFixed(1);
+        pdf.text(`${category.category}: $${category.spent.toFixed(2)} / $${category.cap.toFixed(2)} (${percentage}%)`, 30, yPosition);
+        yPosition += 5;
+      });
+      
+      // Footer
+      yPosition = pageHeight - 20;
+      pdf.setFontSize(8);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(150, 150, 150);
+      pdf.text('Generated by MoneyLens - Financial Analytics System', 20, yPosition);
+      
+      const currentDate = new Date().toISOString().split('T')[0];
+      pdf.save(`analytics-report-${selectedPeriod}-${currentDate}.pdf`);
+      
       toast.success("Analytics report exported successfully!");
     } catch (error) {
+      console.error('Export failed:', error);
       toast.error("Failed to export report. Please try again.");
     } finally {
       setIsExporting(false);
