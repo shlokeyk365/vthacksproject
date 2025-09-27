@@ -77,7 +77,7 @@ export default function Dashboard() {
 
   return (
     <motion.div
-      className="space-y-8"
+      className="h-full min-h-screen space-y-6 p-6"
       variants={containerVariants}
       initial="hidden"
       animate="visible"

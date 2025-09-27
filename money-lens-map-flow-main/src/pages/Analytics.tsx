@@ -68,28 +68,32 @@ const chartConfig = {
 export default function Analytics() {
   return (
     <motion.div
-      className="space-y-6"
+      className="h-full min-h-screen space-y-6 p-6"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
     >
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Financial Analytics</h1>
-          <p className="text-muted-foreground">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
+        <div className="space-y-1">
+          <h1 className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+            Financial Analytics
+          </h1>
+          <p className="text-muted-foreground text-sm">
             Comprehensive insights into your spending patterns
           </p>
         </div>
         
-        <div className="flex items-center gap-3">
-          <Button variant="outline">
+        <div className="flex flex-wrap items-center gap-2 lg:gap-3">
+          <Button variant="outline" size="sm" className="h-9">
             <Calendar className="w-4 h-4 mr-2" />
-            Last 6 Months
+            <span className="hidden sm:inline">Last 6 Months</span>
+            <span className="sm:hidden">6M</span>
           </Button>
-          <Button>
+          <Button size="sm" className="h-9">
             <Download className="w-4 h-4 mr-2" />
-            Export Report
+            <span className="hidden sm:inline">Export Report</span>
+            <span className="sm:hidden">Export</span>
           </Button>
         </div>
       </div>
