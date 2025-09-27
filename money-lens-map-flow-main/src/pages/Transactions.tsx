@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,8 @@ import {
   XCircle,
   Loader2
 } from "lucide-react";
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 import {
   Table,
   TableBody,
@@ -104,6 +106,7 @@ const chartConfig = {
 export default function Transactions() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [isExporting, setIsExporting] = useState(false);
   
   // Debug logging
   console.log("Category data:", categoryData);
@@ -117,6 +120,7 @@ export default function Transactions() {
   const [simulationResult, setSimulationResult] = useState(null);
   
   const simulateTransaction = useSimulateTransaction();
+  const transactionsRef = useRef<HTMLDivElement>(null);
 
   const handleSimulate = async () => {
     if (!simulatorData.merchant || !simulatorData.amount) {
@@ -132,6 +136,47 @@ export default function Transactions() {
       setSimulationResult(result.data);
     } catch (error) {
       console.error('Simulation failed:', error);
+    }
+  };
+
+  const handleExportPDF = async () => {
+    if (!transactionsRef.current) return;
+    
+    setIsExporting(true);
+    try {
+      const canvas = await html2canvas(transactionsRef.current, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff'
+      });
+      
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      
+      const imgWidth = 210;
+      const pageHeight = 295;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+      
+      let position = 0;
+      
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+      
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+      
+      const currentDate = new Date().toISOString().split('T')[0];
+      pdf.save(`transactions-${currentDate}.pdf`);
+    } catch (error) {
+      console.error('Export failed:', error);
+    } finally {
+      setIsExporting(false);
     }
   };
 
@@ -152,9 +197,13 @@ export default function Transactions() {
         </div>
         
         <div className="flex items-center gap-3">
-          <Button variant="outline">
+          <Button 
+            variant="outline" 
+            onClick={handleExportPDF}
+            disabled={isExporting}
+          >
             <Download className="w-4 h-4 mr-2" />
-            Export
+            {isExporting ? 'Exporting...' : 'Export'}
           </Button>
           <Button>
             <Plus className="w-4 h-4 mr-2" />
@@ -205,7 +254,7 @@ export default function Transactions() {
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div ref={transactionsRef} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Transactions Table */}
         <div className="lg:col-span-2">
           <Card className="card-gradient">
