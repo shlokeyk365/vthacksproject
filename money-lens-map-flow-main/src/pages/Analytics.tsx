@@ -49,6 +49,7 @@ import {
 } from "recharts";
 import { getBrandColor, getCategoryBrandColor } from "@/lib/brandColors";
 import { AutoVisualizationAgent } from "@/components/agents/AutoVisualizationAgent";
+import { AIDescription } from "@/components/ui/AIDescription";
 
 const monthlyData = [
   { month: "Jan", dining: 486, shopping: 329, transport: 245, utilities: 187 },
@@ -625,7 +626,19 @@ export default function Analytics() {
             className="min-h-[400px]"
           >
             {views[currentView].component === 'ava' && (
-              <AutoVisualizationAgent />
+              <div>
+                <AutoVisualizationAgent />
+                <AIDescription
+                  shortDescription="The Auto Visualization Agent intelligently analyzes your spending data and automatically generates the most relevant charts and insights based on your financial patterns and trends."
+                  longDescription="This advanced AI-powered agent continuously monitors your financial data to identify patterns, anomalies, and trends. It automatically selects the most appropriate visualization type (bar charts, pie charts, line graphs, or area charts) based on the data characteristics and your spending behavior. The agent can detect spending anomalies, seasonal patterns, budget deviations, and emerging trends. It provides real-time insights and recommendations, helping you understand your financial habits without manual analysis. The system learns from your spending patterns to provide increasingly personalized and relevant visualizations over time."
+                  insights={[
+                    "Automatically selects optimal chart types based on data patterns",
+                    "Detects spending anomalies and unusual patterns",
+                    "Provides real-time insights and recommendations",
+                    "Learns from your spending behavior for personalized analysis"
+                  ]}
+                />
+              </div>
             )}
             
             {views[currentView].component === 'monthly' && (
@@ -692,6 +705,16 @@ export default function Analytics() {
                     />
                   </AreaChart>
                 </ChartContainer>
+                <AIDescription
+                  shortDescription="Your spending shows a consistent pattern with dining being your highest category, averaging $502/month. There's a notable increase in shopping expenses during March and May."
+                  longDescription="The monthly trends reveal several key patterns in your spending behavior. Dining expenses consistently lead your spending categories, with an average of $502 per month and a peak of $567 in June. Shopping expenses show seasonal variation, with significant increases in March ($398) and May ($423), likely reflecting seasonal purchases or lifestyle changes. Transportation costs remain relatively stable around $250-280 per month, while utilities show minimal fluctuation, indicating good budget discipline in essential expenses. The overall trend suggests you maintain consistent spending habits with occasional spikes in discretionary categories."
+                  insights={[
+                    "Dining expenses are 25% higher than other categories on average",
+                    "Shopping spikes in March and May suggest seasonal spending patterns",
+                    "Transportation costs are well-controlled with minimal variance",
+                    "Utilities spending is the most predictable category"
+                  ]}
+                />
               </div>
             )}
             
@@ -736,6 +759,16 @@ export default function Analytics() {
                     </Bar>
                   </BarChart>
                 </ChartContainer>
+                <AIDescription
+                  shortDescription="Amazon dominates your spending at $892, representing 40% of your top merchant expenses. You have a good mix of shopping, dining, and transport merchants with Starbucks showing high visit frequency."
+                  longDescription="Your merchant spending reveals a concentrated pattern with Amazon accounting for the largest portion of your expenses at $892. This suggests you rely heavily on online shopping for various needs. Target follows as your second-largest merchant at $523, indicating a preference for retail shopping. Interestingly, while Shell has the highest visit frequency (15 visits), your spending per visit is lower, suggesting frequent but smaller fuel purchases. Starbucks shows the highest visit frequency among dining establishments (18 visits), indicating regular coffee purchases. McDonald's represents smaller individual transactions but frequent visits, suggesting convenience-based dining choices."
+                  insights={[
+                    "Amazon represents 40% of your top merchant spending",
+                    "High visit frequency at Shell suggests regular commuting patterns",
+                    "Starbucks visits indicate a daily coffee habit",
+                    "Merchant diversity is good across shopping, dining, and transport"
+                  ]}
+                />
               </div>
             )}
             
@@ -787,6 +820,16 @@ export default function Analytics() {
                     />
                   </ComposedChart>
                 </ChartContainer>
+                <AIDescription
+                  shortDescription="Excellent budget control! You're under your caps in all categories, with dining at 97% of cap and utilities at 94%. Your targets are well-calibrated and achievable."
+                  longDescription="Your spending vs caps analysis reveals strong financial discipline across all categories. Dining expenses are at 97% of your cap ($486/$500), showing excellent control while still allowing for lifestyle spending. Shopping is well-managed at 82% of cap ($329/$400), indicating good restraint in discretionary purchases. Transportation spending is at 82% of cap ($245/$300), suggesting efficient travel management. Utilities are at 94% of cap ($187/$200), showing consistent and predictable essential spending. Your target lines are well-positioned between actual spending and caps, providing a healthy buffer for unexpected expenses while maintaining budget discipline."
+                  insights={[
+                    "All categories are under budget caps - excellent financial discipline",
+                    "Dining is closest to cap at 97% - monitor for potential overruns",
+                    "Target lines provide good buffer zones for each category",
+                    "Utilities spending is most predictable and well-controlled"
+                  ]}
+                />
               </div>
             )}
             
@@ -863,6 +906,16 @@ export default function Analytics() {
                     </p>
                   </div>
                 </div>
+                <AIDescription
+                  shortDescription="Your spending is projected to increase gradually from $2,847 to $3,289 by December, with a notable holiday spike. The trend suggests seasonal spending patterns and lifestyle inflation."
+                  longDescription="The spending projection reveals a steady upward trend in your monthly expenses, increasing from $2,847 in July to $3,289 by December. This represents a 15.5% increase over six months, averaging 2.6% growth per month. The gradual increase suggests normal lifestyle inflation and seasonal spending patterns. The December spike to $3,289 indicates anticipated holiday spending, which is typical for most households. The consistent upward trend suggests you may need to adjust your budget caps or spending targets to accommodate this growth. The projection is based on historical spending patterns and seasonal trends, providing a realistic forecast for budget planning."
+                  insights={[
+                    "15.5% spending increase projected over 6 months",
+                    "December holiday spike expected at $3,289",
+                    "Average monthly growth rate of 2.6%",
+                    "Consider adjusting budget caps for projected increases"
+                  ]}
+                />
               </div>
             )}
           </motion.div>
