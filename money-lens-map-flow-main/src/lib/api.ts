@@ -178,6 +178,31 @@ class ApiClient {
     });
   }
 
+  // 2FA methods
+  async setup2FA() {
+    return this.request<{ secret: string; qrCode: string; manualEntryKey: string }>('/auth/2fa/setup', {
+      method: 'POST',
+    });
+  }
+
+  async verify2FASetup(token: string) {
+    return this.request<{ message: string }>('/auth/2fa/verify-setup', {
+      method: 'POST',
+      body: JSON.stringify({ token }),
+    });
+  }
+
+  async disable2FA(token: string) {
+    return this.request<{ message: string }>('/auth/2fa/disable', {
+      method: 'POST',
+      body: JSON.stringify({ token }),
+    });
+  }
+
+  async get2FAStatus() {
+    return this.request<{ enabled: boolean }>('/auth/2fa/status');
+  }
+
   async logout() {
     this.clearToken();
     return this.request('/auth/logout', { method: 'POST' });

@@ -1,6 +1,8 @@
 import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import speakeasy from 'speakeasy';
+import * as qrcode from 'qrcode';
 import { PrismaClient } from '@prisma/client';
 import { authenticate } from '../middleware/auth';
 import { AppError } from '../middleware/errorHandler';
@@ -229,6 +231,171 @@ router.put('/change-password', authenticate, async (req: AuthenticatedRequest, r
     const response: ApiResponse = {
       success: true,
       message: 'Password changed successfully'
+    };
+
+    res.status(200).json(response);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Setup 2FA
+router.post('/2fa/setup', authenticate, async (req: AuthenticatedRequest, res, next) => {
+  try {
+    const userId = req.user!.id;
+    
+    // Generate secret
+    const secret = speakeasy.generateSecret({
+      name: `MoneyLens (${req.user!.email})`,
+      issuer: 'MoneyLens',
+      length: 32
+    });
+
+    // Generate QR code
+    const qrCodeUrl = await qrcode.toDataURL(secret.otpauth_url!);
+
+    // Store secret temporarily (user needs to verify before enabling)
+    await prisma.user.update({
+      where: { id: userId },
+      data: { twoFactorSecret: secret.base32 }
+    });
+
+    const response: ApiResponse = {
+      success: true,
+      data: {
+        secret: secret.base32,
+        qrCode: qrCodeUrl,
+        manualEntryKey: secret.base32
+      },
+      message: '2FA setup initiated. Please verify with authenticator app.'
+    };
+
+    res.status(200).json(response);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Verify 2FA setup
+router.post('/2fa/verify-setup', authenticate, async (req: AuthenticatedRequest, res, next) => {
+  try {
+    const { token } = req.body;
+    const userId = req.user!.id;
+
+    if (!token) {
+      throw new AppError('Please provide verification token', 400);
+    }
+
+    // Get user with secret
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { twoFactorSecret: true }
+    });
+
+    if (!user?.twoFactorSecret) {
+      throw new AppError('2FA setup not initiated', 400);
+    }
+
+    // Verify token
+    const verified = speakeasy.totp.verify({
+      secret: user.twoFactorSecret,
+      encoding: 'base32',
+      token: token,
+      window: 2
+    });
+
+    if (!verified) {
+      throw new AppError('Invalid verification token', 400);
+    }
+
+    // Enable 2FA
+    await prisma.user.update({
+      where: { id: userId },
+      data: { twoFactorEnabled: true }
+    });
+
+    const response: ApiResponse = {
+      success: true,
+      message: '2FA enabled successfully'
+    };
+
+    res.status(200).json(response);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Disable 2FA
+router.post('/2fa/disable', authenticate, async (req: AuthenticatedRequest, res, next) => {
+  try {
+    const { token } = req.body;
+    const userId = req.user!.id;
+
+    if (!token) {
+      throw new AppError('Please provide verification token', 400);
+    }
+
+    // Get user with secret
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { twoFactorSecret: true, twoFactorEnabled: true }
+    });
+
+    if (!user?.twoFactorEnabled) {
+      throw new AppError('2FA is not enabled', 400);
+    }
+
+    if (!user.twoFactorSecret) {
+      throw new AppError('2FA secret not found', 400);
+    }
+
+    // Verify token
+    const verified = speakeasy.totp.verify({
+      secret: user.twoFactorSecret,
+      encoding: 'base32',
+      token: token,
+      window: 2
+    });
+
+    if (!verified) {
+      throw new AppError('Invalid verification token', 400);
+    }
+
+    // Disable 2FA
+    await prisma.user.update({
+      where: { id: userId },
+      data: { 
+        twoFactorEnabled: false,
+        twoFactorSecret: null
+      }
+    });
+
+    const response: ApiResponse = {
+      success: true,
+      message: '2FA disabled successfully'
+    };
+
+    res.status(200).json(response);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Get 2FA status
+router.get('/2fa/status', authenticate, async (req: AuthenticatedRequest, res, next) => {
+  try {
+    const userId = req.user!.id;
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { twoFactorEnabled: true }
+    });
+
+    const response: ApiResponse = {
+      success: true,
+      data: {
+        enabled: user?.twoFactorEnabled || false
+      }
     };
 
     res.status(200).json(response);
