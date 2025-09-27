@@ -22,7 +22,6 @@ import {
   Loader2
 } from "lucide-react";
 import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 import {
   Table,
   TableBody,
@@ -120,7 +119,6 @@ export default function Transactions() {
   const [simulationResult, setSimulationResult] = useState(null);
   
   const simulateTransaction = useSimulateTransaction();
-  const transactionsRef = useRef<HTMLDivElement>(null);
 
   const handleSimulate = async () => {
     if (!simulatorData.merchant || !simulatorData.amount) {
@@ -140,39 +138,176 @@ export default function Transactions() {
   };
 
   const handleExportPDF = async () => {
-    if (!transactionsRef.current) return;
-    
     setIsExporting(true);
     try {
-      const canvas = await html2canvas(transactionsRef.current, {
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: '#ffffff'
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      let yPosition = 20;
+      
+      // Helper function to add new page if needed
+      const checkNewPage = (requiredSpace: number) => {
+        if (yPosition + requiredSpace > pageHeight - 20) {
+          pdf.addPage();
+          yPosition = 20;
+          return true;
+        }
+        return false;
+      };
+      
+      // Helper function to draw a line
+      const drawLine = (y: number) => {
+        pdf.setLineWidth(0.5);
+        pdf.setDrawColor(200, 200, 200);
+        pdf.line(20, y, pageWidth - 20, y);
+      };
+      
+      // Header
+      pdf.setFontSize(24);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(50, 50, 50);
+      pdf.text('Transaction Report', 20, yPosition);
+      yPosition += 15;
+      
+      // Date and time
+      pdf.setFontSize(10);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(100, 100, 100);
+      const reportDate = new Date().toLocaleDateString();
+      const currentTime = new Date().toLocaleTimeString();
+      pdf.text(`Generated on ${reportDate} at ${currentTime}`, 20, yPosition);
+      yPosition += 20;
+      
+      // Summary section
+      pdf.setFontSize(16);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(50, 50, 50);
+      pdf.text('Summary', 20, yPosition);
+      yPosition += 10;
+      
+      drawLine(yPosition);
+      yPosition += 5;
+      
+      // Calculate totals
+      const totalAmount = mockTransactions.reduce((sum, transaction) => sum + transaction.amount, 0);
+      const categoryTotals = mockTransactions.reduce((acc, transaction) => {
+        acc[transaction.category] = (acc[transaction.category] || 0) + transaction.amount;
+        return acc;
+      }, {} as Record<string, number>);
+      
+      pdf.setFontSize(12);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text(`Total Transactions: ${mockTransactions.length}`, 20, yPosition);
+      yPosition += 8;
+      pdf.text(`Total Amount: $${totalAmount.toFixed(2)}`, 20, yPosition);
+      yPosition += 8;
+      pdf.text(`Average Transaction: $${(totalAmount / mockTransactions.length).toFixed(2)}`, 20, yPosition);
+      yPosition += 15;
+      
+      // Category breakdown
+      pdf.setFontSize(14);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Spending by Category', 20, yPosition);
+      yPosition += 10;
+      
+      drawLine(yPosition);
+      yPosition += 5;
+      
+      Object.entries(categoryTotals).forEach(([category, amount]) => {
+        if (yPosition > pageHeight - 30) {
+          pdf.addPage();
+          yPosition = 20;
+        }
+        
+        pdf.setFontSize(10);
+        pdf.setFont('helvetica', 'normal');
+        pdf.text(`${category}: $${amount.toFixed(2)}`, 20, yPosition);
+        yPosition += 6;
       });
       
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('p', 'mm', 'a4');
+      yPosition += 10;
       
-      const imgWidth = 210;
-      const pageHeight = 295;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      let heightLeft = imgHeight;
-      
-      let position = 0;
-      
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
-      
-      while (heightLeft >= 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
+      // Transactions table header
+      if (checkNewPage(30)) {
+        yPosition = 20;
       }
       
+      pdf.setFontSize(16);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Transaction Details', 20, yPosition);
+      yPosition += 10;
+      
+      drawLine(yPosition);
+      yPosition += 5;
+      
+      // Table headers
+      pdf.setFontSize(10);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(50, 50, 50);
+      
+      const colWidths = [60, 40, 30, 30, 30]; // Merchant, Category, Amount, Date, Status
+      const colPositions = [20, 80, 120, 150, 180];
+      const headers = ['Merchant', 'Category', 'Amount', 'Date', 'Status'];
+      
+      headers.forEach((header, index) => {
+        pdf.text(header, colPositions[index], yPosition);
+      });
+      yPosition += 8;
+      
+      drawLine(yPosition);
+      yPosition += 5;
+      
+      // Transaction rows
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(9);
+      
+      mockTransactions.forEach((transaction) => {
+        if (checkNewPage(15)) {
+          yPosition = 20;
+          // Redraw headers on new page
+          pdf.setFont('helvetica', 'bold');
+          pdf.setFontSize(10);
+          headers.forEach((header, index) => {
+            pdf.text(header, colPositions[index], yPosition);
+          });
+          yPosition += 8;
+          drawLine(yPosition);
+          yPosition += 5;
+          pdf.setFont('helvetica', 'normal');
+          pdf.setFontSize(9);
+        }
+        
+        // Merchant (truncated if too long)
+        const merchantText = transaction.merchant.length > 20 
+          ? transaction.merchant.substring(0, 17) + '...' 
+          : transaction.merchant;
+        pdf.text(merchantText, colPositions[0], yPosition);
+        
+        // Category
+        pdf.text(transaction.category, colPositions[1], yPosition);
+        
+        // Amount
+        pdf.text(`$${transaction.amount.toFixed(2)}`, colPositions[2], yPosition);
+        
+        // Date
+        const date = new Date(transaction.date).toLocaleDateString();
+        pdf.text(date, colPositions[3], yPosition);
+        
+        // Status
+        pdf.text('Completed', colPositions[4], yPosition);
+        
+        yPosition += 6;
+      });
+      
+      // Footer
+      yPosition = pageHeight - 20;
+      pdf.setFontSize(8);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(150, 150, 150);
+      pdf.text('Generated by MoneyLens - Financial Tracking System', 20, yPosition);
+      
       const currentDate = new Date().toISOString().split('T')[0];
-      pdf.save(`transactions-${currentDate}.pdf`);
+      pdf.save(`transactions-report-${currentDate}.pdf`);
     } catch (error) {
       console.error('Export failed:', error);
     } finally {
@@ -254,7 +389,7 @@ export default function Transactions() {
         </CardContent>
       </Card>
 
-      <div ref={transactionsRef} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Transactions Table */}
         <div className="lg:col-span-2">
           <Card className="card-gradient">
