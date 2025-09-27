@@ -23,10 +23,12 @@ import {
   Calendar,
   Filter,
   RefreshCw,
-  Plus
+  Plus,
+  Shield
 } from "lucide-react";
 import { apiClient } from "@/lib/api";
 import { toast } from "sonner";
+import { useFinancialBodyguard } from "@/contexts/FinancialBodyguardContext";
 
 interface MapMerchant {
   id: string;
@@ -76,6 +78,14 @@ export default function MapView() {
     latitude: '',
     longitude: ''
   });
+
+  // Financial Bodyguard integration
+  const { 
+    isActive: isBodyguardActive, 
+    currentLocation, 
+    assessTransactionRisk,
+    showAlert 
+  } = useFinancialBodyguard();
 
   // Load map data
   useEffect(() => {
@@ -438,6 +448,35 @@ export default function MapView() {
           </Dialog>
         </div>
       </div>
+
+      {/* Financial Bodyguard Status Widget */}
+      {isBodyguardActive && (
+        <Card className="border-l-4 border-l-blue-500 bg-blue-50/50 dark:bg-blue-950/20">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                  <Shield className="w-4 h-4 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-blue-900 dark:text-blue-100">Financial Bodyguard Active</h3>
+                  <p className="text-sm text-blue-700 dark:text-blue-300">
+                    AI is monitoring your location and spending patterns
+                  </p>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-sm text-blue-600 dark:text-blue-400">
+                  {currentLocation ? 'Location: Tracked' : 'Location: Unknown'}
+                </div>
+                <div className="text-xs text-blue-500 dark:text-blue-400">
+                  Risk assessment enabled
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 lg:gap-6 min-h-[600px]">
         {/* Map Container */}

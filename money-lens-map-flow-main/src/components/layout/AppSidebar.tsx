@@ -14,6 +14,7 @@ import {
   Moon,
   Sun,
   Monitor,
+  Shield,
 } from "lucide-react";
 
 import {
@@ -61,6 +62,12 @@ const navigationItems = [
     url: "/analytics",
     icon: BarChart3,
     description: "Detailed insights",
+  },
+  {
+    title: "Financial Bodyguard",
+    url: "/bodyguard",
+    icon: Shield,
+    description: "AI spending protection",
   },
   {
     title: "Settings",
