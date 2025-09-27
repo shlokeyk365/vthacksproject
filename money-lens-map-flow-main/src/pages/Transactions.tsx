@@ -97,12 +97,16 @@ const categoryData = [
 const chartConfig = {
   value: {
     label: "Amount",
+    color: "#3B82F6",
   },
 };
 
 export default function Transactions() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
+  
+  // Debug logging
+  console.log("Category data:", categoryData);
   
   // Transaction simulator state
   const [simulatorData, setSimulatorData] = useState({
@@ -412,38 +416,36 @@ export default function Transactions() {
               <CardTitle>Spending by Category</CardTitle>
             </CardHeader>
             <CardContent>
-              <ChartContainer config={chartConfig} className="h-[200px]">
-                <PieChart>
+              <div className="h-[200px] w-full flex items-center justify-center">
+                <PieChart width={200} height={200}>
                   <Pie
                     data={categoryData}
-                    cx="50%"
-                    cy="50%"
+                    cx={100}
+                    cy={100}
                     innerRadius={40}
                     outerRadius={80}
-                    paddingAngle={5}
+                    paddingAngle={2}
                     dataKey="value"
                   >
                     {categoryData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
-                  <ChartTooltip 
-                    content={<ChartTooltipContent />}
-                  />
+                  <ChartTooltip />
                 </PieChart>
-              </ChartContainer>
+              </div>
               
-              <div className="space-y-2 mt-4">
+              <div className="legend-container-responsive space-y-2 mt-4">
                 {categoryData.map((category) => (
-                  <div key={category.name} className="flex items-center justify-between text-sm">
-                    <div className="flex items-center gap-2">
+                  <div key={category.name} className="flex items-center justify-between text-sm legend-item">
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
                       <div 
-                        className="w-3 h-3 rounded-sm"
+                        className="w-3 h-3 rounded-sm flex-shrink-0"
                         style={{ backgroundColor: category.color }}
                       ></div>
-                      <span>{category.name}</span>
+                      <span className="truncate">{category.name}</span>
                     </div>
-                    <span className="font-semibold">${category.value}</span>
+                    <span className="font-semibold ml-2 flex-shrink-0">${category.value}</span>
                   </div>
                 ))}
               </div>

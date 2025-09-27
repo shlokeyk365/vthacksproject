@@ -24,7 +24,7 @@ export function MainLayout() {
         
         <div className="flex-1 flex flex-col min-h-screen">
           {/* Header */}
-          <header className="bg-card border-b border-border px-6 py-4 flex items-center gap-4">
+          <header className="bg-card border-b border-border px-4 sm:px-6 py-4 flex items-center gap-2 sm:gap-4">
             <SidebarTrigger />
             
             <div className="flex-1 max-w-md">
@@ -32,12 +32,12 @@ export function MainLayout() {
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                 <Input
                   placeholder="Search transactions, merchants..."
-                  className="pl-10 bg-background"
+                  className="pl-10 bg-background text-sm"
                 />
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
               <Button variant="ghost" size="sm" className="relative">
                 <Bell className="w-4 h-4" />
                 <div className="absolute -top-1 -right-1 w-2 h-2 bg-danger rounded-full"></div>
@@ -67,7 +67,7 @@ export function MainLayout() {
           </header>
 
           {/* Main Content */}
-          <main className="flex-1 p-6 bg-background">
+          <main className="flex-1 p-4 sm:p-6 bg-background">
             <Outlet />
           </main>
         </div>

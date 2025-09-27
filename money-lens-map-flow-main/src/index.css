@@ -154,19 +154,42 @@ All colors MUST be HSL.
   /* Custom scrollbar */
   ::-webkit-scrollbar {
     width: 6px;
-    height: 6px;
+    height: 8px;
   }
 
   ::-webkit-scrollbar-track {
-    @apply bg-muted/30;
+    @apply bg-muted/30 rounded-full;
   }
 
   ::-webkit-scrollbar-thumb {
-    @apply bg-border rounded-full;
+    @apply bg-primary/40 rounded-full;
+    transition: background-color 0.2s ease;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-primary/30;
+    @apply bg-primary/60;
+  }
+
+  /* Horizontal scrollbar for stats grid */
+  .stats-grid-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--primary) / 0.4) hsl(var(--muted) / 0.3);
+  }
+
+  .stats-grid-scroll::-webkit-scrollbar {
+    height: 8px;
+  }
+
+  .stats-grid-scroll::-webkit-scrollbar-track {
+    @apply bg-muted/20 rounded-full;
+  }
+
+  .stats-grid-scroll::-webkit-scrollbar-thumb {
+    @apply bg-primary/50 rounded-full;
+  }
+
+  .stats-grid-scroll::-webkit-scrollbar-thumb:hover {
+    @apply bg-primary/70;
   }
 }
 
@@ -222,6 +245,300 @@ All colors MUST be HSL.
   .chart-container {
     @apply bg-card rounded-lg p-6 shadow-sm border;
   }
+
+  /* Responsive improvements */
+  @media (max-width: 640px) {
+    .stats-card {
+      min-height: 120px;
+    }
+    
+    .stats-card .flex {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.75rem;
+    }
+    
+    .stats-card .flex-1 {
+      width: 100%;
+    }
+  }
+
+  /* Dynamic font scaling based on viewport width */
+  .stats-card {
+    font-size: clamp(0.2rem, 1vw, 1rem);
+    transition: font-size 0.3s ease;
+  }
+
+  .stats-card h3 {
+    font-size: clamp(0.3rem, 1.5vw, 2rem);
+    line-height: 1;
+    white-space: nowrap;
+    overflow: visible;
+    text-overflow: unset;
+    max-width: none;
+    min-width: 0;
+  }
+
+  .stats-card p {
+    font-size: clamp(0.2rem, 0.8vw, 0.9rem);
+    line-height: 1;
+    white-space: nowrap;
+    overflow: visible;
+    text-overflow: unset;
+    max-width: none;
+    min-width: 0;
+  }
+
+  .stats-card span {
+    font-size: clamp(0.15rem, 0.6vw, 0.8rem);
+    line-height: 1;
+    white-space: nowrap;
+    overflow: visible;
+    text-overflow: unset;
+    max-width: none;
+    min-width: 0;
+  }
+
+  /* Force no wrapping for all text elements but allow overflow */
+  .stats-card * {
+    white-space: nowrap !important;
+    overflow: visible !important;
+    text-overflow: unset !important;
+    min-width: 0 !important;
+  }
+
+  /* Container query support for more precise scaling */
+  @container (max-width: 200px) {
+    .stats-card h3 {
+      font-size: 0.75rem;
+    }
+    
+    .stats-card p {
+      font-size: 0.5rem;
+    }
+    
+    .stats-card span {
+      font-size: 0.4rem;
+    }
+  }
+
+  @container (max-width: 150px) {
+    .stats-card h3 {
+      font-size: 0.625rem;
+    }
+    
+    .stats-card p {
+      font-size: 0.4rem;
+    }
+    
+    .stats-card span {
+      font-size: 0.35rem;
+    }
+  }
+
+  /* Extra small screens */
+  @media (max-width: 475px) {
+    .stats-card {
+      min-height: 100px;
+      padding: 0.75rem;
+    }
+    
+    .stats-card h3 {
+      font-size: clamp(0.5rem, 2vw, 1.2rem);
+    }
+    
+    .stats-card p {
+      font-size: clamp(0.35rem, 1.2vw, 0.6rem);
+    }
+    
+    .stats-card span {
+      font-size: clamp(0.3rem, 0.8vw, 0.5rem);
+    }
+  }
+
+  /* Very small screens */
+  @media (max-width: 320px) {
+    .stats-card {
+      min-height: 90px;
+      padding: 0.5rem;
+    }
+    
+    .stats-card h3 {
+      font-size: clamp(0.4rem, 1.5vw, 1rem);
+    }
+    
+    .stats-card p {
+      font-size: clamp(0.3rem, 1vw, 0.5rem);
+    }
+    
+    .stats-card span {
+      font-size: clamp(0.25rem, 0.7vw, 0.4rem);
+    }
+  }
+
+  /* Ultra small screens - switch to vertical layout */
+  @media (max-width: 280px) {
+    .stats-grid-scroll {
+      overflow-x: visible;
+    }
+    
+    .stats-grid-scroll .grid {
+      grid-template-columns: 1fr !important;
+      gap: 0.5rem !important;
+    }
+    
+    .stats-card {
+      min-height: 60px;
+      padding: 0.4rem;
+      width: 100%;
+    }
+    
+    .stats-card h3 {
+      font-size: clamp(0.4rem, 1.5vw, 1rem);
+    }
+    
+    .stats-card p {
+      font-size: clamp(0.3rem, 1vw, 0.6rem);
+    }
+    
+    .stats-card span {
+      font-size: clamp(0.25rem, 0.8vw, 0.5rem);
+    }
+  }
+
+  /* Very small screens - 2x2 grid */
+  @media (max-width: 400px) and (min-width: 281px) {
+    .stats-grid-scroll .grid {
+      grid-template-columns: repeat(2, 1fr) !important;
+      gap: 0.5rem !important;
+    }
+    
+    .stats-card {
+      min-height: 70px;
+      padding: 0.5rem;
+    }
+    
+    .stats-card h3 {
+      font-size: clamp(0.35rem, 1.3vw, 1.2rem);
+    }
+    
+    .stats-card p {
+      font-size: clamp(0.25rem, 0.9vw, 0.7rem);
+    }
+    
+    .stats-card span {
+      font-size: clamp(0.2rem, 0.7vw, 0.6rem);
+    }
+  }
+
+  /* Stats grid scroll improvements */
+  .stats-grid-scroll {
+    position: relative;
+  }
+
+  /* Ensure text never gets cut off */
+  .stats-card {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .stats-card .flex-1 {
+    min-width: 0;
+    flex: 1;
+    padding-right: 1rem;
+    max-width: calc(100% - 4rem);
+  }
+
+  /* Ensure icons don't overlap text */
+  .stats-card .flex-shrink-0 {
+    margin-left: 1rem;
+    z-index: 1;
+    position: relative;
+  }
+
+  /* Add more spacing between text and icons on small screens */
+  @media (max-width: 640px) {
+    .stats-card .flex-1 {
+      padding-right: 1.5rem;
+      max-width: calc(100% - 5rem);
+    }
+    
+    .stats-card .flex-shrink-0 {
+      margin-left: 1.5rem;
+    }
+  }
+
+  /* Extra small screens - even more constrained */
+  @media (max-width: 400px) {
+    .stats-card .flex-1 {
+      padding-right: 2rem;
+      max-width: calc(100% - 6rem);
+    }
+    
+    .stats-card .flex-shrink-0 {
+      margin-left: 2rem;
+    }
+    
+    /* Make icons smaller on small screens */
+    .stats-card .flex-shrink-0 div {
+      width: 1rem !important;
+      height: 1rem !important;
+    }
+    
+    /* More aggressive font scaling for constrained space */
+    .stats-card h3 {
+      font-size: clamp(0.25rem, 1.2vw, 1.2rem) !important;
+    }
+    
+    .stats-card p {
+      font-size: clamp(0.15rem, 0.7vw, 0.6rem) !important;
+    }
+    
+    .stats-card span {
+      font-size: clamp(0.1rem, 0.5vw, 0.5rem) !important;
+    }
+  }
+
+  /* Allow horizontal scrolling when needed */
+  @media (max-width: 640px) {
+    .stats-grid-scroll {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    
+    .stats-grid-scroll .grid {
+      min-width: max-content;
+    }
+  }
+
+  .stats-grid-scroll::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 20px;
+    background: linear-gradient(to left, hsl(var(--background)) 0%, transparent 100%);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .stats-grid-scroll:hover::after {
+    opacity: 1;
+  }
+
+  @media (max-width: 768px) {
+    .grid-cols-1.sm\\:grid-cols-2 {
+      grid-template-columns: repeat(1, minmax(0, 1fr));
+    }
+  }
+
+  @media (min-width: 640px) and (max-width: 1024px) {
+    .grid-cols-1.sm\\:grid-cols-2 {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
 }
 
 @keyframes fade-in {
@@ -243,5 +560,125 @@ All colors MUST be HSL.
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+/* Simple Pie Chart Styles */
+.chart-container-responsive {
+  width: 100%;
+  overflow: visible;
+  position: relative;
+}
+
+/* Legend responsive styles */
+.legend-container-responsive {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: visible;
+}
+
+.legend-item {
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.legend-item span {
+  font-size: clamp(0.75rem, 2vw, 0.875rem);
+  line-height: 1.2;
+}
+
+/* Small screens - horizontal scroll for legend */
+@media (max-width: 640px) {
+  .legend-container-responsive {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 1rem;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 0.5rem;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
+  }
+  
+  .legend-container-responsive::-webkit-scrollbar {
+    height: 4px;
+  }
+  
+  .legend-container-responsive::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  .legend-container-responsive::-webkit-scrollbar-thumb {
+    background-color: rgba(156, 163, 175, 0.5);
+    border-radius: 2px;
+  }
+  
+  .legend-item {
+    flex-shrink: 0;
+    min-width: 120px;
+    padding: 0.5rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 0.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .legend-item span {
+    font-size: clamp(0.7rem, 1.8vw, 0.8rem);
+  }
+}
+
+/* Extra small screens - vertical legend layout */
+@media (max-width: 400px) {
+  .legend-container-responsive {
+    display: block;
+    overflow-x: visible;
+    overflow-y: visible;
+  }
+  
+  .legend-item {
+    min-width: auto;
+    padding: 0.25rem 0;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+  }
+  
+  .legend-item span {
+    font-size: clamp(0.65rem, 1.5vw, 0.75rem);
+  }
+}
+
+/* Ultra small screens - compact legend */
+@media (max-width: 280px) {
+  .legend-item {
+    padding: 0.125rem 0;
+  }
+  
+  .legend-item span {
+    font-size: clamp(0.6rem, 1.2vw, 0.7rem);
+  }
+  
+  .legend-item .w-3 {
+    width: 0.5rem !important;
+    height: 0.5rem !important;
+  }
+}
+
+/* Chart responsive adjustments */
+@media (max-width: 640px) {
+  .chart-container-responsive .recharts-pie {
+    transform: scale(0.9);
+  }
+}
+
+@media (max-width: 400px) {
+  .chart-container-responsive .recharts-pie {
+    transform: scale(0.8);
+  }
+}
+
+@media (max-width: 280px) {
+  .chart-container-responsive .recharts-pie {
+    transform: scale(0.7);
   }
 }
