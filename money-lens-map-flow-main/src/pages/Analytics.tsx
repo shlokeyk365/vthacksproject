@@ -581,12 +581,13 @@ export default function Analytics() {
                 />
                 <ChartTooltip 
                   content={<ChartTooltipContent />}
-                  labelStyle={{ color: '#374151' }}
+                  labelStyle={{ color: '#374151', fontSize: '14px', fontWeight: '600', lineHeight: '1.5' }}
                   contentStyle={{ 
                     backgroundColor: '#ffffff',
                     border: '1px solid #e5e7eb',
                     borderRadius: '8px',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                    padding: '8px 12px'
                   }}
                 />
                 <Area
@@ -654,12 +655,13 @@ export default function Analytics() {
                 />
                 <ChartTooltip 
                   content={<ChartTooltipContent />}
-                  labelStyle={{ color: '#374151' }}
+                  labelStyle={{ color: '#374151', fontSize: '14px', fontWeight: '600', lineHeight: '1.5' }}
                   contentStyle={{ 
                     backgroundColor: '#ffffff',
                     border: '1px solid #e5e7eb',
                     borderRadius: '8px',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                    padding: '8px 12px'
                   }}
                   formatter={(value, name) => [`$${value}`, 'Amount Spent']}
                 />
@@ -698,12 +700,13 @@ export default function Analytics() {
                 />
                 <ChartTooltip 
                   content={<ChartTooltipContent />}
-                  labelStyle={{ color: '#374151' }}
+                  labelStyle={{ color: '#374151', fontSize: '14px', fontWeight: '600', lineHeight: '1.5' }}
                   contentStyle={{ 
                     backgroundColor: '#ffffff',
                     border: '1px solid #e5e7eb',
                     borderRadius: '8px',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                    padding: '8px 12px'
                   }}
                 />
                 <Bar 
@@ -756,14 +759,16 @@ export default function Analytics() {
                 />
                 <ChartTooltip 
                   content={<ChartTooltipContent />}
-                  labelStyle={{ color: '#374151' }}
+                  labelStyle={{ color: '#374151', fontSize: '14px', fontWeight: '600', lineHeight: '1.5' }}
                   contentStyle={{ 
                     backgroundColor: '#ffffff',
                     border: '1px solid #e5e7eb',
                     borderRadius: '8px',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                    padding: '8px 12px'
                   }}
                   formatter={(value, name) => [`$${value}`, name === 'projected' ? 'Projected' : 'Actual']}
+                  labelFormatter={(label) => `${label} 2024`}
                 />
                 <Area
                   type="monotone"
