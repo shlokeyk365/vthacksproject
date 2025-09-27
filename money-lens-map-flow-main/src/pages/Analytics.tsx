@@ -45,6 +45,7 @@ import {
   LineChart
 } from "recharts";
 import { getBrandColor, getCategoryBrandColor } from "@/lib/brandColors";
+import { AutoVisualizationAgent } from "@/components/agents/AutoVisualizationAgent";
 
 const monthlyData = [
   { month: "Jan", dining: 486, shopping: 329, transport: 245, utilities: 187 },
@@ -554,6 +555,9 @@ export default function Analytics() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Auto Visualization Agent */}
+      <AutoVisualizationAgent className="mb-8" />
 
       {/* Charts Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

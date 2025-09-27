@@ -28,8 +28,10 @@ const io = new Server(server, {
   cors: {
     origin: [
       "http://localhost:8080",
+      "http://localhost:8081",
       "http://localhost:8082", 
       "http://172.16.24.70:8080",
+      "http://172.16.24.70:8081",
       "http://172.16.24.70:8082",
       /^http:\/\/192\.168\.\d+\.\d+:\d+$/, // Allow any local network IP
       /^http:\/\/10\.\d+\.\d+\.\d+:\d+$/,  // Allow any local network IP
@@ -45,8 +47,10 @@ app.use(helmet());
 app.use(cors({
   origin: [
     "http://localhost:8080",
+    "http://localhost:8081",
     "http://localhost:8082", 
     "http://172.16.24.70:8080",
+    "http://172.16.24.70:8081",
     "http://172.16.24.70:8082",
     /^http:\/\/192\.168\.\d+\.\d+:\d+$/, // Allow any local network IP
     /^http:\/\/10\.\d+\.\d+\.\d+:\d+$/,  // Allow any local network IP
