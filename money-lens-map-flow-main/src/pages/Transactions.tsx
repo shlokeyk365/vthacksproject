@@ -201,6 +201,32 @@ export default function Transactions() {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [isExporting, setIsExporting] = useState(false);
   
+  // Filter transactions based on search query and selected category
+  const filteredTransactions = mockTransactions.filter((transaction) => {
+    const matchesSearch = transaction.merchant.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         transaction.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         transaction.location.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesCategory = selectedCategory === "all" || transaction.category === selectedCategory;
+    
+    return matchesSearch && matchesCategory;
+  });
+  
+  // Create filtered category data for pie chart
+  const filteredCategoryData = filteredTransactions.reduce((acc, transaction) => {
+    const existing = acc.find(item => item.name === transaction.category);
+    if (existing) {
+      existing.value += transaction.amount;
+    } else {
+      acc.push({
+        name: transaction.category,
+        value: transaction.amount,
+        color: categoryData.find(cat => cat.name === transaction.category)?.color || "#6B7280"
+      });
+    }
+    return acc;
+  }, [] as Array<{name: string, value: number, color: string}>);
+  
   // Debug logging
   console.log("Category data:", categoryData);
   
@@ -282,20 +308,20 @@ export default function Transactions() {
       drawLine(yPosition);
       yPosition += 5;
       
-      // Calculate totals
-      const totalAmount = mockTransactions.reduce((sum, transaction) => sum + transaction.amount, 0);
-      const categoryTotals = mockTransactions.reduce((acc, transaction) => {
+      // Calculate totals from filtered transactions
+      const totalAmount = filteredTransactions.reduce((sum, transaction) => sum + transaction.amount, 0);
+      const categoryTotals = filteredTransactions.reduce((acc, transaction) => {
         acc[transaction.category] = (acc[transaction.category] || 0) + transaction.amount;
         return acc;
       }, {} as Record<string, number>);
       
       pdf.setFontSize(12);
       pdf.setFont('helvetica', 'normal');
-      pdf.text(`Total Transactions: ${mockTransactions.length}`, 20, yPosition);
+      pdf.text(`Total Transactions: ${filteredTransactions.length}`, 20, yPosition);
       yPosition += 8;
       pdf.text(`Total Amount: $${totalAmount.toFixed(2)}`, 20, yPosition);
       yPosition += 8;
-      pdf.text(`Average Transaction: $${(totalAmount / mockTransactions.length).toFixed(2)}`, 20, yPosition);
+      pdf.text(`Average Transaction: $${filteredTransactions.length > 0 ? (totalAmount / filteredTransactions.length).toFixed(2) : '0.00'}`, 20, yPosition);
       yPosition += 15;
       
       // Category breakdown
@@ -355,7 +381,7 @@ export default function Transactions() {
       pdf.setFont('helvetica', 'normal');
       pdf.setFontSize(9);
       
-      mockTransactions.forEach((transaction) => {
+      filteredTransactions.forEach((transaction) => {
         if (checkNewPage(15)) {
           yPosition = 20;
           // Redraw headers on new page
@@ -502,7 +528,22 @@ export default function Transactions() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {mockTransactions.map((transaction) => {
+                  {filteredTransactions.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-8">
+                        <div className="flex flex-col items-center gap-2">
+                          <div className="w-12 h-12 rounded-full bg-muted/20 flex items-center justify-center">
+                            <Search className="w-6 h-6 text-muted-foreground" />
+                          </div>
+                          <p className="text-muted-foreground">No transactions found</p>
+                          <p className="text-sm text-muted-foreground">
+                            Try adjusting your search or filter criteria
+                          </p>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filteredTransactions.map((transaction) => {
                     const merchantLogo = getMerchantLogo(transaction.merchant);
                     const IconComponent = transaction.icon;
                     return (
@@ -543,7 +584,8 @@ export default function Transactions() {
                         </TableCell>
                       </TableRow>
                     );
-                  })}
+                  })
+                  )}
                 </TableBody>
               </Table>
             </CardContent>
@@ -702,26 +744,36 @@ export default function Transactions() {
             </CardHeader>
             <CardContent>
               <div className="h-[200px] w-full flex items-center justify-center">
-                <PieChart width={200} height={200}>
-                  <Pie
-                    data={categoryData}
-                    cx={100}
-                    cy={100}
-                    innerRadius={40}
-                    outerRadius={80}
-                    paddingAngle={2}
-                    dataKey="value"
-                  >
-                    {categoryData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <ChartTooltip />
-                </PieChart>
+                {filteredCategoryData.length === 0 ? (
+                  <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                    <div className="w-12 h-12 rounded-full bg-muted/20 flex items-center justify-center">
+                      <Search className="w-6 h-6" />
+                    </div>
+                    <p className="text-sm">No data available</p>
+                    <p className="text-xs">Try adjusting your filters</p>
+                  </div>
+                ) : (
+                  <PieChart width={200} height={200}>
+                    <Pie
+                      data={filteredCategoryData}
+                      cx={100}
+                      cy={100}
+                      innerRadius={40}
+                      outerRadius={80}
+                      paddingAngle={2}
+                      dataKey="value"
+                    >
+                      {filteredCategoryData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <ChartTooltip />
+                  </PieChart>
+                )}
               </div>
               
               <div className="legend-container-responsive space-y-2 mt-4">
-                {categoryData.map((category) => (
+                {filteredCategoryData.map((category) => (
                   <div key={category.name} className="flex items-center justify-between text-sm legend-item">
                     <div className="flex items-center gap-2 min-w-0 flex-1">
                       <div 
