@@ -18,7 +18,7 @@ export const authenticate = async (
       throw new AppError('Access denied. No token provided.', 401);
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as JWTPayload;
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-super-secret-jwt-key-here-moneylens-2024') as JWTPayload;
     
     const user = await prisma.user.findUnique({
       where: { id: decoded.userId },
@@ -60,7 +60,7 @@ export const optionalAuth = async (
     const token = req.header('Authorization')?.replace('Bearer ', '');
 
     if (token) {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET!) as JWTPayload;
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-super-secret-jwt-key-here-moneylens-2024') as JWTPayload;
       
       const user = await prisma.user.findUnique({
         where: { id: decoded.userId },

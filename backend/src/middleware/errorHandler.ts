@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { Prisma } from '@prisma/client';
+import { PrismaClientKnownRequestError, PrismaClientValidationError } from '@prisma/client/runtime/library';
 
 export class AppError extends Error {
   statusCode: number;
@@ -27,7 +27,7 @@ export const errorHandler = (
   console.error('Error:', err);
 
   // Prisma errors
-  if (err instanceof Prisma.PrismaClientKnownRequestError) {
+  if (err instanceof PrismaClientKnownRequestError) {
     switch (err.code) {
       case 'P2002':
         error = new AppError('Duplicate field value entered', 400);
@@ -47,7 +47,7 @@ export const errorHandler = (
   }
 
   // Prisma validation errors
-  if (err instanceof Prisma.PrismaClientValidationError) {
+  if (err instanceof PrismaClientValidationError) {
     error = new AppError('Invalid data provided', 400);
   }
 

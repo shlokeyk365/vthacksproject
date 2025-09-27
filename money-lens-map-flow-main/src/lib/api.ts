@@ -317,6 +317,21 @@ class ApiClient {
     });
   }
 
+  async searchTransactions(query: string, limit?: number) {
+    const params = new URLSearchParams();
+    params.append('q', query);
+    if (limit) params.append('limit', limit.toString());
+
+    return this.request<{ 
+      transactions: Transaction[];
+      searchQuery: string;
+      filters: any;
+      generalTerms: string[];
+    }>(
+      `/transactions/search?${params.toString()}`
+    );
+  }
+
   // Spending Caps
   getSpendingCaps = async () => {
     return this.request<SpendingCap[]>('/caps');
@@ -496,6 +511,7 @@ export const {
   simulateTransaction,
   updateTransaction,
   deleteTransaction,
+  searchTransactions,
   getSpendingCaps,
   createSpendingCap,
   updateSpendingCap,
