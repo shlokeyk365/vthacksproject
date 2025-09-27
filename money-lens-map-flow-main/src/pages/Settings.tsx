@@ -30,7 +30,7 @@ import {
 export default function Settings() {
   const { user } = useAuth();
   const { data: profileData, isLoading: profileLoading } = useProfile();
-  const { theme, setTheme, resolvedTheme } = useTheme();
+  const { theme, setTheme, resolvedTheme, primaryColor, setPrimaryColor, colorSchemes } = useTheme();
   
   // Profile form state
   const [profileForm, setProfileForm] = useState({
@@ -516,13 +516,36 @@ export default function Settings() {
               <Separator />
               
               <div>
-                <label className="text-sm font-medium">Primary Color</label>
-                <div className="flex gap-2 mt-2">
-                  <div className="w-8 h-8 bg-primary rounded-md border cursor-pointer"></div>
-                  <div className="w-8 h-8 bg-success rounded-md border cursor-pointer"></div>
-                  <div className="w-8 h-8 bg-warning rounded-md border cursor-pointer"></div>
-                  <div className="w-8 h-8 bg-danger rounded-md border cursor-pointer"></div>
+                <label className="text-sm font-medium mb-3 block">Primary Color</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {colorSchemes.map((scheme) => (
+                    <button
+                      key={scheme.primary}
+                      onClick={() => {
+                        setPrimaryColor(scheme.primary);
+                        toast.success('Primary color updated!', {
+                          description: `Switched to ${scheme.name} theme`,
+                          duration: 2000,
+                        });
+                      }}
+                      className={`p-3 rounded-lg border-2 transition-all hover:scale-105 ${
+                        primaryColor === scheme.primary 
+                          ? 'border-primary ring-2 ring-primary ring-opacity-50' 
+                          : 'border-border hover:border-primary/50'
+                      }`}
+                      title={scheme.description}
+                    >
+                      <div 
+                        className="w-full h-6 rounded-md mb-2"
+                        style={{ backgroundColor: `hsl(${scheme.primary})` }}
+                      />
+                      <div className="text-xs font-medium text-left">{scheme.name}</div>
+                    </button>
+                  ))}
                 </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Current: {colorSchemes.find(s => s.primary === primaryColor)?.name || 'Financial Blue'}
+                </p>
               </div>
             </CardContent>
           </Card>
