@@ -237,6 +237,10 @@ export default function Analytics() {
       const query = nlQuery.toLowerCase();
       let result = null;
       
+      // Extract percentage from query (e.g., "reduce by 20%", "cut 60%")
+      const percentageMatch = query.match(/(\d+)%/);
+      const percentage = percentageMatch ? parseInt(percentageMatch[1]) : 20;
+      
       if (query.includes('healthcare') && query.includes('shopping')) {
         result = {
           type: 'comparison',
@@ -247,15 +251,54 @@ export default function Analytics() {
           ],
           summary: 'Your healthcare spending ($450) is 40% higher than shopping ($320) this month.'
         };
-      } else if (query.includes('dining') && query.includes('reduce') && query.includes('20%')) {
+      } else if (query.includes('dining') && (query.includes('reduce') || query.includes('cut') || query.includes('decrease'))) {
+        // Calculate actual dining reduction scenario
+        const currentDining = 486; // Current monthly dining
+        const reductionAmount = (currentDining * percentage) / 100;
+        const newDining = currentDining - reductionAmount;
+        const monthlySavings = reductionAmount;
+        const annualSavings = monthlySavings * 12;
+        
         result = {
           type: 'scenario',
-          title: 'Dining Reduction Scenario (20%)',
+          title: `Dining Reduction Scenario (${percentage}%)`,
           data: [
-            { period: 'Current', dining: 486, projected: 486 },
-            { period: 'With 20% Reduction', dining: 389, projected: 389 }
+            { period: 'Current', dining: currentDining, projected: currentDining },
+            { period: `With ${percentage}% Reduction`, dining: newDining, projected: newDining }
           ],
-          summary: 'Reducing dining by 20% would save you $97/month, totaling $1,164 annually.'
+          summary: `Reducing dining by ${percentage}% would save you $${monthlySavings.toFixed(0)}/month, totaling $${annualSavings.toFixed(0)} annually.`
+        };
+      } else if (query.includes('shopping') && (query.includes('reduce') || query.includes('cut') || query.includes('decrease'))) {
+        const currentShopping = 329;
+        const reductionAmount = (currentShopping * percentage) / 100;
+        const newShopping = currentShopping - reductionAmount;
+        const monthlySavings = reductionAmount;
+        const annualSavings = monthlySavings * 12;
+        
+        result = {
+          type: 'scenario',
+          title: `Shopping Reduction Scenario (${percentage}%)`,
+          data: [
+            { period: 'Current', shopping: currentShopping, projected: currentShopping },
+            { period: `With ${percentage}% Reduction`, shopping: newShopping, projected: newShopping }
+          ],
+          summary: `Reducing shopping by ${percentage}% would save you $${monthlySavings.toFixed(0)}/month, totaling $${annualSavings.toFixed(0)} annually.`
+        };
+      } else if (query.includes('transport') && (query.includes('reduce') || query.includes('cut') || query.includes('decrease'))) {
+        const currentTransport = 245;
+        const reductionAmount = (currentTransport * percentage) / 100;
+        const newTransport = currentTransport - reductionAmount;
+        const monthlySavings = reductionAmount;
+        const annualSavings = monthlySavings * 12;
+        
+        result = {
+          type: 'scenario',
+          title: `Transport Reduction Scenario (${percentage}%)`,
+          data: [
+            { period: 'Current', transport: currentTransport, projected: currentTransport },
+            { period: `With ${percentage}% Reduction`, transport: newTransport, projected: newTransport }
+          ],
+          summary: `Reducing transport by ${percentage}% would save you $${monthlySavings.toFixed(0)}/month, totaling $${annualSavings.toFixed(0)} annually.`
         };
       } else if (query.includes('trend') || query.includes('over time')) {
         result = {
@@ -271,6 +314,31 @@ export default function Analytics() {
           data: formattedMerchants,
           summary: 'Amazon leads your spending at $892, followed by Target at $523.'
         };
+      } else if (query.includes('compare') || query.includes('vs') || query.includes('versus')) {
+        // Extract categories to compare
+        const categories = [];
+        if (query.includes('dining')) categories.push({ name: 'Dining', amount: 486, color: '#EF4444' });
+        if (query.includes('shopping')) categories.push({ name: 'Shopping', amount: 329, color: '#3B82F6' });
+        if (query.includes('transport')) categories.push({ name: 'Transport', amount: 245, color: '#10B981' });
+        if (query.includes('utilities')) categories.push({ name: 'Utilities', amount: 187, color: '#F59E0B' });
+        if (query.includes('healthcare')) categories.push({ name: 'Healthcare', amount: 150, color: '#8B5CF6' });
+        if (query.includes('entertainment')) categories.push({ name: 'Entertainment', amount: 120, color: '#EC4899' });
+        
+        if (categories.length >= 2) {
+          result = {
+            type: 'comparison',
+            title: `${categories[0].name} vs ${categories[1].name} Spending`,
+            data: categories.slice(0, 2),
+            summary: `${categories[0].name} spending ($${categories[0].amount}) is ${categories[0].amount > categories[1].amount ? 'higher' : 'lower'} than ${categories[1].name} ($${categories[1].amount}).`
+          };
+        } else {
+          result = {
+            type: 'general',
+            title: 'Spending Analysis',
+            data: monthlyData,
+            summary: 'Based on your query, here\'s your spending analysis with key insights.'
+          };
+        }
       } else {
         result = {
           type: 'general',
@@ -280,6 +348,7 @@ export default function Analytics() {
         };
       }
       
+      console.log('Query result:', result); // Debug log
       setQueryResult(result);
       toast.success("Query processed successfully!");
     } catch (error) {
@@ -715,7 +784,7 @@ export default function Analytics() {
                 <div className="space-y-4">
                   <div className="flex gap-2">
                     <Input
-                      placeholder="Try: 'Show me my healthcare spending vs shopping in September' or 'What if I reduce dining by 20%?'"
+                      placeholder="Try: 'What if I reduce dining by 60%?' or 'Compare dining vs shopping spending'"
                       value={nlQuery}
                       onChange={(e) => setNlQuery(e.target.value)}
                       onKeyPress={(e) => e.key === 'Enter' && handleNaturalLanguageQuery()}
@@ -740,19 +809,19 @@ export default function Analytics() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => setNlQuery("Show me my healthcare spending vs shopping in September")}
+                      onClick={() => setNlQuery("Compare dining vs shopping spending")}
                       className="text-left justify-start h-auto p-3"
                       disabled={isProcessingQuery}
                     >
                       <div>
-                        <p className="font-medium text-xs">Healthcare vs Shopping</p>
+                        <p className="font-medium text-xs">Dining vs Shopping</p>
                         <p className="text-xs text-muted-foreground">Compare categories</p>
                       </div>
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => setNlQuery("What if I reduce dining by 20%?")}
+                      onClick={() => setNlQuery("What if I reduce dining by 60%?")}
                       className="text-left justify-start h-auto p-3"
                       disabled={isProcessingQuery}
                     >
@@ -811,7 +880,27 @@ export default function Analytics() {
                                   <XAxis dataKey="period" />
                                   <YAxis />
                                   <ChartTooltip content={<ChartTooltipContent />} />
-                                  <Bar dataKey="dining" fill="#3B82F6" radius={[4, 4, 0, 0]} />
+                                  {queryResult.data[0].dining !== undefined && (
+                                    <Bar dataKey="dining" fill="#EF4444" radius={[4, 4, 0, 0]} />
+                                  )}
+                                  {queryResult.data[0].shopping !== undefined && (
+                                    <Bar dataKey="shopping" fill="#3B82F6" radius={[4, 4, 0, 0]} />
+                                  )}
+                                  {queryResult.data[0].transport !== undefined && (
+                                    <Bar dataKey="transport" fill="#10B981" radius={[4, 4, 0, 0]} />
+                                  )}
+                                  {queryResult.data[0].utilities !== undefined && (
+                                    <Bar dataKey="utilities" fill="#F59E0B" radius={[4, 4, 0, 0]} />
+                                  )}
+                                  {queryResult.data[0].healthcare !== undefined && (
+                                    <Bar dataKey="healthcare" fill="#8B5CF6" radius={[4, 4, 0, 0]} />
+                                  )}
+                                  {queryResult.data[0].entertainment !== undefined && (
+                                    <Bar dataKey="entertainment" fill="#EC4899" radius={[4, 4, 0, 0]} />
+                                  )}
+                                  {queryResult.data[0].groceries !== undefined && (
+                                    <Bar dataKey="groceries" fill="#06B6D4" radius={[4, 4, 0, 0]} />
+                                  )}
                                 </BarChart>
                               </ChartContainer>
                             )}
