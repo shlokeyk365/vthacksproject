@@ -42,18 +42,18 @@ export function QuickActions() {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {actions.map((action) => {
             const IconComponent = action.icon;
             return (
               <Button
                 key={action.label}
                 variant={action.variant}
-                className="h-auto p-4 flex flex-col items-center gap-2 text-center"
+                className="h-auto p-3 sm:p-4 flex flex-col items-center gap-2 text-center min-h-[80px] sm:min-h-[90px]"
                 onClick={action.onClick}
               >
-                <IconComponent className="w-5 h-5" />
-                <span className="text-xs font-medium">{action.label}</span>
+                <IconComponent className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
+                <span className="text-xs font-medium leading-tight">{action.label}</span>
               </Button>
             );
           })}
