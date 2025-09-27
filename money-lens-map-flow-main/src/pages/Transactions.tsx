@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { 
   Plus, 
   Search, 
@@ -15,7 +16,10 @@ import {
   Home,
   Utensils,
   Play,
-  CheckCircle
+  CheckCircle,
+  AlertTriangle,
+  XCircle,
+  Loader2
 } from "lucide-react";
 import {
   Table,
@@ -27,6 +31,7 @@ import {
 } from "@/components/ui/table";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
+import { useSimulateTransaction } from "@/hooks/useApi";
 
 const mockTransactions = [
   {
@@ -98,6 +103,33 @@ const chartConfig = {
 export default function Transactions() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
+  
+  // Transaction simulator state
+  const [simulatorData, setSimulatorData] = useState({
+    merchant: "",
+    amount: "",
+    category: "Food & Dining"
+  });
+  const [simulationResult, setSimulationResult] = useState(null);
+  
+  const simulateTransaction = useSimulateTransaction();
+
+  const handleSimulate = async () => {
+    if (!simulatorData.merchant || !simulatorData.amount) {
+      return;
+    }
+
+    try {
+      const result = await simulateTransaction.mutateAsync({
+        merchant: simulatorData.merchant,
+        amount: parseFloat(simulatorData.amount),
+        category: simulatorData.category
+      });
+      setSimulationResult(result.data);
+    } catch (error) {
+      console.error('Simulation failed:', error);
+    }
+  };
 
   return (
     <motion.div
@@ -242,7 +274,11 @@ export default function Transactions() {
             <CardContent className="space-y-4">
               <div>
                 <label className="text-sm font-medium">Merchant</label>
-                <Input placeholder="Enter merchant name..." />
+                <Input 
+                  placeholder="Enter merchant name..." 
+                  value={simulatorData.merchant}
+                  onChange={(e) => setSimulatorData({...simulatorData, merchant: e.target.value})}
+                />
               </div>
               
               <div>
@@ -251,34 +287,122 @@ export default function Transactions() {
                   <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">
                     $
                   </span>
-                  <Input placeholder="0.00" className="pl-8" />
+                  <Input 
+                    placeholder="0.00" 
+                    className="pl-8" 
+                    type="number"
+                    step="0.01"
+                    value={simulatorData.amount}
+                    onChange={(e) => setSimulatorData({...simulatorData, amount: e.target.value})}
+                  />
                 </div>
               </div>
               
               <div>
                 <label className="text-sm font-medium">Category</label>
-                <select className="w-full p-2 border border-input rounded-md bg-background">
-                  <option>Food & Dining</option>
-                  <option>Shopping</option>
-                  <option>Transportation</option>
-                  <option>Utilities</option>
-                  <option>Entertainment</option>
+                <select 
+                  className="w-full p-2 border border-input rounded-md bg-background"
+                  value={simulatorData.category}
+                  onChange={(e) => setSimulatorData({...simulatorData, category: e.target.value})}
+                >
+                  <option value="Food & Dining">Food & Dining</option>
+                  <option value="Shopping">Shopping</option>
+                  <option value="Transportation">Transportation</option>
+                  <option value="Utilities">Utilities</option>
+                  <option value="Entertainment">Entertainment</option>
+                  <option value="Healthcare">Healthcare</option>
+                  <option value="Education">Education</option>
                 </select>
               </div>
               
-              <Button className="w-full">
-                <Play className="w-4 h-4 mr-2" />
+              <Button 
+                className="w-full" 
+                onClick={handleSimulate}
+                disabled={simulateTransaction.isPending || !simulatorData.merchant || !simulatorData.amount}
+              >
+                {simulateTransaction.isPending ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Play className="w-4 h-4 mr-2" />
+                )}
                 Simulate Transaction
               </Button>
               
-              <div className="p-3 bg-muted/20 rounded-lg">
-                <p className="text-sm font-medium text-success">
-                  ✓ Transaction would be approved
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  No spending caps would be exceeded
-                </p>
-              </div>
+              {/* Simulation Results */}
+              {simulationResult && (
+                <div className="space-y-3">
+                  {simulationResult.wouldBeApproved ? (
+                    <Alert className="border-green-200 bg-green-50">
+                      <CheckCircle className="h-4 w-4 text-green-600" />
+                      <AlertDescription className="text-green-800">
+                        <strong>✓ Transaction would be approved</strong>
+                        {simulationResult.warnings?.length > 0 && (
+                          <p className="text-sm mt-1">⚠️ With {simulationResult.warnings.length} warning(s)</p>
+                        )}
+                      </AlertDescription>
+                    </Alert>
+                  ) : (
+                    <Alert className="border-red-200 bg-red-50">
+                      <XCircle className="h-4 w-4 text-red-600" />
+                      <AlertDescription className="text-red-800">
+                        <strong>✗ Transaction would be rejected</strong>
+                        <p className="text-sm mt-1">{simulationResult.violations?.length} violation(s) found</p>
+                      </AlertDescription>
+                    </Alert>
+                  )}
+
+                  {/* Violations */}
+                  {simulationResult.violations?.length > 0 && (
+                    <div className="space-y-2">
+                      <h4 className="text-sm font-medium text-red-700">Violations:</h4>
+                      {simulationResult.violations.map((violation: any, index: number) => (
+                        <div key={index} className="p-2 bg-red-50 border border-red-200 rounded text-sm">
+                          <div className="font-medium text-red-800">{violation.name}</div>
+                          <div className="text-red-600">
+                            Would exceed by ${violation.wouldExceed?.toFixed(2)} 
+                            ({violation.percentage?.toFixed(1)}% of limit)
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Warnings */}
+                  {simulationResult.warnings?.length > 0 && (
+                    <div className="space-y-2">
+                      <h4 className="text-sm font-medium text-yellow-700">Warnings:</h4>
+                      {simulationResult.warnings.map((warning: any, index: number) => (
+                        <div key={index} className="p-2 bg-yellow-50 border border-yellow-200 rounded text-sm">
+                          <div className="font-medium text-yellow-800">{warning.name}</div>
+                          <div className="text-yellow-600">
+                            {warning.percentage?.toFixed(1)}% of limit used
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Summary */}
+                  <div className="p-3 bg-muted/20 rounded-lg text-sm">
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <span className="text-muted-foreground">Current Spending:</span>
+                        <div className="font-medium">${simulationResult.currentSpending?.toFixed(2)}</div>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">After Transaction:</span>
+                        <div className="font-medium">${simulationResult.wouldSpend?.toFixed(2)}</div>
+                      </div>
+                    </div>
+                    {simulationResult.monthlyBudget && (
+                      <div className="mt-2 pt-2 border-t">
+                        <span className="text-muted-foreground">Monthly Budget:</span>
+                        <div className="font-medium">${simulationResult.monthlyBudget.toFixed(2)}</div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
 

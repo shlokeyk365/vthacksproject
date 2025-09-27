@@ -35,7 +35,7 @@ export const useLogin = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: apiClient.login,
+    mutationFn: (data: any) => apiClient.login(data),
     onSuccess: (data) => {
       queryClient.setQueryData(queryKeys.profile, data);
       toast.success('Login successful!');
@@ -50,7 +50,7 @@ export const useRegister = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: apiClient.register,
+    mutationFn: (data: any) => apiClient.register(data),
     onSuccess: (data) => {
       queryClient.setQueryData(queryKeys.profile, data);
       toast.success('Registration successful!');
@@ -89,7 +89,7 @@ export const useCreateTransaction = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: apiClient.createTransaction,
+    mutationFn: (data: any) => apiClient.createTransaction(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.transactions });
       queryClient.invalidateQueries({ queryKey: queryKeys.dashboard });
@@ -103,7 +103,7 @@ export const useCreateTransaction = () => {
 
 export const useSimulateTransaction = () => {
   return useMutation({
-    mutationFn: apiClient.simulateTransaction,
+    mutationFn: (data: any) => apiClient.simulateTransaction(data),
     onError: (error: any) => {
       toast.error(error.message || 'Transaction simulation failed');
     },
