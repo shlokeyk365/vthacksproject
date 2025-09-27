@@ -25,9 +25,9 @@ All colors MUST be HSL.
     --primary-dark: 217 91% 45%;
 
     /* Financial Green for Success/Growth */
-    --success: 142 71% 45%;
+    --success: 142 71% 50%;
     --success-foreground: 0 0% 100%;
-    --success-light: 142 71% 55%;
+    --success-light: 142 71% 60%;
 
     /* Warning Orange for Alerts */
     --warning: 38 92% 50%;
@@ -93,9 +93,9 @@ All colors MUST be HSL.
     --primary-glow: 217 91% 75%;
     --primary-dark: 217 91% 50%;
 
-    --success: 142 71% 50%;
+    --success: 142 71% 55%;
     --success-foreground: 222 47% 11%;
-    --success-light: 142 71% 60%;
+    --success-light: 142 71% 65%;
 
     --warning: 38 92% 55%;
     --warning-foreground: 222 47% 11%;
@@ -244,6 +244,15 @@ All colors MUST be HSL.
   /* Chart Styles */
   .chart-container {
     @apply bg-card rounded-lg p-6 shadow-sm border;
+  }
+
+  /* High contrast green text for better readability */
+  .text-success-high-contrast {
+    color: hsl(142 71% 30%);
+  }
+
+  .dark .text-success-high-contrast {
+    color: hsl(142 71% 70%);
   }
 
   /* Responsive improvements */
