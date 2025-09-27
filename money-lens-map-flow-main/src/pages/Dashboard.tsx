@@ -134,7 +134,7 @@ export default function Dashboard() {
               change="All active"
               changeType="positive"
               icon={<CheckCircle className="w-6 h-6" />}
-              variant="success"
+              variant="primary"
             />
           </div>
           

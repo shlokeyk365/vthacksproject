@@ -87,23 +87,23 @@ export function NotificationDropdown() {
         </Button>
       </DropdownMenuTrigger>
       
-      <DropdownMenuContent align="end" className="w-80">
-        <div className="flex items-center justify-between p-3 border-b">
-          <div>
-            <h3 className="font-semibold">Notifications</h3>
+      <DropdownMenuContent align="end" className="w-80 p-0">
+        <div className="flex items-center justify-between p-4 border-b border-border/50">
+          <div className="space-y-1">
+            <h3 className="font-semibold text-sm">Notifications</h3>
             <p className="text-xs text-muted-foreground">
               {unreadCount} unread
             </p>
           </div>
-          <div className="flex gap-1">
+          <div className="flex gap-2">
             {unreadCount > 0 && (
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={handleMarkAllAsRead}
-                className="h-6 px-2 text-xs"
+                className="h-7 px-3 text-xs hover:bg-muted/50"
               >
-                <Check className="w-3 h-3 mr-1" />
+                <Check className="w-3 h-3 mr-1.5" />
                 Mark all read
               </Button>
             )}
@@ -112,9 +112,9 @@ export function NotificationDropdown() {
                 variant="ghost"
                 size="sm"
                 onClick={handleClearAll}
-                className="h-6 px-2 text-xs"
+                className="h-7 px-3 text-xs hover:bg-muted/50"
               >
-                <X className="w-3 h-3 mr-1" />
+                <X className="w-3 h-3 mr-1.5" />
                 Clear all
               </Button>
             )}
@@ -125,47 +125,47 @@ export function NotificationDropdown() {
         
         <ScrollArea className="h-80">
           {notifications.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-8 text-center">
-              <Bell className="w-8 h-8 text-muted-foreground mb-2" />
-              <p className="text-sm text-muted-foreground">No notifications</p>
+            <div className="flex flex-col items-center justify-center py-12 text-center px-4">
+              <Bell className="w-10 h-10 text-muted-foreground mb-3" />
+              <p className="text-sm font-medium text-muted-foreground mb-1">No notifications</p>
               <p className="text-xs text-muted-foreground">
                 You're all caught up!
               </p>
             </div>
           ) : (
-            <div className="space-y-1">
+            <div className="space-y-2 p-2">
               {notifications.map((notification) => (
                 <DropdownMenuItem
                   key={notification.id}
-                  className={`p-3 cursor-pointer transition-all duration-200 ${getNotificationColor(notification.type)} ${
-                    !notification.read ? 'font-medium' : ''
+                  className={`p-4 cursor-pointer transition-all duration-200 rounded-lg border-l-4 ${getNotificationColor(notification.type)} ${
+                    !notification.read ? 'font-medium bg-muted/30' : 'bg-background'
                   }`}
                   onClick={() => handleNotificationClick(notification)}
                 >
-                  <div className="flex items-start gap-3 w-full">
-                    <div className="flex-shrink-0 mt-0.5">
+                  <div className="flex items-start gap-4 w-full">
+                    <div className="flex-shrink-0 mt-1">
                       {getNotificationIcon(notification.type)}
                     </div>
                     
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <h4 className="text-sm font-medium truncate">
+                    <div className="flex-1 min-w-0 space-y-2">
+                      <div className="flex items-start justify-between gap-2">
+                        <h4 className="text-sm font-medium leading-tight">
                           {notification.title}
                         </h4>
                         {!notification.read && (
-                          <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0" />
+                          <div className="w-2 h-2 bg-primary rounded-full flex-shrink-0 mt-1.5" />
                         )}
                       </div>
                       
-                      <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                      <p className="text-xs text-muted-foreground leading-relaxed line-clamp-3">
                         {notification.message}
                       </p>
                       
-                      <div className="flex items-center justify-between mt-2">
+                      <div className="flex items-center justify-between pt-1">
                         <span className="text-xs text-muted-foreground">
                           {formatDistanceToNow(notification.timestamp, { addSuffix: true })}
                         </span>
-                        <Badge variant="outline" className="text-xs">
+                        <Badge variant="secondary" className="text-xs px-2 py-0.5">
                           {notification.category}
                         </Badge>
                       </div>
@@ -178,9 +178,9 @@ export function NotificationDropdown() {
                         e.stopPropagation();
                         removeNotification(notification.id);
                       }}
-                      className="h-6 w-6 p-0 hover:bg-red-100"
+                      className="h-7 w-7 p-0 hover:bg-destructive/10 hover:text-destructive flex-shrink-0"
                     >
-                      <X className="w-3 h-3" />
+                      <X className="w-3.5 h-3.5" />
                     </Button>
                   </div>
                 </DropdownMenuItem>

@@ -30,7 +30,7 @@ export function StatsCard({
   };
 
   const changeClasses = {
-    positive: "text-success",
+    positive: "text-success-high-contrast",
     negative: "text-danger",
     neutral: "text-muted-foreground",
   };

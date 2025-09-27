@@ -208,8 +208,8 @@ export class FinancialBodyguard {
   // Assess amount-based risk
   private assessAmountRisk(amount: number): RiskFactor {
     const dailySpent = this.getDailySpending();
-    const weeklySpent = this.getWeeklySpending();
-    const monthlySpent = this.getMonthlySpending();
+    const weeklySpent = this.getTotalWeeklySpending();
+    const monthlySpent = this.getTotalMonthlySpending();
 
     if (amount > this.userPreferences.dailyLimit) {
       return {
@@ -426,16 +426,16 @@ export class FinancialBodyguard {
       .reduce((sum, t) => sum + t.amount, 0);
   }
 
-  // Get weekly spending
-  private getWeeklySpending(): number {
+  // Get total weekly spending
+  private getTotalWeeklySpending(): number {
     const weekAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
     return this.spendingHistory
       .filter(t => t.timestamp >= weekAgo)
       .reduce((sum, t) => sum + t.amount, 0);
   }
 
-  // Get monthly spending
-  private getMonthlySpending(): number {
+  // Get total monthly spending
+  private getTotalMonthlySpending(): number {
     const monthAgo = Date.now() - (30 * 24 * 60 * 60 * 1000);
     return this.spendingHistory
       .filter(t => t.timestamp >= monthAgo)
