@@ -9,6 +9,114 @@ export const isNessieConfigured = () => {
   return import.meta.env.VITE_NESSIE_API_KEY && import.meta.env.VITE_NESSIE_API_KEY !== 'your-api-key-here';
 };
 
+// Demo data for hackathon demonstration
+export const demoCustomers: NessieCustomer[] = [
+  {
+    _id: 'demo-customer-1',
+    first_name: 'Alex',
+    last_name: 'Johnson',
+    address: {
+      street_number: '123',
+      street_name: 'Main Street',
+      city: 'Blacksburg',
+      state: 'VA',
+      zip: '24060'
+    }
+  },
+  {
+    _id: 'demo-customer-2',
+    first_name: 'Sarah',
+    last_name: 'Williams',
+    address: {
+      street_number: '456',
+      street_name: 'College Avenue',
+      city: 'Blacksburg',
+      state: 'VA',
+      zip: '24061'
+    }
+  }
+];
+
+export const demoAccounts: NessieAccount[] = [
+  {
+    _id: 'demo-account-1',
+    type: 'Checking',
+    nickname: 'Primary Checking',
+    rewards: 1250,
+    balance: 2847.50,
+    customer_id: 'demo-customer-1'
+  },
+  {
+    _id: 'demo-account-2',
+    type: 'Savings',
+    nickname: 'Emergency Fund',
+    rewards: 0,
+    balance: 5420.75,
+    customer_id: 'demo-customer-1'
+  },
+  {
+    _id: 'demo-account-3',
+    type: 'Checking',
+    nickname: 'Student Account',
+    rewards: 850,
+    balance: 1234.25,
+    customer_id: 'demo-customer-2'
+  }
+];
+
+export const demoTransactions: NessieTransaction[] = [
+  {
+    _id: 'demo-tx-1',
+    type: 'purchase',
+    transaction_date: '2024-09-25T14:30:00Z',
+    status: 'COMPLETED',
+    payee_id: 'Starbucks',
+    medium: 'balance',
+    amount: 8.50,
+    description: 'Coffee purchase'
+  },
+  {
+    _id: 'demo-tx-2',
+    type: 'purchase',
+    transaction_date: '2024-09-24T19:15:00Z',
+    status: 'COMPLETED',
+    payee_id: 'Amazon',
+    medium: 'balance',
+    amount: 45.99,
+    description: 'Online shopping'
+  },
+  {
+    _id: 'demo-tx-3',
+    type: 'purchase',
+    transaction_date: '2024-09-23T12:00:00Z',
+    status: 'COMPLETED',
+    payee_id: 'Shell',
+    medium: 'balance',
+    amount: 35.00,
+    description: 'Gas station'
+  },
+  {
+    _id: 'demo-tx-4',
+    type: 'purchase',
+    transaction_date: '2024-09-22T18:45:00Z',
+    status: 'COMPLETED',
+    payee_id: 'Target',
+    medium: 'balance',
+    amount: 67.50,
+    description: 'Grocery shopping'
+  },
+  {
+    _id: 'demo-tx-5',
+    type: 'purchase',
+    transaction_date: '2024-09-21T09:30:00Z',
+    status: 'COMPLETED',
+    payee_id: 'McDonald\'s',
+    medium: 'balance',
+    amount: 12.30,
+    description: 'Fast food'
+  }
+];
+
 export interface NessieCustomer {
   _id: string;
   first_name: string;
@@ -125,10 +233,18 @@ class NessieApiClient {
 
   // Customer Endpoints
   async getCustomers(): Promise<NessieCustomer[]> {
+    if (this.apiKey === 'demo-key') {
+      return Promise.resolve(demoCustomers);
+    }
     return this.request<NessieCustomer[]>('/customers');
   }
 
   async getCustomer(customerId: string): Promise<NessieCustomer> {
+    if (this.apiKey === 'demo-key') {
+      const customer = demoCustomers.find(c => c._id === customerId);
+      if (!customer) throw new Error('Customer not found');
+      return Promise.resolve(customer);
+    }
     return this.request<NessieCustomer>(`/customers/${customerId}`);
   }
 
@@ -141,6 +257,9 @@ class NessieApiClient {
 
   // Account Endpoints
   async getAccounts(customerId: string): Promise<NessieAccount[]> {
+    if (this.apiKey === 'demo-key') {
+      return Promise.resolve(demoAccounts.filter(account => account.customer_id === customerId));
+    }
     return this.request<NessieAccount[]>(`/customers/${customerId}/accounts`);
   }
 
@@ -157,6 +276,9 @@ class NessieApiClient {
 
   // Transaction Endpoints
   async getTransactions(accountId: string): Promise<NessieTransaction[]> {
+    if (this.apiKey === 'demo-key') {
+      return Promise.resolve(demoTransactions);
+    }
     return this.request<NessieTransaction[]>(`/accounts/${accountId}/transactions`);
   }
 
@@ -251,6 +373,43 @@ class NessieApiClient {
     for (const account of accounts) {
       const transactions = await this.getTransactions(account._id);
       allTransactions.push(...transactions);
+    }
+
+    // If using demo data, add some additional demo transactions for better analysis
+    if (this.apiKey === 'demo-key') {
+      const additionalDemoTransactions: NessieTransaction[] = [
+        {
+          _id: 'demo-tx-6',
+          type: 'purchase',
+          transaction_date: '2024-09-20T16:20:00Z',
+          status: 'COMPLETED',
+          payee_id: 'Chipotle',
+          medium: 'balance',
+          amount: 14.75,
+          description: 'Lunch'
+        },
+        {
+          _id: 'demo-tx-7',
+          type: 'purchase',
+          transaction_date: '2024-09-19T11:30:00Z',
+          status: 'COMPLETED',
+          payee_id: 'Uber',
+          medium: 'balance',
+          amount: 15.50,
+          description: 'Ride share'
+        },
+        {
+          _id: 'demo-tx-8',
+          type: 'purchase',
+          transaction_date: '2024-09-18T20:00:00Z',
+          status: 'COMPLETED',
+          payee_id: 'Netflix',
+          medium: 'balance',
+          amount: 15.99,
+          description: 'Subscription'
+        }
+      ];
+      allTransactions.push(...additionalDemoTransactions);
     }
 
     const cutoffDate = new Date();

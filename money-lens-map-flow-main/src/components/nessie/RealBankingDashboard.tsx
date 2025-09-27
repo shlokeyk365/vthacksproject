@@ -166,7 +166,7 @@ export function RealBankingDashboard() {
             <Building className="w-6 h-6 text-primary" />
             Capital One Nessie API Integration
             <Badge variant="secondary" className="ml-auto">
-              Real Banking Data
+              {import.meta.env.VITE_NESSIE_API_KEY === 'demo-key' ? 'Demo Mode' : 'Real Banking Data'}
             </Badge>
           </CardTitle>
         </CardHeader>
