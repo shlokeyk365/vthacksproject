@@ -125,20 +125,20 @@ export function AppSidebar() {
             {!collapsed && "Navigation"}
           </SidebarGroupLabel>
           <SidebarGroupContent className="px-3">
-            <SidebarMenu className="space-y-1">
+            <SidebarMenu className="space-y-2">
               {navigationItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild className="w-full">
                     <NavLink
                       to={item.url}
                       end
-                      className={`flex items-center gap-3 px-3 py-3 rounded-md transition-all duration-200 ${getNavCls(
+                      className={`flex items-center gap-3 px-3 py-4 rounded-md transition-all duration-200 ${getNavCls(
                         { isActive: isActive(item.url) }
                       )}`}
                     >
                       <item.icon className={`w-5 h-5 flex-shrink-0 ${isActive(item.url) ? 'text-primary-foreground' : ''}`} />
                       {!collapsed && (
-                        <div className="flex-1 min-w-0">
+                        <div className="flex-1 min-w-0 pb-1">
                           <div className="font-medium text-sm">{item.title}</div>
                           <div className="text-xs opacity-60 truncate">
                             {item.description}
