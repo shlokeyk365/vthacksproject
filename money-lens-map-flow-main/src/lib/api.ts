@@ -240,38 +240,38 @@ class ApiClient {
   }
 
   // Spending Caps
-  async getSpendingCaps() {
+  getSpendingCaps = async () => {
     return this.request<SpendingCap[]>('/caps');
   }
 
-  async createSpendingCap(capData: {
+  createSpendingCap = async (capData: {
     type: 'MERCHANT' | 'CATEGORY' | 'GLOBAL';
     name: string;
     limit: number;
     period: 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'YEARLY';
     category?: string;
     merchant?: string;
-  }) {
+  }) => {
     return this.request<SpendingCap>('/caps', {
       method: 'POST',
       body: JSON.stringify(capData),
     });
   }
 
-  async updateSpendingCap(id: string, capData: Partial<SpendingCap>) {
+  updateSpendingCap = async (id: string, capData: Partial<SpendingCap>) => {
     return this.request<SpendingCap>(`/caps/${id}`, {
       method: 'PUT',
       body: JSON.stringify(capData),
     });
   }
 
-  async toggleSpendingCap(id: string) {
+  toggleSpendingCap = async (id: string) => {
     return this.request<SpendingCap>(`/caps/${id}/toggle`, {
       method: 'PATCH',
     });
   }
 
-  async deleteSpendingCap(id: string) {
+  deleteSpendingCap = async (id: string) => {
     return this.request(`/caps/${id}`, {
       method: 'DELETE',
     });
