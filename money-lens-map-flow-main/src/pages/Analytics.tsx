@@ -54,11 +54,11 @@ const monthlyData = [
 ];
 
 const topMerchants = [
-  { name: "Amazon", amount: 892, visits: 12, category: "Shopping" },
-  { name: "Target", amount: 523, visits: 8, category: "Shopping" },
-  { name: "Shell", amount: 356, visits: 15, category: "Transport" },
-  { name: "Starbucks", amount: 247, visits: 18, category: "Dining" },
-  { name: "McDonald's", amount: 189, visits: 14, category: "Dining" },
+  { name: "Amazon", amount: 892, visits: 12, category: "Shopping", color: "#3B82F6" },
+  { name: "Target", amount: 523, visits: 8, category: "Shopping", color: "#10B981" },
+  { name: "Shell", amount: 356, visits: 15, category: "Transport", color: "#F59E0B" },
+  { name: "Starbucks", amount: 247, visits: 18, category: "Dining", color: "#EF4444" },
+  { name: "McDonald's", amount: 189, visits: 14, category: "Dining", color: "#8B5CF6" },
 ];
 
 // Ensure data is properly formatted for charts
@@ -470,10 +470,13 @@ export default function Analytics() {
                 />
                 <Bar 
                   dataKey="amount" 
-                  fill="#3B82F6"
                   radius={[4, 4, 0, 0]}
                   name="Amount Spent"
-                />
+                >
+                  {formattedMerchants.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Bar>
               </BarChart>
             </ChartContainer>
           </CardContent>
