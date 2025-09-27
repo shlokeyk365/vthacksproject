@@ -1,0 +1,385 @@
+import { useState } from "react";
+import { motion } from "framer-motion";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
+import { 
+  User, 
+  Bell, 
+  Map, 
+  Download, 
+  Upload, 
+  Trash2,
+  Shield,
+  Moon,
+  Sun,
+  Palette,
+  Database,
+  Key
+} from "lucide-react";
+
+export default function Settings() {
+  const [notifications, setNotifications] = useState({
+    capAlerts: true,
+    weeklyReports: true,
+    budgetWarnings: true,
+    transactionAlerts: false,
+  });
+
+  const [mapSettings, setMapSettings] = useState({
+    defaultLocation: "Blacksburg, VA",
+    mapboxToken: "",
+    showHeatmap: true,
+    showMerchantPins: true,
+  });
+
+  const [theme, setTheme] = useState("light");
+
+  return (
+    <motion.div
+      className="space-y-6"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+    >
+      {/* Header */}
+      <div>
+        <h1 className="text-3xl font-bold">Settings</h1>
+        <p className="text-muted-foreground">
+          Manage your preferences and application configuration
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Main Settings */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Profile Settings */}
+          <Card className="card-gradient">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <User className="w-5 h-5" />
+                Profile Settings
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium">First Name</label>
+                  <Input defaultValue="John" />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Last Name</label>
+                  <Input defaultValue="Doe" />
+                </div>
+              </div>
+              
+              <div>
+                <label className="text-sm font-medium">Email Address</label>
+                <Input defaultValue="john.doe@example.com" type="email" />
+              </div>
+              
+              <div>
+                <label className="text-sm font-medium">Monthly Budget Goal</label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">
+                    $
+                  </span>
+                  <Input defaultValue="3500" className="pl-8" />
+                </div>
+              </div>
+              
+              <Button>Save Profile Changes</Button>
+            </CardContent>
+          </Card>
+
+          {/* Notification Settings */}
+          <Card className="card-gradient">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Bell className="w-5 h-5" />
+                Notification Preferences
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium">Spending Cap Alerts</p>
+                  <p className="text-sm text-muted-foreground">
+                    Get notified when you approach spending limits
+                  </p>
+                </div>
+                <Switch
+                  checked={notifications.capAlerts}
+                  onCheckedChange={(checked) =>
+                    setNotifications({ ...notifications, capAlerts: checked })
+                  }
+                />
+              </div>
+              
+              <Separator />
+              
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium">Weekly Reports</p>
+                  <p className="text-sm text-muted-foreground">
+                    Receive weekly spending summaries
+                  </p>
+                </div>
+                <Switch
+                  checked={notifications.weeklyReports}
+                  onCheckedChange={(checked) =>
+                    setNotifications({ ...notifications, weeklyReports: checked })
+                  }
+                />
+              </div>
+              
+              <Separator />
+              
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium">Budget Warnings</p>
+                  <p className="text-sm text-muted-foreground">
+                    Alert when approaching monthly budget limit
+                  </p>
+                </div>
+                <Switch
+                  checked={notifications.budgetWarnings}
+                  onCheckedChange={(checked) =>
+                    setNotifications({ ...notifications, budgetWarnings: checked })
+                  }
+                />
+              </div>
+              
+              <Separator />
+              
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium">Transaction Alerts</p>
+                  <p className="text-sm text-muted-foreground">
+                    Instant notifications for all transactions
+                  </p>
+                </div>
+                <Switch
+                  checked={notifications.transactionAlerts}
+                  onCheckedChange={(checked) =>
+                    setNotifications({ ...notifications, transactionAlerts: checked })
+                  }
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Map Configuration */}
+          <Card className="card-gradient">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Map className="w-5 h-5" />
+                Map Configuration
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <label className="text-sm font-medium">Default Location</label>
+                <Input 
+                  value={mapSettings.defaultLocation}
+                  onChange={(e) => setMapSettings({ ...mapSettings, defaultLocation: e.target.value })}
+                />
+              </div>
+              
+              <div>
+                <label className="text-sm font-medium flex items-center gap-2">
+                  Mapbox Access Token
+                  <Badge variant="outline" className="text-xs">Required</Badge>
+                </label>
+                <Input 
+                  type="password"
+                  placeholder="pk.eyJ1..."
+                  value={mapSettings.mapboxToken}
+                  onChange={(e) => setMapSettings({ ...mapSettings, mapboxToken: e.target.value })}
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Get your free token from <a href="https://mapbox.com" target="_blank" className="text-primary underline">mapbox.com</a>
+                </p>
+              </div>
+              
+              <Separator />
+              
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium">Show Spending Heatmap</p>
+                  <p className="text-sm text-muted-foreground">
+                    Display color-coded spending intensity
+                  </p>
+                </div>
+                <Switch
+                  checked={mapSettings.showHeatmap}
+                  onCheckedChange={(checked) =>
+                    setMapSettings({ ...mapSettings, showHeatmap: checked })
+                  }
+                />
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium">Show Merchant Pins</p>
+                  <p className="text-sm text-muted-foreground">
+                    Display clickable merchant markers
+                  </p>
+                </div>
+                <Switch
+                  checked={mapSettings.showMerchantPins}
+                  onCheckedChange={(checked) =>
+                    setMapSettings({ ...mapSettings, showMerchantPins: checked })
+                  }
+                />
+              </div>
+              
+              <Button>Save Map Settings</Button>
+            </CardContent>
+          </Card>
+
+          {/* Data Management */}
+          <Card className="card-gradient">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Database className="w-5 h-5" />
+                Data Management
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Button variant="outline" className="flex items-center gap-2">
+                  <Download className="w-4 h-4" />
+                  Export All Data
+                </Button>
+                
+                <Button variant="outline" className="flex items-center gap-2">
+                  <Upload className="w-4 h-4" />
+                  Import Data
+                </Button>
+              </div>
+              
+              <Separator />
+              
+              <div className="p-4 bg-danger/10 rounded-lg border border-danger/20">
+                <h4 className="font-semibold text-danger mb-2">Danger Zone</h4>
+                <p className="text-sm text-muted-foreground mb-3">
+                  This action cannot be undone. All your data will be permanently deleted.
+                </p>
+                <Button variant="destructive" size="sm" className="flex items-center gap-2">
+                  <Trash2 className="w-4 h-4" />
+                  Delete All Data
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Sidebar Settings */}
+        <div className="space-y-6">
+          {/* Theme Settings */}
+          <Card className="card-gradient">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Palette className="w-5 h-5" />
+                Appearance
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <label className="text-sm font-medium mb-3 block">Theme</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    variant={theme === "light" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setTheme("light")}
+                    className="flex items-center gap-2"
+                  >
+                    <Sun className="w-4 h-4" />
+                    Light
+                  </Button>
+                  <Button
+                    variant={theme === "dark" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setTheme("dark")}
+                    className="flex items-center gap-2"
+                  >
+                    <Moon className="w-4 h-4" />
+                    Dark
+                  </Button>
+                </div>
+              </div>
+              
+              <Separator />
+              
+              <div>
+                <label className="text-sm font-medium">Primary Color</label>
+                <div className="flex gap-2 mt-2">
+                  <div className="w-8 h-8 bg-primary rounded-md border cursor-pointer"></div>
+                  <div className="w-8 h-8 bg-success rounded-md border cursor-pointer"></div>
+                  <div className="w-8 h-8 bg-warning rounded-md border cursor-pointer"></div>
+                  <div className="w-8 h-8 bg-danger rounded-md border cursor-pointer"></div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Security */}
+          <Card className="card-gradient">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="w-5 h-5" />
+                Security
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Button variant="outline" className="w-full">
+                Change Password
+              </Button>
+              
+              <Button variant="outline" className="w-full">
+                Enable 2FA
+              </Button>
+              
+              <Separator />
+              
+              <div className="text-center">
+                <Badge variant="secondary" className="text-xs">
+                  Last login: 2 hours ago
+                </Badge>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Quick Stats */}
+          <Card className="card-gradient">
+            <CardHeader>
+              <CardTitle>Account Overview</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex justify-between text-sm">
+                <span>Total Transactions</span>
+                <span className="font-semibold">1,247</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span>Active Caps</span>
+                <span className="font-semibold">8</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span>Account Age</span>
+                <span className="font-semibold">6 months</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span>Data Size</span>
+                <span className="font-semibold">2.4 MB</span>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
