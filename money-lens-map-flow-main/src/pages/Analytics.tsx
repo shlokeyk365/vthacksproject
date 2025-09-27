@@ -186,40 +186,62 @@ export default function Analytics() {
           <CardContent>
             <ChartContainer config={chartConfig} className="h-[300px]">
               <AreaChart data={monthlyData}>
-                <XAxis dataKey="month" />
-                <YAxis />
-                <ChartTooltip content={<ChartTooltipContent />} />
+                <XAxis 
+                  dataKey="month" 
+                  tick={{ fontSize: 12 }}
+                  axisLine={{ stroke: '#e5e7eb' }}
+                  tickLine={{ stroke: '#e5e7eb' }}
+                />
+                <YAxis 
+                  tick={{ fontSize: 12 }}
+                  axisLine={{ stroke: '#e5e7eb' }}
+                  tickLine={{ stroke: '#e5e7eb' }}
+                />
+                <ChartTooltip 
+                  content={<ChartTooltipContent />}
+                  labelStyle={{ color: '#374151' }}
+                  contentStyle={{ 
+                    backgroundColor: '#ffffff',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                  }}
+                />
                 <Area
                   type="monotone"
                   dataKey="dining"
                   stackId="1"
-                  stroke="var(--color-dining)"
-                  fill="var(--color-dining)"
+                  stroke={chartConfig.dining.color}
+                  fill={chartConfig.dining.color}
                   fillOpacity={0.6}
+                  strokeWidth={2}
                 />
                 <Area
                   type="monotone"
                   dataKey="shopping"
                   stackId="1"
-                  stroke="var(--color-shopping)"
-                  fill="var(--color-shopping)"
+                  stroke={chartConfig.shopping.color}
+                  fill={chartConfig.shopping.color}
                   fillOpacity={0.6}
+                  strokeWidth={2}
                 />
                 <Area
                   type="monotone"
                   dataKey="transport"
                   stackId="1"
-                  stroke="var(--color-transport)"
-                  fill="var(--color-transport)"
+                  stroke={chartConfig.transport.color}
+                  fill={chartConfig.transport.color}
                   fillOpacity={0.6}
+                  strokeWidth={2}
                 />
                 <Area
                   type="monotone"
                   dataKey="utilities"
                   stackId="1"
-                  stroke="var(--color-utilities)"
-                  fill="var(--color-utilities)"
+                  stroke={chartConfig.utilities.color}
+                  fill={chartConfig.utilities.color}
                   fillOpacity={0.6}
+                  strokeWidth={2}
                 />
               </AreaChart>
             </ChartContainer>
@@ -234,10 +256,35 @@ export default function Analytics() {
           <CardContent>
             <ChartContainer config={{}} className="h-[300px]">
               <BarChart data={topMerchants} layout="horizontal">
-                <XAxis type="number" />
-                <YAxis dataKey="name" type="category" width={80} />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <Bar dataKey="amount" fill="#3B82F6" />
+                <XAxis 
+                  type="number" 
+                  tick={{ fontSize: 12 }}
+                  axisLine={{ stroke: '#e5e7eb' }}
+                  tickLine={{ stroke: '#e5e7eb' }}
+                />
+                <YAxis 
+                  dataKey="name" 
+                  type="category" 
+                  width={80}
+                  tick={{ fontSize: 12 }}
+                  axisLine={{ stroke: '#e5e7eb' }}
+                  tickLine={{ stroke: '#e5e7eb' }}
+                />
+                <ChartTooltip 
+                  content={<ChartTooltipContent />}
+                  labelStyle={{ color: '#374151' }}
+                  contentStyle={{ 
+                    backgroundColor: '#ffffff',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                  }}
+                />
+                <Bar 
+                  dataKey="amount" 
+                  fill="#3B82F6"
+                  radius={[0, 4, 4, 0]}
+                />
               </BarChart>
             </ChartContainer>
           </CardContent>
@@ -251,17 +298,46 @@ export default function Analytics() {
           <CardContent>
             <ChartContainer config={{}} className="h-[300px]">
               <ComposedChart data={spendingVsCaps}>
-                <XAxis dataKey="category" />
-                <YAxis />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <Bar dataKey="spent" fill="#3B82F6" name="Spent" />
-                <Bar dataKey="cap" fill="#10B981" name="Cap" />
+                <XAxis 
+                  dataKey="category" 
+                  tick={{ fontSize: 12 }}
+                  axisLine={{ stroke: '#e5e7eb' }}
+                  tickLine={{ stroke: '#e5e7eb' }}
+                />
+                <YAxis 
+                  tick={{ fontSize: 12 }}
+                  axisLine={{ stroke: '#e5e7eb' }}
+                  tickLine={{ stroke: '#e5e7eb' }}
+                />
+                <ChartTooltip 
+                  content={<ChartTooltipContent />}
+                  labelStyle={{ color: '#374151' }}
+                  contentStyle={{ 
+                    backgroundColor: '#ffffff',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                  }}
+                />
+                <Bar 
+                  dataKey="spent" 
+                  fill="#3B82F6" 
+                  name="Spent"
+                  radius={[4, 4, 0, 0]}
+                />
+                <Bar 
+                  dataKey="cap" 
+                  fill="#10B981" 
+                  name="Cap"
+                  radius={[4, 4, 0, 0]}
+                />
                 <Line 
                   type="monotone" 
                   dataKey="target" 
                   stroke="#F59E0B" 
                   strokeWidth={2}
                   name="Target"
+                  dot={{ fill: '#F59E0B', strokeWidth: 2, r: 4 }}
                 />
               </ComposedChart>
             </ChartContainer>
