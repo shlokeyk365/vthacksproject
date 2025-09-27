@@ -4,7 +4,7 @@ import jwt from 'jsonwebtoken';
 import speakeasy from 'speakeasy';
 import * as qrcode from 'qrcode';
 import { PrismaClient } from '@prisma/client';
-import { authenticate } from '../middleware/auth';
+import { authenticate, optionalAuth } from '../middleware/auth';
 import { AppError } from '../middleware/errorHandler';
 import { ApiResponse, AuthenticatedRequest } from '../types';
 
@@ -405,7 +405,7 @@ router.get('/2fa/status', authenticate, async (req: AuthenticatedRequest, res, n
 });
 
 // Logout (client-side token removal)
-router.post('/logout', authenticate, async (req: AuthenticatedRequest, res, next) => {
+router.post('/logout', optionalAuth, async (req: AuthenticatedRequest, res, next) => {
   try {
     const response: ApiResponse = {
       success: true,

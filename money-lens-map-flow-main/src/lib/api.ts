@@ -232,8 +232,15 @@ class ApiClient {
   }
 
   async logout() {
-    this.clearToken();
-    return this.request('/auth/logout', { method: 'POST' });
+    try {
+      const response = await this.request('/auth/logout', { method: 'POST' });
+      this.clearToken();
+      return response;
+    } catch (error) {
+      // Even if the logout request fails, clear the token locally
+      this.clearToken();
+      throw error;
+    }
   }
 
   // Transactions
