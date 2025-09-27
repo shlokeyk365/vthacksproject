@@ -54,11 +54,11 @@ const monthlyData = [
 ];
 
 const topMerchants = [
-  { name: "Starbucks", amount: 247, visits: 18 },
-  { name: "Amazon", amount: 892, visits: 12 },
-  { name: "Shell", amount: 356, visits: 15 },
-  { name: "Target", amount: 523, visits: 8 },
-  { name: "McDonald's", amount: 189, visits: 14 },
+  { name: "Amazon", amount: 892, visits: 12, category: "Shopping" },
+  { name: "Target", amount: 523, visits: 8, category: "Shopping" },
+  { name: "Shell", amount: 356, visits: 15, category: "Transport" },
+  { name: "Starbucks", amount: 247, visits: 18, category: "Dining" },
+  { name: "McDonald's", amount: 189, visits: 14, category: "Dining" },
 ];
 
 const spendingVsCaps = [
@@ -73,6 +73,10 @@ const chartConfig = {
   shopping: { label: "Shopping", color: "#10B981" },
   transport: { label: "Transport", color: "#F59E0B" },
   utilities: { label: "Utilities", color: "#EF4444" },
+};
+
+const merchantsChartConfig = {
+  amount: { label: "Amount Spent", color: "#3B82F6" },
 };
 
 export default function Analytics() {
@@ -430,18 +434,19 @@ export default function Analytics() {
             <CardTitle>Top 5 Merchants</CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
-            <ChartContainer config={{}} className="h-[280px] w-full">
-              <BarChart data={topMerchants} layout="horizontal">
+            <ChartContainer config={merchantsChartConfig} className="h-[280px] w-full">
+              <BarChart data={topMerchants} layout="horizontal" margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                 <XAxis 
                   type="number" 
                   tick={{ fontSize: 12 }}
                   axisLine={{ stroke: '#e5e7eb' }}
                   tickLine={{ stroke: '#e5e7eb' }}
+                  domain={[0, 'dataMax']}
                 />
                 <YAxis 
                   dataKey="name" 
                   type="category" 
-                  width={80}
+                  width={100}
                   tick={{ fontSize: 12 }}
                   axisLine={{ stroke: '#e5e7eb' }}
                   tickLine={{ stroke: '#e5e7eb' }}
@@ -455,11 +460,13 @@ export default function Analytics() {
                     borderRadius: '8px',
                     boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
                   }}
+                  formatter={(value, name) => [`$${value}`, 'Amount Spent']}
                 />
                 <Bar 
                   dataKey="amount" 
-                  fill="#3B82F6"
+                  fill={merchantsChartConfig.amount.color}
                   radius={[0, 4, 4, 0]}
+                  name="Amount Spent"
                 />
               </BarChart>
             </ChartContainer>
