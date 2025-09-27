@@ -597,24 +597,24 @@ export default function Analytics() {
                 />
               </AreaChart>
             </ChartContainer>
-            <div className="mt-4 p-3 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-200">
+            <div className="mt-4 p-3 bg-primary/10 rounded-lg border border-primary/20">
               <div className="flex items-center gap-2 mb-2">
-                <TrendingUp className="w-4 h-4 text-purple-600" />
-                <h4 className="font-semibold text-purple-800 text-sm">Projection Insights</h4>
+                <TrendingUp className="w-4 h-4 text-primary" />
+                <h4 className="font-semibold text-primary text-sm">Projection Insights</h4>
               </div>
               <div className="grid grid-cols-2 gap-3 text-xs">
                 <div>
-                  <p className="text-gray-600">Current Average</p>
-                  <p className="font-semibold">$2,847</p>
+                  <p className="text-muted-foreground">Current Average</p>
+                  <p className="font-semibold text-primary">$2,847</p>
                 </div>
                 <div>
-                  <p className="text-gray-600">Year-End</p>
-                  <p className="font-semibold">$3,289</p>
+                  <p className="text-muted-foreground">Year-End</p>
+                  <p className="font-semibold text-primary">$3,289</p>
                 </div>
               </div>
-              <div className="mt-2 p-2 bg-white/50 rounded border">
-                <p className="text-xs text-gray-700">
-                  <strong>Forecast:</strong> Gradual increase with holiday spike in December.
+              <div className="mt-2 p-2 bg-background/50 rounded border border-primary/10">
+                <p className="text-xs text-foreground">
+                  <strong className="text-primary">Forecast:</strong> Gradual increase with holiday spike in December.
                 </p>
               </div>
             </div>
