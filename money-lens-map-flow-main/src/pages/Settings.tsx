@@ -872,22 +872,28 @@ export default function Settings() {
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-md">
-                  <DialogHeader>
+                  <DialogHeader className="pb-4">
                     <DialogTitle>
                       {twoFactorEnabled ? 'Disable Two-Factor Authentication' : 'Enable Two-Factor Authentication'}
                     </DialogTitle>
                   </DialogHeader>
-                  <div className="space-y-4">
+                  <div className="space-y-6">
                     {!twoFactorEnabled ? (
                       <>
-                        <p className="text-sm text-muted-foreground">
-                          Click "Setup 2FA" to generate a QR code for your authenticator app.
-                        </p>
-                        <div className="flex gap-2">
+                        <div className="text-center space-y-3">
+                          <p className="text-sm font-medium">
+                            Ready to secure your account?
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            Click "Setup 2FA" to generate a QR code for your authenticator app.
+                          </p>
+                        </div>
+                        <div className="flex gap-3">
                           <Button
                             onClick={handle2FASetup}
                             disabled={is2FASetupLoading}
                             className="flex-1"
+                            size="lg"
                           >
                             {is2FASetupLoading ? 'Setting up...' : 'Setup 2FA'}
                           </Button>
@@ -895,6 +901,7 @@ export default function Settings() {
                             variant="outline"
                             onClick={() => setIs2FAVerifyDialogOpen(false)}
                             disabled={is2FASetupLoading}
+                            size="lg"
                           >
                             Cancel
                           </Button>
@@ -902,26 +909,37 @@ export default function Settings() {
                       </>
                     ) : (
                       <>
-                        <p className="text-sm text-muted-foreground">
-                          Enter the 6-digit code from your authenticator app to disable 2FA.
-                        </p>
-                        <div>
-                          <Label htmlFor="disableToken">Verification Code</Label>
-                          <Input
-                            id="disableToken"
-                            type="text"
-                            value={verificationToken}
-                            onChange={(e) => setVerificationToken(e.target.value)}
-                            placeholder="000000"
-                            maxLength={6}
-                          />
+                        <div className="text-center space-y-3">
+                          <p className="text-sm font-medium text-destructive">
+                            ⚠️ Disabling 2FA will reduce your account security
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            Enter the 6-digit code from your authenticator app to disable 2FA.
+                          </p>
                         </div>
-                        <div className="flex gap-2">
+                        <div className="space-y-3">
+                          <div>
+                            <Label htmlFor="disableToken" className="text-sm font-medium">
+                              Verification Code
+                            </Label>
+                            <Input
+                              id="disableToken"
+                              type="text"
+                              value={verificationToken}
+                              onChange={(e) => setVerificationToken(e.target.value)}
+                              placeholder="000000"
+                              maxLength={6}
+                              className="mt-2 text-center text-lg font-mono tracking-widest"
+                            />
+                          </div>
+                        </div>
+                        <div className="flex gap-3">
                           <Button
                             onClick={handle2FADisable}
                             disabled={is2FADisabling || !verificationToken}
                             variant="destructive"
                             className="flex-1"
+                            size="lg"
                           >
                             {is2FADisabling ? 'Disabling...' : 'Disable 2FA'}
                           </Button>
@@ -929,6 +947,7 @@ export default function Settings() {
                             variant="outline"
                             onClick={() => setIs2FAVerifyDialogOpen(false)}
                             disabled={is2FADisabling}
+                            size="lg"
                           >
                             Cancel
                           </Button>
@@ -940,52 +959,81 @@ export default function Settings() {
               </Dialog>
               
               <Dialog open={is2FASetupDialogOpen} onOpenChange={setIs2FASetupDialogOpen}>
-                <DialogContent className="sm:max-w-md">
-                  <DialogHeader>
+                <DialogContent className="sm:max-w-lg">
+                  <DialogHeader className="pb-4">
                     <DialogTitle>Complete 2FA Setup</DialogTitle>
                   </DialogHeader>
-                  <div className="space-y-4">
-                    <div className="text-center">
-                      <p className="text-sm text-muted-foreground mb-4">
-                        Scan this QR code with your authenticator app:
-                      </p>
+                  <div className="space-y-6">
+                    {/* QR Code Section */}
+                    <div className="text-center space-y-4">
+                      <div>
+                        <p className="text-sm font-medium mb-2">
+                          Scan this QR code with your authenticator app:
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Use Google Authenticator, Authy, or any TOTP-compatible app
+                        </p>
+                      </div>
+                      
                       {qrCodeUrl && (
-                        <div className="flex justify-center mb-4">
-                          <img src={qrCodeUrl} alt="2FA QR Code" className="w-48 h-48 border rounded" />
+                        <div className="flex justify-center p-4 bg-muted/30 rounded-lg border-2 border-dashed border-muted-foreground/25">
+                          <img 
+                            src={qrCodeUrl} 
+                            alt="2FA QR Code" 
+                            className="w-40 h-40 rounded-lg shadow-sm" 
+                          />
                         </div>
                       )}
-                      <div className="space-y-2">
-                        <p className="text-xs text-muted-foreground">
-                          Or enter this key manually:
+                    </div>
+
+                    {/* Manual Entry Section */}
+                    <div className="space-y-3">
+                      <div className="text-center">
+                        <p className="text-sm font-medium mb-2">
+                          Can't scan the QR code?
                         </p>
-                        <div className="bg-muted p-2 rounded text-center font-mono text-sm">
-                          {manualEntryKey}
+                        <p className="text-xs text-muted-foreground mb-3">
+                          Enter this key manually in your authenticator app:
+                        </p>
+                        <div className="bg-muted p-3 rounded-lg border">
+                          <code className="text-sm font-mono break-all text-foreground">
+                            {manualEntryKey}
+                          </code>
                         </div>
                       </div>
                     </div>
-                    
-                    <div>
-                      <Label htmlFor="verifyToken">Verification Code</Label>
-                      <Input
-                        id="verifyToken"
-                        type="text"
-                        value={verificationToken}
-                        onChange={(e) => setVerificationToken(e.target.value)}
-                        placeholder="000000"
-                        maxLength={6}
-                      />
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Enter the 6-digit code from your authenticator app
-                      </p>
+
+                    {/* Verification Section */}
+                    <div className="space-y-3">
+                      <Separator />
+                      <div>
+                        <Label htmlFor="verifyToken" className="text-sm font-medium">
+                          Verification Code
+                        </Label>
+                        <Input
+                          id="verifyToken"
+                          type="text"
+                          value={verificationToken}
+                          onChange={(e) => setVerificationToken(e.target.value)}
+                          placeholder="000000"
+                          maxLength={6}
+                          className="mt-2 text-center text-lg font-mono tracking-widest"
+                        />
+                        <p className="text-xs text-muted-foreground mt-2">
+                          Enter the 6-digit code from your authenticator app
+                        </p>
+                      </div>
                     </div>
                     
-                    <div className="flex gap-2">
+                    {/* Action Buttons */}
+                    <div className="flex gap-3 pt-2">
                       <Button
                         onClick={handle2FAVerification}
                         disabled={is2FAVerifying || !verificationToken}
                         className="flex-1"
+                        size="lg"
                       >
-                        {is2FAVerifying ? 'Verifying...' : 'Verify & Enable'}
+                        {is2FAVerifying ? 'Verifying...' : 'Verify & Enable 2FA'}
                       </Button>
                       <Button
                         variant="outline"
@@ -994,6 +1042,7 @@ export default function Settings() {
                           setVerificationToken('');
                         }}
                         disabled={is2FAVerifying}
+                        size="lg"
                       >
                         Cancel
                       </Button>
