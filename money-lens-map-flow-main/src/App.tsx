@@ -6,6 +6,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { FinancialBodyguardProvider } from "./contexts/FinancialBodyguardContext";
+import { MapboxProvider } from "./contexts/MapboxContext";
+import { NotificationProvider } from "./contexts/NotificationContext";
 import { LoginForm } from "./components/auth/LoginForm";
 import { MainLayout } from "./components/layout/MainLayout";
 import Dashboard from "./pages/Dashboard";
@@ -69,24 +71,28 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
       <AuthProvider>
-        <FinancialBodyguardProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <HotToast 
-              position="top-right"
-              toastOptions={{
-                duration: 4000,
-                style: {
-                  background: 'hsl(var(--card))',
-                  color: 'hsl(var(--card-foreground))',
-                  border: '1px solid hsl(var(--border))',
-                },
-              }}
-            />
-            <AppRoutes />
-          </TooltipProvider>
-        </FinancialBodyguardProvider>
+        <MapboxProvider>
+          <FinancialBodyguardProvider>
+            <NotificationProvider>
+              <TooltipProvider>
+                <Toaster />
+                <Sonner />
+                <HotToast 
+                  position="top-right"
+                  toastOptions={{
+                    duration: 4000,
+                    style: {
+                      background: 'hsl(var(--card))',
+                      color: 'hsl(var(--card-foreground))',
+                      border: '1px solid hsl(var(--border))',
+                    },
+                  }}
+                />
+                <AppRoutes />
+              </TooltipProvider>
+            </NotificationProvider>
+          </FinancialBodyguardProvider>
+        </MapboxProvider>
       </AuthProvider>
     </ThemeProvider>
   </QueryClientProvider>

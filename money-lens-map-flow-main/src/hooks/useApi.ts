@@ -219,6 +219,14 @@ export const useDeleteSpendingCap = () => {
   });
 };
 
+export const useCapMerchants = (period?: string) => {
+  return useQuery({
+    queryKey: ['capMerchants', period],
+    queryFn: () => apiClient.getCapMerchants(period),
+    select: (data) => data.data,
+  });
+};
+
 // Analytics Hooks
 export const useDashboardStats = () => {
   return useQuery({

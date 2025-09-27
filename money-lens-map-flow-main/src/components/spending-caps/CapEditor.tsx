@@ -7,8 +7,9 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent } from "@/components/ui/card";
-import { Store, Target, DollarSign, Calendar } from "lucide-react";
-import { useCreateSpendingCap, useUpdateSpendingCap } from "@/hooks/useApi";
+import { Badge } from "@/components/ui/badge";
+import { Store, Target, DollarSign, Calendar, TrendingUp, ShoppingBag } from "lucide-react";
+import { useCreateSpendingCap, useUpdateSpendingCap, useCapMerchants } from "@/hooks/useApi";
 import toast from "react-hot-toast";
 
 interface CapEditorProps {
@@ -54,9 +55,11 @@ export default function CapEditor({ isOpen, onClose, cap, onSuccess }: CapEditor
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [showMerchantSuggestions, setShowMerchantSuggestions] = useState(false);
 
   const createCapMutation = useCreateSpendingCap();
   const updateCapMutation = useUpdateSpendingCap();
+  const { data: suggestedMerchants = [], isLoading: isLoadingMerchants } = useCapMerchants('90');
 
   const isEditing = !!cap;
 
@@ -83,7 +86,23 @@ export default function CapEditor({ isOpen, onClose, cap, onSuccess }: CapEditor
       });
     }
     setErrors({});
+    setShowMerchantSuggestions(false);
   }, [cap, isOpen]);
+
+  // Close suggestions when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.merchant-suggestions')) {
+        setShowMerchantSuggestions(false);
+      }
+    };
+
+    if (showMerchantSuggestions) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showMerchantSuggestions]);
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -117,11 +136,10 @@ export default function CapEditor({ isOpen, onClose, cap, onSuccess }: CapEditor
 
     try {
       const capData = {
-        type: formData.type,
+        type: formData.type as "MERCHANT" | "CATEGORY" | "GLOBAL",
         name: formData.name.trim(),
         limit: parseFloat(formData.limit),
-        period: formData.period,
-        enabled: formData.enabled,
+        period: formData.period as "DAILY" | "WEEKLY" | "MONTHLY" | "YEARLY",
         ...(formData.type === "CATEGORY" && { category: formData.category }),
         ...(formData.type === "MERCHANT" && { merchant: formData.merchant.trim() }),
       };
@@ -146,6 +164,14 @@ export default function CapEditor({ isOpen, onClose, cap, onSuccess }: CapEditor
     setFormData(prev => ({ ...prev, [field]: value }));
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: "" }));
+    }
+  };
+
+  const handleMerchantSelect = (merchantName: string) => {
+    setFormData(prev => ({ ...prev, merchant: merchantName }));
+    setShowMerchantSuggestions(false);
+    if (errors.merchant) {
+      setErrors(prev => ({ ...prev, merchant: "" }));
     }
   };
 
@@ -268,14 +294,108 @@ export default function CapEditor({ isOpen, onClose, cap, onSuccess }: CapEditor
             {formData.type === "MERCHANT" && (
               <div className="space-y-2">
                 <Label htmlFor="merchant">Merchant Name *</Label>
-                <Input
-                  id="merchant"
-                  value={formData.merchant}
-                  onChange={(e) => handleInputChange("merchant", e.target.value)}
-                  placeholder="Enter merchant name"
-                  className={errors.merchant ? "border-destructive" : ""}
-                />
+                <div className="relative">
+                  <Input
+                    id="merchant"
+                    value={formData.merchant}
+                    onChange={(e) => handleInputChange("merchant", e.target.value)}
+                    onFocus={() => setShowMerchantSuggestions(true)}
+                    placeholder="Enter merchant name"
+                    className={errors.merchant ? "border-destructive" : ""}
+                  />
+                  
+                  {/* Merchant Suggestions */}
+                  {showMerchantSuggestions && suggestedMerchants.length > 0 && (
+                    <div className="merchant-suggestions absolute z-50 w-full mt-1 bg-background border border-border rounded-md shadow-lg max-h-60 overflow-y-auto">
+                      <div className="p-2 text-xs text-muted-foreground border-b">
+                        Suggested merchants from your transaction history:
+                      </div>
+                      {suggestedMerchants.slice(0, 10).map((merchant: any) => (
+                        <button
+                          key={merchant.name}
+                          type="button"
+                          className="w-full px-3 py-2 text-left hover:bg-muted/50 flex items-center justify-between"
+                          onClick={() => handleMerchantSelect(merchant.name)}
+                        >
+                          <div className="flex items-center gap-2">
+                            <ShoppingBag className="w-4 h-4 text-muted-foreground" />
+                            <span className="font-medium">{merchant.name}</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Badge variant="secondary" className="text-xs">
+                              ${merchant.totalSpent.toFixed(0)}
+                            </Badge>
+                            <span>{merchant.transactionCount} visits</span>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
                 {errors.merchant && <p className="text-sm text-destructive">{errors.merchant}</p>}
+                
+                {/* Quick Stats for Selected Merchant */}
+                {formData.merchant && suggestedMerchants.find((m: any) => m.name === formData.merchant) && (
+                  <div className="p-3 bg-muted/50 rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <TrendingUp className="w-4 h-4 text-primary" />
+                      <span className="text-sm font-medium">Spending Insights</span>
+                    </div>
+                    {(() => {
+                      const merchant = suggestedMerchants.find((m: any) => m.name === formData.merchant);
+                      return (
+                        <div className="grid grid-cols-2 gap-2 text-sm">
+                          <div>
+                            <span className="text-muted-foreground">Total Spent:</span>
+                            <span className="ml-1 font-medium">${merchant.totalSpent.toFixed(0)}</span>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Visits:</span>
+                            <span className="ml-1 font-medium">{merchant.transactionCount}</span>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Avg per Visit:</span>
+                            <span className="ml-1 font-medium">${merchant.averageSpent.toFixed(0)}</span>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Period:</span>
+                            <span className="ml-1 font-medium">Last 90 days</span>
+                          </div>
+                          <div className="col-span-2 mt-2 p-2 bg-primary/10 rounded border border-primary/20">
+                            <div className="flex items-center gap-2 text-primary">
+                              <Target className="w-4 h-4" />
+                              <span className="text-sm font-medium">Suggested Limit</span>
+                            </div>
+                            <p className="text-sm text-primary mt-1">
+                              Based on your spending pattern, consider setting a limit of{' '}
+                              <span className="font-semibold">
+                                ${(() => {
+                                  const merchant = suggestedMerchants.find((m: any) => m.name === formData.merchant);
+                                  const suggestedLimit = Math.ceil(merchant.totalSpent * 1.2); // 20% above current spending
+                                  return suggestedLimit;
+                                })()}
+                              </span>{' '}
+                              for this merchant.
+                            </p>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="mt-2 text-primary border-primary hover:bg-primary hover:text-primary-foreground"
+                              onClick={() => {
+                                const merchant = suggestedMerchants.find((m: any) => m.name === formData.merchant);
+                                const suggestedLimit = Math.ceil(merchant.totalSpent * 1.2);
+                                handleInputChange("limit", suggestedLimit.toString());
+                              }}
+                            >
+                              Use Suggested Limit
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                )}
               </div>
             )}
 

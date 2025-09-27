@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useNotifications } from "@/contexts/NotificationContext";
 import { 
   Plus, 
   Target, 
@@ -17,6 +18,7 @@ import SpendingCapCard from "@/components/spending-caps/SpendingCapCard";
 export default function SpendingCaps() {
   const [isAddCapOpen, setIsAddCapOpen] = useState(false);
   const { data: caps = [], isLoading, refetch } = useSpendingCaps();
+  const { checkSpendingAlerts } = useNotifications();
 
   const handleAddCapSuccess = () => {
     setIsAddCapOpen(false);
@@ -26,6 +28,25 @@ export default function SpendingCaps() {
   const handleCapUpdate = () => {
     refetch();
   };
+
+  // Check for spending alerts when caps change
+  useEffect(() => {
+    if (caps.length > 0) {
+      // Simulate current spending for demo purposes
+      const mockSpending = {
+        'Food & Dining': 450,
+        'Shopping': 320,
+        'Transportation': 180,
+        'Entertainment': 120,
+        'Utilities': 150
+      };
+
+      caps.forEach(cap => {
+        const currentSpending = mockSpending[cap.category] || 0;
+        checkSpendingAlerts(currentSpending, [cap]);
+      });
+    }
+  }, [caps, checkSpendingAlerts]);
 
   // Calculate analytics
   const activeCaps = caps.filter(cap => cap.enabled);

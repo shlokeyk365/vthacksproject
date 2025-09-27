@@ -355,6 +355,18 @@ class ApiClient {
     });
   }
 
+  getCapMerchants = async (period?: string) => {
+    const params = new URLSearchParams();
+    if (period) params.append('period', period);
+
+    return this.request<Array<{
+      name: string;
+      totalSpent: number;
+      transactionCount: number;
+      averageSpent: number;
+    }>>(`/caps/merchants?${params.toString()}`);
+  }
+
   // Analytics
   async getDashboardStats() {
     return this.request<DashboardStats>('/analytics/dashboard');
@@ -407,6 +419,15 @@ class ApiClient {
     if (period) params.append('period', period);
 
     return this.request(`/map/locations?${params.toString()}`);
+  }
+
+  // Leaderboard
+  async getLeaderboard(period?: string, type?: string) {
+    const params = new URLSearchParams();
+    if (period) params.append('period', period);
+    if (type) params.append('type', type);
+
+    return this.request(`/leaderboard?${params.toString()}`);
   }
 
   // Settings
@@ -480,6 +501,7 @@ export const {
   updateSpendingCap,
   toggleSpendingCap,
   deleteSpendingCap,
+  getCapMerchants,
   getDashboardStats,
   getSpendingTrends,
   getCategoryBreakdown,
@@ -488,6 +510,7 @@ export const {
   getMapMerchants,
   getHeatmapData,
   getLocationData,
+  getLeaderboard,
   getSettings,
   updateSettings,
   getNotificationSettings,
