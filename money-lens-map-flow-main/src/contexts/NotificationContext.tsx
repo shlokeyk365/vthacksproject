@@ -57,6 +57,12 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     toast[toastType](notification.title, {
       description: notification.message,
       duration: 5000,
+      style: {
+        borderRadius: '0.5rem',
+        padding: '0.75rem 1rem',
+        margin: '0.5rem',
+        boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
+      },
     });
   }, []);
 
