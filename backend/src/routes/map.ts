@@ -8,6 +8,30 @@ import { realMerchants, RealMerchant } from '../data/merchants';
 const router = express.Router();
 const prisma = new PrismaClient();
 
+// Helper function to determine pricing level based on average spending
+function getPricingLevel(averageSpent: number, category: string): 'low' | 'medium' | 'high' {
+  // Category-specific thresholds
+  const thresholds = {
+    'Food & Dining': { low: 15, high: 35 },
+    'Shopping': { low: 50, high: 150 },
+    'Grocery': { low: 30, high: 80 },
+    'Transportation': { low: 20, high: 60 },
+    'Entertainment': { low: 25, high: 75 },
+    'Healthcare': { low: 40, high: 120 },
+    'Other': { low: 20, high: 60 }
+  };
+
+  const categoryThresholds = thresholds[category as keyof typeof thresholds] || thresholds['Other'];
+  
+  if (averageSpent <= categoryThresholds.low) {
+    return 'low';
+  } else if (averageSpent <= categoryThresholds.high) {
+    return 'medium';
+  } else {
+    return 'high';
+  }
+}
+
 // Get merchants with coordinates
 router.get('/merchants', authenticate, async (req: AuthenticatedRequest, res, next) => {
   try {
@@ -56,15 +80,22 @@ router.get('/merchants', authenticate, async (req: AuthenticatedRequest, res, ne
       const merchantName = realMerchant.name.toLowerCase();
       const transactionData = merchantTransactionMap.get(merchantName);
       
+      const totalSpent = transactionData?.totalSpent || 0;
+      const visits = transactionData?.visits || 0;
+      const averageSpent = visits > 0 ? totalSpent / visits : 0;
+      const pricingLevel = getPricingLevel(averageSpent, realMerchant.category);
+      
       // Always add real merchants, use transaction data if available
       merchants.push({
         id: realMerchant.id,
         name: realMerchant.name,
         address: realMerchant.address,
-        totalSpent: transactionData?.totalSpent || 0,
-        visits: transactionData?.visits || 0,
+        totalSpent,
+        visits,
         category: realMerchant.category,
-        coordinates: realMerchant.coordinates
+        coordinates: realMerchant.coordinates,
+        averageSpent,
+        pricingLevel
       });
     });
 
@@ -82,6 +113,9 @@ router.get('/merchants', authenticate, async (req: AuthenticatedRequest, res, ne
 
         if (similarMerchant) {
           // Use similar merchant's data but with transaction amounts
+          const averageSpent = data.visits > 0 ? data.totalSpent / data.visits : 0;
+          const pricingLevel = getPricingLevel(averageSpent, similarMerchant.category);
+          
           merchants.push({
             id: `${merchantName}-similar-${similarMerchant.id}`,
             name: merchantName,
@@ -89,7 +123,9 @@ router.get('/merchants', authenticate, async (req: AuthenticatedRequest, res, ne
             totalSpent: data.totalSpent,
             visits: data.visits,
             category: similarMerchant.category,
-            coordinates: similarMerchant.coordinates
+            coordinates: similarMerchant.coordinates,
+            averageSpent,
+            pricingLevel
           });
         }
         // Skip unknown merchants entirely - no more "Address to be geocoded" merchants

@@ -34,6 +34,8 @@ interface MapMerchant {
   visits: number;
   category: string;
   coordinates: { lat: number; lng: number };
+  averageSpent: number;
+  pricingLevel: 'low' | 'medium' | 'high';
 }
 
 const categoryIcons: { [key: string]: any } = {
@@ -44,6 +46,25 @@ const categoryIcons: { [key: string]: any } = {
   'Other': DollarSign,
   'Entertainment': DollarSign,
   'Healthcare': MapPin,
+};
+
+// Pricing level colors and glow effects
+const pricingLevelColors = {
+  low: {
+    background: 'linear-gradient(135deg, #10b981, #059669)', // Green
+    glow: '0 0 20px rgba(16, 185, 129, 0.6), 0 0 40px rgba(16, 185, 129, 0.4), 0 0 60px rgba(16, 185, 129, 0.2)',
+    border: '#10b981'
+  },
+  medium: {
+    background: 'linear-gradient(135deg, #f59e0b, #d97706)', // Yellow/Orange
+    glow: '0 0 20px rgba(245, 158, 11, 0.6), 0 0 40px rgba(245, 158, 11, 0.4), 0 0 60px rgba(245, 158, 11, 0.2)',
+    border: '#f59e0b'
+  },
+  high: {
+    background: 'linear-gradient(135deg, #ef4444, #dc2626)', // Red
+    glow: '0 0 20px rgba(239, 68, 68, 0.6), 0 0 40px rgba(239, 68, 68, 0.4), 0 0 60px rgba(239, 68, 68, 0.2)',
+    border: '#ef4444'
+  }
 };
 
 export default function MapView() {
@@ -193,21 +214,26 @@ export default function MapView() {
     // Create markers for each merchant
     processedMerchants.forEach((merchant) => {
       if (merchant.coordinates.lat && merchant.coordinates.lng) {
-        console.log(`Creating marker for ${merchant.name} at:`, merchant.coordinates);
+        console.log(`Creating marker for ${merchant.name} at:`, merchant.coordinates, `Pricing: ${merchant.pricingLevel}`);
         const el = document.createElement('div');
         el.className = 'merchant-marker';
+        
+        // Get pricing level colors
+        const colors = pricingLevelColors[merchant.pricingLevel];
+        
         el.style.cssText = `
-          width: 30px;
-          height: 30px;
+          width: 32px;
+          height: 32px;
           border-radius: 50%;
-          background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+          background: ${colors.background};
           border: 3px solid white;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+          box-shadow: ${colors.glow}, 0 4px 12px rgba(0,0,0,0.15);
           cursor: pointer;
           display: flex;
           align-items: center;
           justify-content: center;
-          transition: all 0.2s ease;
+          transition: all 0.3s ease;
+          position: relative;
         `;
 
         // Add category icon (using Lucide React icon)
@@ -249,15 +275,20 @@ export default function MapView() {
         iconElement.appendChild(iconSvg);
         el.appendChild(iconElement);
 
-        // Add hover effect
+        // Add hover effect with enhanced glow
         el.addEventListener('mouseenter', () => {
-          el.style.transform = 'scale(1.2)';
+          el.style.transform = 'scale(1.3)';
           el.style.zIndex = '1000';
+          // Enhance glow on hover
+          const enhancedGlow = colors.glow.replace(/0\.6/g, '0.8').replace(/0\.4/g, '0.6').replace(/0\.2/g, '0.4');
+          el.style.boxShadow = `${enhancedGlow}, 0 6px 20px rgba(0,0,0,0.25)`;
         });
 
         el.addEventListener('mouseleave', () => {
           el.style.transform = 'scale(1)';
           el.style.zIndex = '1';
+          // Restore original glow
+          el.style.boxShadow = `${colors.glow}, 0 4px 12px rgba(0,0,0,0.15)`;
         });
 
         const marker = new mapboxgl.Marker(el)
@@ -271,6 +302,9 @@ export default function MapView() {
           handleMerchantClick(merchant);
           
           // Create popup
+          const pricingColor = colors.border;
+          const pricingText = merchant.pricingLevel.charAt(0).toUpperCase() + merchant.pricingLevel.slice(1);
+          
           const popup = new mapboxgl.Popup({
             offset: 25,
             closeButton: true,
@@ -281,11 +315,18 @@ export default function MapView() {
               <p class="text-sm text-gray-600 mb-2">${merchant.address}</p>
               <div class="flex items-center gap-2 mb-2">
                 <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">${merchant.category}</span>
+                <span class="px-2 py-1 text-xs rounded-full" style="background-color: ${pricingColor}20; color: ${pricingColor}; border: 1px solid ${pricingColor}40;">
+                  ${pricingText} Pricing
+                </span>
               </div>
-              <div class="text-sm">
+              <div class="text-sm space-y-1">
                 <div class="flex justify-between">
                   <span>Total Spent:</span>
                   <span class="font-medium">$${merchant.totalSpent.toFixed(2)}</span>
+                </div>
+                <div class="flex justify-between">
+                  <span>Average per Visit:</span>
+                  <span class="font-medium">$${merchant.averageSpent.toFixed(2)}</span>
                 </div>
                 <div class="flex justify-between">
                   <span>Visits:</span>
@@ -585,10 +626,23 @@ export default function MapView() {
                       {selectedMerchant.address}
                     </p>
                   </div>
-                  <Badge variant="secondary" className="flex items-center gap-1 w-fit">
-                    {React.createElement(getCategoryIcon(selectedMerchant.category), { className: "w-3 h-3" })}
-                    {selectedMerchant.category}
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary" className="flex items-center gap-1">
+                      {React.createElement(getCategoryIcon(selectedMerchant.category), { className: "w-3 h-3" })}
+                      {selectedMerchant.category}
+                    </Badge>
+                    <Badge 
+                      variant="outline" 
+                      className="flex items-center gap-1"
+                      style={{
+                        backgroundColor: `${pricingLevelColors[selectedMerchant.pricingLevel].border}20`,
+                        color: pricingLevelColors[selectedMerchant.pricingLevel].border,
+                        borderColor: pricingLevelColors[selectedMerchant.pricingLevel].border
+                      }}
+                    >
+                      {selectedMerchant.pricingLevel.charAt(0).toUpperCase() + selectedMerchant.pricingLevel.slice(1)} Pricing
+                    </Badge>
+                  </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div className="flex items-center gap-2">
@@ -596,6 +650,12 @@ export default function MapView() {
                     <span className="text-muted-foreground">Total Spent:</span>
                   </div>
                   <span className="font-medium text-right">${selectedMerchant.totalSpent.toFixed(2)}</span>
+                  
+                  <div className="flex items-center gap-2">
+                    <DollarSign className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-muted-foreground">Avg per Visit:</span>
+                  </div>
+                  <span className="font-medium text-right">${selectedMerchant.averageSpent.toFixed(2)}</span>
                   
                   <div className="flex items-center gap-2">
                     <Calendar className="w-4 h-4 text-muted-foreground" />
