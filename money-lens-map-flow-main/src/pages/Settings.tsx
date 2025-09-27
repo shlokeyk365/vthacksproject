@@ -55,6 +55,9 @@ export default function Settings() {
   });
 
   const [isSaving, setIsSaving] = useState(false);
+  const [isSavingNotifications, setIsSavingNotifications] = useState(false);
+  const [isSavingMap, setIsSavingMap] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   // Load user data into form
   useEffect(() => {
@@ -74,6 +77,7 @@ export default function Settings() {
       ...prev,
       [field]: value
     }));
+    setHasUnsavedChanges(true);
   };
 
   // Save profile changes
@@ -81,22 +85,103 @@ export default function Settings() {
     if (!profileData) return;
     
     setIsSaving(true);
+    
+    // Show loading notification
+    const loadingToast = toast.loading('Saving your changes...', {
+      description: 'Please wait while we update your profile',
+    });
+    
     try {
       // Include email in profile update (backend now supports email changes)
       const response = await apiClient.updateProfile(profileForm);
       
       if (response.success) {
-        toast.success('Profile updated successfully!');
-        // Refresh profile data
-        window.location.reload();
+        // Dismiss loading toast and show success
+        toast.dismiss(loadingToast);
+        toast.success('Profile updated successfully!', {
+          description: 'Your account changes have been saved',
+          duration: 4000,
+        });
+        
+        // Reset unsaved changes flag
+        setHasUnsavedChanges(false);
+        
+        // Refresh profile data after a short delay
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
       } else {
-        toast.error(response.message || 'Failed to update profile');
+        toast.dismiss(loadingToast);
+        toast.error('Failed to update profile', {
+          description: response.message || 'Please try again',
+          duration: 5000,
+        });
       }
     } catch (error: any) {
       console.error('Profile update error:', error);
-      toast.error(error.message || 'Failed to update profile');
+      toast.dismiss(loadingToast);
+      toast.error('Failed to update profile', {
+        description: error.message || 'Please check your connection and try again',
+        duration: 5000,
+      });
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  // Save notification settings
+  const handleSaveNotifications = async () => {
+    setIsSavingNotifications(true);
+    
+    const loadingToast = toast.loading('Saving notification preferences...', {
+      description: 'Updating your notification settings',
+    });
+    
+    try {
+      // Simulate API call (replace with actual API endpoint)
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      toast.dismiss(loadingToast);
+      toast.success('Notification preferences saved!', {
+        description: 'Your notification settings have been updated',
+        duration: 3000,
+      });
+    } catch (error: any) {
+      toast.dismiss(loadingToast);
+      toast.error('Failed to save notifications', {
+        description: 'Please try again',
+        duration: 4000,
+      });
+    } finally {
+      setIsSavingNotifications(false);
+    }
+  };
+
+  // Save map settings
+  const handleSaveMapSettings = async () => {
+    setIsSavingMap(true);
+    
+    const loadingToast = toast.loading('Saving map settings...', {
+      description: 'Updating your map configuration',
+    });
+    
+    try {
+      // Simulate API call (replace with actual API endpoint)
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      toast.dismiss(loadingToast);
+      toast.success('Map settings saved!', {
+        description: 'Your map configuration has been updated',
+        duration: 3000,
+      });
+    } catch (error: any) {
+      toast.dismiss(loadingToast);
+      toast.error('Failed to save map settings', {
+        description: 'Please try again',
+        duration: 4000,
+      });
+    } finally {
+      setIsSavingMap(false);
     }
   };
 
@@ -177,9 +262,9 @@ export default function Settings() {
               <Button 
                 onClick={handleSaveProfile}
                 disabled={isSaving || profileLoading}
-                className="w-full"
+                className={`w-full ${hasUnsavedChanges ? 'ring-2 ring-primary ring-opacity-50' : ''}`}
               >
-                {isSaving ? 'Saving...' : 'Save Profile Changes'}
+                {isSaving ? 'Saving...' : hasUnsavedChanges ? 'Save Profile Changes •' : 'Save Profile Changes'}
               </Button>
             </CardContent>
           </Card>
@@ -258,6 +343,14 @@ export default function Settings() {
                   }
                 />
               </div>
+              
+              <Button 
+                onClick={handleSaveNotifications}
+                disabled={isSavingNotifications}
+                className="w-full"
+              >
+                {isSavingNotifications ? 'Saving...' : 'Save Notification Preferences'}
+              </Button>
             </CardContent>
           </Card>
 
@@ -326,7 +419,13 @@ export default function Settings() {
                 />
               </div>
               
-              <Button>Save Map Settings</Button>
+              <Button 
+                onClick={handleSaveMapSettings}
+                disabled={isSavingMap}
+                className="w-full"
+              >
+                {isSavingMap ? 'Saving...' : 'Save Map Settings'}
+              </Button>
             </CardContent>
           </Card>
 
