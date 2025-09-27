@@ -2,89 +2,57 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
 import { 
   Plus, 
   Target, 
-  Store, 
-  Calendar, 
-  DollarSign, 
-  Edit, 
-  Trash2,
-  ToggleLeft,
-  ToggleRight,
   AlertTriangle,
-  CheckCircle
+  CheckCircle,
+  DollarSign,
+  Loader2
 } from "lucide-react";
-
-const mockCaps = [
-  {
-    id: "1",
-    type: "merchant",
-    name: "Starbucks Coffee",
-    limit: 100,
-    spent: 85,
-    period: "monthly",
-    enabled: true,
-    category: "Food & Dining"
-  },
-  {
-    id: "2",
-    type: "category",
-    name: "Food & Dining",
-    limit: 500,
-    spent: 420,
-    period: "monthly",
-    enabled: true,
-    category: "Food & Dining"
-  },
-  {
-    id: "3",
-    type: "global",
-    name: "Monthly Budget",
-    limit: 3500,
-    spent: 2847,
-    period: "monthly",
-    enabled: true,
-    category: "All Categories"
-  },
-  {
-    id: "4",
-    type: "merchant",
-    name: "Amazon",
-    limit: 300,
-    spent: 156,
-    period: "monthly",
-    enabled: false,
-    category: "Shopping"
-  },
-];
+import { useSpendingCaps } from "@/hooks/useApi";
+import CapEditor from "@/components/spending-caps/CapEditor";
+import SpendingCapCard from "@/components/spending-caps/SpendingCapCard";
 
 export default function SpendingCaps() {
-  const [caps, setCaps] = useState(mockCaps);
+  const [isAddCapOpen, setIsAddCapOpen] = useState(false);
+  const { data: caps = [], isLoading, refetch } = useSpendingCaps();
 
-  const toggleCap = (id: string) => {
-    setCaps(caps.map(cap => 
-      cap.id === id ? { ...cap, enabled: !cap.enabled } : cap
-    ));
+  const handleAddCapSuccess = () => {
+    setIsAddCapOpen(false);
+    refetch();
   };
 
-  const getCapStatus = (spent: number, limit: number) => {
-    const percentage = (spent / limit) * 100;
-    if (percentage >= 100) return { status: "exceeded", color: "danger" };
-    if (percentage >= 80) return { status: "warning", color: "warning" };
-    return { status: "safe", color: "success" };
+  const handleCapUpdate = () => {
+    refetch();
   };
 
-  const getTypeIcon = (type: string) => {
-    switch (type) {
-      case "merchant": return Store;
-      case "category": return Target;
-      case "global": return DollarSign;
-      default: return Target;
-    }
-  };
+  // Calculate analytics
+  const activeCaps = caps.filter(cap => cap.enabled);
+  const atRiskCaps = caps.filter(cap => {
+    const percentage = ((cap.spent || 0) / cap.limit) * 100;
+    return cap.enabled && percentage >= 80 && percentage < 100;
+  });
+  const exceededCaps = caps.filter(cap => {
+    const percentage = ((cap.spent || 0) / cap.limit) * 100;
+    return cap.enabled && percentage >= 100;
+  });
+  const onTrackCaps = caps.filter(cap => {
+    const percentage = ((cap.spent || 0) / cap.limit) * 100;
+    return cap.enabled && percentage < 80;
+  });
+
+  const totalSaved = caps.reduce((sum, cap) => {
+    const remaining = cap.limit - (cap.spent || 0);
+    return sum + Math.max(0, remaining);
+  }, 0);
+
+  const averageAdherence = caps.length > 0 
+    ? caps.reduce((sum, cap) => {
+        const percentage = ((cap.spent || 0) / cap.limit) * 100;
+        return sum + Math.min(percentage, 100);
+      }, 0) / caps.length
+    : 0;
 
   return (
     <motion.div
@@ -102,7 +70,10 @@ export default function SpendingCaps() {
           </p>
         </div>
         
-        <Button className="flex items-center gap-2">
+        <Button 
+          className="flex items-center gap-2"
+          onClick={() => setIsAddCapOpen(true)}
+        >
           <Plus className="w-4 h-4" />
           Add New Cap
         </Button>
@@ -118,7 +89,7 @@ export default function SpendingCaps() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Active Caps</p>
-                <p className="text-2xl font-bold">{caps.filter(c => c.enabled).length}</p>
+                <p className="text-2xl font-bold">{activeCaps.length}</p>
               </div>
             </div>
           </CardContent>
@@ -132,7 +103,7 @@ export default function SpendingCaps() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">At Risk</p>
-                <p className="text-2xl font-bold">2</p>
+                <p className="text-2xl font-bold">{atRiskCaps.length}</p>
               </div>
             </div>
           </CardContent>
@@ -146,7 +117,7 @@ export default function SpendingCaps() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">On Track</p>
-                <p className="text-2xl font-bold">5</p>
+                <p className="text-2xl font-bold">{onTrackCaps.length}</p>
               </div>
             </div>
           </CardContent>
@@ -160,7 +131,7 @@ export default function SpendingCaps() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Total Saved</p>
-                <p className="text-2xl font-bold">$1,247</p>
+                <p className="text-2xl font-bold">${totalSaved.toFixed(0)}</p>
               </div>
             </div>
           </CardContent>
@@ -168,132 +139,67 @@ export default function SpendingCaps() {
       </div>
 
       {/* Caps List */}
-      <div className="grid gap-4">
-        {caps.map((cap) => {
-          const IconComponent = getTypeIcon(cap.type);
-          const { status, color } = getCapStatus(cap.spent, cap.limit);
-          const percentage = Math.min((cap.spent / cap.limit) * 100, 100);
-          
-          return (
-            <motion.div
+      {isLoading ? (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="w-8 h-8 animate-spin" />
+        </div>
+      ) : caps.length === 0 ? (
+        <Card className="card-gradient">
+          <CardContent className="p-12 text-center">
+            <Target className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">No Spending Caps Yet</h3>
+            <p className="text-muted-foreground mb-4">
+              Create your first spending cap to start managing your finances better.
+            </p>
+            <Button onClick={() => setIsAddCapOpen(true)}>
+              <Plus className="w-4 h-4 mr-2" />
+              Add Your First Cap
+            </Button>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid gap-4">
+          {caps.map((cap) => (
+            <SpendingCapCard
               key={cap.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              <Card className={`${cap.enabled ? 'card-gradient' : 'opacity-60'}`}>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <div className={`p-2 rounded-lg ${
-                        color === 'danger' ? 'bg-danger/10' :
-                        color === 'warning' ? 'bg-warning/10' : 'bg-success/10'
-                      }`}>
-                        <IconComponent className={`w-5 h-5 ${
-                          color === 'danger' ? 'text-danger' :
-                          color === 'warning' ? 'text-warning' : 'text-success'
-                        }`} />
-                      </div>
-                      <div>
-                        <h3 className="font-semibold">{cap.name}</h3>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <Badge variant="outline" className="text-xs">
-                            {cap.type.charAt(0).toUpperCase() + cap.type.slice(1)}
-                          </Badge>
-                          <span>•</span>
-                          <Calendar className="w-3 h-3" />
-                          <span>{cap.period.charAt(0).toUpperCase() + cap.period.slice(1)}</span>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center gap-2">
-                      <div className="text-right mr-4">
-                        <p className="text-sm text-muted-foreground">
-                          ${cap.spent} / ${cap.limit}
-                        </p>
-                        <p className={`text-sm font-medium ${
-                          color === 'danger' ? 'text-danger' :
-                          color === 'warning' ? 'text-warning' : 'text-success'
-                        }`}>
-                          {percentage.toFixed(0)}% used
-                        </p>
-                      </div>
-                      
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => toggleCap(cap.id)}
-                      >
-                        {cap.enabled ? (
-                          <ToggleRight className="w-5 h-5 text-primary" />
-                        ) : (
-                          <ToggleLeft className="w-5 h-5 text-muted-foreground" />
-                        )}
-                      </Button>
-                      
-                      <Button variant="ghost" size="sm">
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      
-                      <Button variant="ghost" size="sm">
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Progress 
-                      value={percentage} 
-                      className={`h-2 ${
-                        color === 'danger' ? '[&>div]:bg-danger' :
-                        color === 'warning' ? '[&>div]:bg-warning' : '[&>div]:bg-success'
-                      }`}
-                    />
-                    
-                    {status === "exceeded" && (
-                      <div className="flex items-center gap-2 text-sm text-danger">
-                        <AlertTriangle className="w-4 h-4" />
-                        Cap exceeded by ${(cap.spent - cap.limit).toFixed(2)}
-                      </div>
-                    )}
-                    
-                    {status === "warning" && (
-                      <div className="flex items-center gap-2 text-sm text-warning">
-                        <AlertTriangle className="w-4 h-4" />
-                        Approaching limit - ${(cap.limit - cap.spent).toFixed(2)} remaining
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          );
-        })}
-      </div>
+              cap={cap}
+              onUpdate={handleCapUpdate}
+            />
+          ))}
+        </div>
+      )}
 
       {/* Analytics Section */}
-      <Card className="card-gradient">
-        <CardHeader>
-          <CardTitle>Cap Analytics</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="text-center">
-              <h3 className="text-2xl font-bold text-success">$1,247</h3>
-              <p className="text-sm text-muted-foreground">Total Savings This Month</p>
+      {caps.length > 0 && (
+        <Card className="card-gradient">
+          <CardHeader>
+            <CardTitle>Cap Analytics</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="text-center">
+                <h3 className="text-2xl font-bold text-success">${totalSaved.toFixed(0)}</h3>
+                <p className="text-sm text-muted-foreground">Total Savings This Period</p>
+              </div>
+              <div className="text-center">
+                <h3 className="text-2xl font-bold text-primary">{averageAdherence.toFixed(0)}%</h3>
+                <p className="text-sm text-muted-foreground">Average Cap Adherence</p>
+              </div>
+              <div className="text-center">
+                <h3 className="text-2xl font-bold text-warning">{exceededCaps.length}</h3>
+                <p className="text-sm text-muted-foreground">Caps Exceeded This Period</p>
+              </div>
             </div>
-            <div className="text-center">
-              <h3 className="text-2xl font-bold text-primary">87%</h3>
-              <p className="text-sm text-muted-foreground">Average Cap Adherence</p>
-            </div>
-            <div className="text-center">
-              <h3 className="text-2xl font-bold text-warning">3</h3>
-              <p className="text-sm text-muted-foreground">Caps Exceeded This Month</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Add Cap Dialog */}
+      <CapEditor
+        isOpen={isAddCapOpen}
+        onClose={() => setIsAddCapOpen(false)}
+        onSuccess={handleAddCapSuccess}
+      />
     </motion.div>
   );
 }
