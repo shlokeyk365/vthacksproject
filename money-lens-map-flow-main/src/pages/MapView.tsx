@@ -69,6 +69,7 @@ const pricingLevelColors = {
 
 export default function MapView() {
   const { mapboxToken, isMapboxConfigured, isLoading: mapboxLoading } = useMapbox();
+  
   const [merchants, setMerchants] = useState<MapMerchant[]>([]);
   const [selectedMerchant, setSelectedMerchant] = useState<MapMerchant | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -232,8 +233,10 @@ export default function MapView() {
           display: flex;
           align-items: center;
           justify-content: center;
-          transition: all 0.3s ease;
+          transition: box-shadow 0.3s ease, border 0.3s ease;
           position: relative;
+          transform: translate(-50%, -50%);
+          transform-origin: center;
         `;
 
         // Add category icon (using Lucide React icon)
@@ -275,20 +278,25 @@ export default function MapView() {
         iconElement.appendChild(iconSvg);
         el.appendChild(iconElement);
 
-        // Add hover effect with enhanced glow
+        // Add hover effect with enhanced glow (without scaling to prevent darting)
         el.addEventListener('mouseenter', () => {
-          el.style.transform = 'scale(1.3)';
+          // Don't scale the marker to prevent darting
           el.style.zIndex = '1000';
           // Enhance glow on hover
           const enhancedGlow = colors.glow.replace(/0\.6/g, '0.8').replace(/0\.4/g, '0.6').replace(/0\.2/g, '0.4');
           el.style.boxShadow = `${enhancedGlow}, 0 6px 20px rgba(0,0,0,0.25)`;
+          // Add a subtle border effect instead of scaling
+          el.style.border = `4px solid ${colors.border}`;
+          el.style.borderWidth = '4px';
         });
 
         el.addEventListener('mouseleave', () => {
-          el.style.transform = 'scale(1)';
           el.style.zIndex = '1';
           // Restore original glow
           el.style.boxShadow = `${colors.glow}, 0 4px 12px rgba(0,0,0,0.15)`;
+          // Restore original border
+          el.style.border = '3px solid white';
+          el.style.borderWidth = '3px';
         });
 
         const marker = new mapboxgl.Marker(el)
