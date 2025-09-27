@@ -237,19 +237,21 @@ export default function Analytics() {
       const query = nlQuery.toLowerCase();
       let result = null;
       
-      // Extract percentage from query (e.g., "reduce by 20%", "cut 60%")
-      const percentageMatch = query.match(/(\d+)%/);
+      // Extract percentage from query (e.g., "reduce by 20%", "cut 60%", "10 percent")
+      const percentageMatch = query.match(/(\d+)%/) || query.match(/(\d+)\s*percent/);
       const percentage = percentageMatch ? parseInt(percentageMatch[1]) : 20;
+      
+      console.log('Query:', query, 'Percentage detected:', percentage); // Debug log
       
       if (query.includes('healthcare') && query.includes('shopping')) {
         result = {
           type: 'comparison',
           title: 'Healthcare vs Shopping Spending',
           data: [
-            { category: 'Healthcare', amount: 450, color: '#10B981' },
-            { category: 'Shopping', amount: 320, color: '#3B82F6' }
+            { category: 'Healthcare', amount: 150, color: '#8B5CF6' },
+            { category: 'Shopping', amount: 329, color: '#3B82F6' }
           ],
-          summary: 'Your healthcare spending ($450) is 40% higher than shopping ($320) this month.'
+          summary: 'Your shopping spending ($329) is higher than healthcare ($150) this month.'
         };
       } else if (query.includes('dining') && (query.includes('reduce') || query.includes('cut') || query.includes('decrease'))) {
         // Calculate actual dining reduction scenario
@@ -317,19 +319,19 @@ export default function Analytics() {
       } else if (query.includes('compare') || query.includes('vs') || query.includes('versus')) {
         // Extract categories to compare
         const categories = [];
-        if (query.includes('dining')) categories.push({ name: 'Dining', amount: 486, color: '#EF4444' });
-        if (query.includes('shopping')) categories.push({ name: 'Shopping', amount: 329, color: '#3B82F6' });
-        if (query.includes('transport')) categories.push({ name: 'Transport', amount: 245, color: '#10B981' });
-        if (query.includes('utilities')) categories.push({ name: 'Utilities', amount: 187, color: '#F59E0B' });
-        if (query.includes('healthcare')) categories.push({ name: 'Healthcare', amount: 150, color: '#8B5CF6' });
-        if (query.includes('entertainment')) categories.push({ name: 'Entertainment', amount: 120, color: '#EC4899' });
+        if (query.includes('dining')) categories.push({ category: 'Dining', amount: 486, color: '#EF4444' });
+        if (query.includes('shopping')) categories.push({ category: 'Shopping', amount: 329, color: '#3B82F6' });
+        if (query.includes('transport')) categories.push({ category: 'Transport', amount: 245, color: '#10B981' });
+        if (query.includes('utilities')) categories.push({ category: 'Utilities', amount: 187, color: '#F59E0B' });
+        if (query.includes('healthcare')) categories.push({ category: 'Healthcare', amount: 150, color: '#8B5CF6' });
+        if (query.includes('entertainment')) categories.push({ category: 'Entertainment', amount: 120, color: '#EC4899' });
         
         if (categories.length >= 2) {
           result = {
             type: 'comparison',
-            title: `${categories[0].name} vs ${categories[1].name} Spending`,
+            title: `${categories[0].category} vs ${categories[1].category} Spending`,
             data: categories.slice(0, 2),
-            summary: `${categories[0].name} spending ($${categories[0].amount}) is ${categories[0].amount > categories[1].amount ? 'higher' : 'lower'} than ${categories[1].name} ($${categories[1].amount}).`
+            summary: `${categories[0].category} spending ($${categories[0].amount}) is ${categories[0].amount > categories[1].amount ? 'higher' : 'lower'} than ${categories[1].category} ($${categories[1].amount}).`
           };
         } else {
           result = {
