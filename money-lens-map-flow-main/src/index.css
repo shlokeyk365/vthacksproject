@@ -562,3 +562,123 @@ All colors MUST be HSL.
     transform: translateY(0);
   }
 }
+
+/* Simple Pie Chart Styles */
+.chart-container-responsive {
+  width: 100%;
+  overflow: visible;
+  position: relative;
+}
+
+/* Legend responsive styles */
+.legend-container-responsive {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: visible;
+}
+
+.legend-item {
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.legend-item span {
+  font-size: clamp(0.75rem, 2vw, 0.875rem);
+  line-height: 1.2;
+}
+
+/* Small screens - horizontal scroll for legend */
+@media (max-width: 640px) {
+  .legend-container-responsive {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 1rem;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 0.5rem;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
+  }
+  
+  .legend-container-responsive::-webkit-scrollbar {
+    height: 4px;
+  }
+  
+  .legend-container-responsive::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  .legend-container-responsive::-webkit-scrollbar-thumb {
+    background-color: rgba(156, 163, 175, 0.5);
+    border-radius: 2px;
+  }
+  
+  .legend-item {
+    flex-shrink: 0;
+    min-width: 120px;
+    padding: 0.5rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 0.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .legend-item span {
+    font-size: clamp(0.7rem, 1.8vw, 0.8rem);
+  }
+}
+
+/* Extra small screens - vertical legend layout */
+@media (max-width: 400px) {
+  .legend-container-responsive {
+    display: block;
+    overflow-x: visible;
+    overflow-y: visible;
+  }
+  
+  .legend-item {
+    min-width: auto;
+    padding: 0.25rem 0;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+  }
+  
+  .legend-item span {
+    font-size: clamp(0.65rem, 1.5vw, 0.75rem);
+  }
+}
+
+/* Ultra small screens - compact legend */
+@media (max-width: 280px) {
+  .legend-item {
+    padding: 0.125rem 0;
+  }
+  
+  .legend-item span {
+    font-size: clamp(0.6rem, 1.2vw, 0.7rem);
+  }
+  
+  .legend-item .w-3 {
+    width: 0.5rem !important;
+    height: 0.5rem !important;
+  }
+}
+
+/* Chart responsive adjustments */
+@media (max-width: 640px) {
+  .chart-container-responsive .recharts-pie {
+    transform: scale(0.9);
+  }
+}
+
+@media (max-width: 400px) {
+  .chart-container-responsive .recharts-pie {
+    transform: scale(0.8);
+  }
+}
+
+@media (max-width: 280px) {
+  .chart-container-responsive .recharts-pie {
+    transform: scale(0.7);
+  }
+}
