@@ -44,6 +44,7 @@ import {
   Line,
   LineChart
 } from "recharts";
+import { getBrandColor, getCategoryBrandColor } from "@/lib/brandColors";
 
 const monthlyData = [
   { month: "Jan", dining: 486, shopping: 329, transport: 245, utilities: 187 },
@@ -55,11 +56,11 @@ const monthlyData = [
 ];
 
 const topMerchants = [
-  { name: "Amazon", amount: 892, visits: 12, category: "Shopping", color: "#3B82F6" },
-  { name: "Target", amount: 523, visits: 8, category: "Shopping", color: "#10B981" },
-  { name: "Shell", amount: 356, visits: 15, category: "Transport", color: "#F59E0B" },
-  { name: "Starbucks", amount: 247, visits: 18, category: "Dining", color: "#EF4444" },
-  { name: "McDonald's", amount: 189, visits: 14, category: "Dining", color: "#8B5CF6" },
+  { name: "Amazon", amount: 892, visits: 12, category: "Shopping", color: getBrandColor("Amazon", "Shopping") },
+  { name: "Target", amount: 523, visits: 8, category: "Shopping", color: getBrandColor("Target", "Shopping") },
+  { name: "Shell", amount: 356, visits: 15, category: "Transport", color: getBrandColor("Shell", "Transport") },
+  { name: "Starbucks", amount: 247, visits: 18, category: "Dining", color: getBrandColor("Starbucks", "Dining") },
+  { name: "McDonald's", amount: 189, visits: 14, category: "Dining", color: getBrandColor("McDonald's", "Dining") },
 ];
 
 // Ensure data is properly formatted for charts
@@ -87,10 +88,10 @@ const spendingProjection = [
 ];
 
 const chartConfig = {
-  dining: { label: "Dining", color: "#3B82F6" },
-  shopping: { label: "Shopping", color: "#10B981" },
-  transport: { label: "Transport", color: "#F59E0B" },
-  utilities: { label: "Utilities", color: "#EF4444" },
+  dining: { label: "Dining", color: getCategoryBrandColor("Dining") },
+  shopping: { label: "Shopping", color: getCategoryBrandColor("Shopping") },
+  transport: { label: "Transport", color: getCategoryBrandColor("Transport") },
+  utilities: { label: "Utilities", color: getCategoryBrandColor("Utilities") },
 };
 
 const merchantsChartConfig = {

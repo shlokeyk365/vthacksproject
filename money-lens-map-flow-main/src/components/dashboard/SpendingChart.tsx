@@ -7,11 +7,12 @@ import {
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, CartesianGrid } from "recharts";
 import { useDashboardStats } from "@/hooks/useApi";
 import { Skeleton } from "@/components/ui/skeleton";
+import { getCategoryBrandColor } from "@/lib/brandColors";
 
 const chartConfig = {
   amount: {
     label: "Spending",
-    color: "hsl(var(--primary))",
+    color: getCategoryBrandColor("Shopping"), // Use brand color for spending trend
   },
 };
 

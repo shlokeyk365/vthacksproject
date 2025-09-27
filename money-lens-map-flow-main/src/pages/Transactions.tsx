@@ -33,6 +33,7 @@ import {
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import { useSimulateTransaction } from "@/hooks/useApi";
+import { getBrandColor, getCategoryBrandColor } from "@/lib/brandColors";
 
 // Merchant logo mapping for real app logos
 const getMerchantLogo = (merchantName: string) => {
@@ -182,11 +183,11 @@ const mockTransactions = [
 ];
 
 const categoryData = [
-  { name: "Food & Dining", value: 486, color: "#3B82F6" },
-  { name: "Shopping", value: 329, color: "#10B981" },
-  { name: "Transportation", value: 245, color: "#F59E0B" },
-  { name: "Utilities", value: 187, color: "#EF4444" },
-  { name: "Entertainment", value: 156, color: "#8B5CF6" },
+  { name: "Food & Dining", value: 486, color: getCategoryBrandColor("Food & Dining") },
+  { name: "Shopping", value: 329, color: getCategoryBrandColor("Shopping") },
+  { name: "Transportation", value: 245, color: getCategoryBrandColor("Transportation") },
+  { name: "Utilities", value: 187, color: getCategoryBrandColor("Utilities") },
+  { name: "Entertainment", value: 156, color: getCategoryBrandColor("Entertainment") },
 ];
 
 const chartConfig = {
