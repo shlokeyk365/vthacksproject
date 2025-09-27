@@ -80,7 +80,7 @@ export function AppSidebar() {
   const isActive = (path: string) => currentPath === path;
   const getNavCls = ({ isActive }: { isActive: boolean }) =>
     isActive
-      ? "bg-primary text-primary-foreground font-semibold shadow-lg border-l-4 border-primary-foreground transform scale-[1.02]"
+      ? "bg-primary text-primary-foreground font-semibold shadow-lg border-l-4 border-primary-foreground transform scale-[1.02] px-4 py-5"
       : "hover:bg-accent hover:text-accent-foreground transition-all duration-200 hover:scale-[1.01] hover:shadow-sm";
 
   const cycleTheme = () => {
@@ -132,9 +132,9 @@ export function AppSidebar() {
                     <NavLink
                       to={item.url}
                       end
-                      className={`flex items-center gap-3 px-3 py-4 rounded-md transition-all duration-200 ${getNavCls(
+                      className={`flex items-center gap-3 rounded-md transition-all duration-200 ${getNavCls(
                         { isActive: isActive(item.url) }
-                      )}`}
+                      )} ${!isActive(item.url) ? 'px-3 py-4' : ''}`}
                     >
                       <item.icon className={`w-5 h-5 flex-shrink-0 ${isActive(item.url) ? 'text-primary-foreground' : ''}`} />
                       {!collapsed && (
