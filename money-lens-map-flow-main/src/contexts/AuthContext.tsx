@@ -93,13 +93,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       onSuccess: () => {
         setUser(null);
         setIsAuthenticated(false);
+        // Double-check that token is cleared
+        if (apiClient.isAuthenticated()) {
+          console.warn('Token still exists after logout, clearing manually');
+          apiClient.clearToken();
+        }
         toast.success('Logged out successfully');
       },
       onError: () => {
         // Even if logout fails, clear local state
         setUser(null);
         setIsAuthenticated(false);
-        toast.error('Logout failed');
+        // Ensure token is cleared even on error
+        apiClient.clearToken();
+        // Don't show error toast since logout is primarily client-side
+        toast.success('Logged out successfully');
       }
     });
   };
