@@ -18,7 +18,13 @@ import {
   Settings,
   Brain,
   Lightbulb,
-  Zap
+  Zap,
+  FileText,
+  AlertTriangle,
+  TrendingDown,
+  TrendingUp as TrendingUpIcon,
+  Activity,
+  Calendar
 } from 'lucide-react';
 import {
   ChartContainer,
@@ -50,6 +56,23 @@ interface ChartData {
   name: string;
   value: number;
   [key: string]: any;
+}
+
+interface AIInsight {
+  type: 'summary' | 'anomaly' | 'trend';
+  title: string;
+  description: string;
+  severity?: 'low' | 'medium' | 'high';
+  icon: React.ComponentType<any>;
+  color: string;
+}
+
+interface AnomalyData {
+  category: string;
+  amount: number;
+  date: string;
+  deviation: number;
+  description: string;
 }
 
 interface VisualizationConfig {
@@ -92,10 +115,115 @@ export function AutoVisualizationAgent({ className }: AutoVisualizationAgentProp
   const [isExpanded, setIsExpanded] = useState(false);
   const [recommendedChartType, setRecommendedChartType] = useState<string | null>(null);
   const [showRecommendation, setShowRecommendation] = useState(false);
+  const [aiInsights, setAiInsights] = useState<AIInsight[]>([]);
+  const [anomalies, setAnomalies] = useState<AnomalyData[]>([]);
   
   // Use the individual hooks
   const { data: categoryBreakdownData, isLoading: isCategoryLoading } = useCategoryBreakdown(config.period);
   const { data: spendingTrendsData, isLoading: isTrendsLoading } = useSpendingTrends(config.period);
+
+  // AI Summary Insights Generation
+  const generateAISummary = (data: ChartData[], categories: string[], period: string): AIInsight[] => {
+    const insights: AIInsight[] = [];
+    
+    if (data.length === 0) return insights;
+
+    // Calculate total spending
+    const totalSpending = data.reduce((sum, item) => sum + item.value, 0);
+    const topCategory = data.reduce((max, item) => item.value > max.value ? item : max, data[0]);
+    const avgSpending = totalSpending / data.length;
+
+    // Generate spending trend insights
+    if (data.length > 1) {
+      const sortedData = [...data].sort((a, b) => b.value - a.value);
+      const topTwo = sortedData.slice(0, 2);
+      const percentage = ((topTwo[0].value / totalSpending) * 100).toFixed(0);
+      
+      insights.push({
+        type: 'summary',
+        title: 'Spending Breakdown',
+        description: `Your ${topTwo[0].name} spending represents ${percentage}% of total expenses, followed by ${topTwo[1].name} at ${((topTwo[1].value / totalSpending) * 100).toFixed(0)}%.`,
+        icon: FileText,
+        color: 'text-blue-600'
+      });
+    }
+
+    // Generate period-based insights
+    const periodDays = parseInt(period);
+    const dailyAverage = totalSpending / periodDays;
+    
+    if (dailyAverage > 50) {
+      insights.push({
+        type: 'trend',
+        title: 'High Spending Alert',
+        description: `You're averaging $${dailyAverage.toFixed(2)} per day over the last ${periodDays} days. Consider reviewing your spending patterns.`,
+        icon: TrendingUpIcon,
+        color: 'text-orange-600'
+      });
+    } else if (dailyAverage < 20) {
+      insights.push({
+        type: 'trend',
+        title: 'Conservative Spending',
+        description: `Great job! You're maintaining a healthy spending average of $${dailyAverage.toFixed(2)} per day.`,
+        icon: TrendingDown,
+        color: 'text-green-600'
+      });
+    }
+
+    // Category-specific insights
+    if (topCategory.value > totalSpending * 0.4) {
+      insights.push({
+        type: 'summary',
+        title: 'Category Focus',
+        description: `${topCategory.name} dominates your spending at ${((topCategory.value / totalSpending) * 100).toFixed(0)}%. Consider diversifying your expenses.`,
+        icon: Activity,
+        color: 'text-purple-600'
+      });
+    }
+
+    return insights;
+  };
+
+  // Anomaly Detection Algorithm
+  const detectAnomalies = (data: ChartData[]): AnomalyData[] => {
+    const anomalies: AnomalyData[] = [];
+    
+    if (data.length < 3) return anomalies;
+
+    // Calculate statistical measures
+    const values = data.map(item => item.value);
+    const mean = values.reduce((sum, val) => sum + val, 0) / values.length;
+    const variance = values.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / values.length;
+    const standardDeviation = Math.sqrt(variance);
+    const threshold = mean + (2 * standardDeviation); // 2-sigma rule
+
+    // Detect anomalies
+    data.forEach(item => {
+      if (item.value > threshold) {
+        const deviation = ((item.value - mean) / mean) * 100;
+        anomalies.push({
+          category: item.name,
+          amount: item.value,
+          date: new Date().toISOString().split('T')[0],
+          deviation: Math.round(deviation),
+          description: `Unusual spike detected: ${item.name} spending is ${Math.round(deviation)}% above average`
+        });
+      }
+    });
+
+    return anomalies;
+  };
+
+  // Generate AI insights when data changes
+  useEffect(() => {
+    if (chartData.length > 0) {
+      const insights = generateAISummary(chartData, config.categories, config.period);
+      const detectedAnomalies = detectAnomalies(chartData);
+      
+      setAiInsights(insights);
+      setAnomalies(detectedAnomalies);
+    }
+  }, [chartData, config.categories, config.period]);
 
   // Auto-recommendation logic
   const getRecommendedChartType = (data: ChartData[], categories: string[], period: string) => {
@@ -441,81 +569,151 @@ export function AutoVisualizationAgent({ className }: AutoVisualizationAgentProp
             {renderChart()}
           </div>
 
-          {/* Auto-Recommendation Banner */}
+          {/* AI Summary Insights - Compact */}
+          {aiInsights.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="space-y-2"
+            >
+              <div className="flex items-center gap-2 mb-2">
+                <Brain className="w-4 h-4 text-primary" />
+                <h4 className="text-sm font-semibold">AI Insights</h4>
+              </div>
+              
+              <div className="space-y-2">
+                {aiInsights.map((insight, index) => (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                    className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-3"
+                  >
+                    <div className="flex items-center gap-2">
+                      <insight.icon className={`w-4 h-4 ${insight.color}`} />
+                      <span className="text-sm font-medium text-blue-900">
+                        {insight.title}:
+                      </span>
+                      <span className="text-sm text-blue-800">
+                        {insight.description}
+                      </span>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          )}
+
+          {/* Anomaly Detection - Compact */}
+          {anomalies.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="space-y-2"
+            >
+              <div className="flex items-center gap-2 mb-2">
+                <AlertTriangle className="w-4 h-4 text-orange-500" />
+                <h4 className="text-sm font-semibold">Anomalies</h4>
+                <Badge variant="destructive" className="text-xs">
+                  {anomalies.length}
+                </Badge>
+              </div>
+              
+              <div className="space-y-2">
+                {anomalies.map((anomaly, index) => (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                    className="bg-gradient-to-r from-orange-50 to-red-50 border border-orange-200 rounded-lg p-3"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <AlertTriangle className="w-4 h-4 text-orange-600" />
+                        <span className="text-sm font-medium text-orange-900">
+                          {anomaly.category} +{anomaly.deviation}%
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-orange-700">
+                        <span>${anomaly.amount.toFixed(2)}</span>
+                        <span>•</span>
+                        <span>{anomaly.date}</span>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          )}
+
+          {/* Smart Recommendation - Compact */}
           {showRecommendation && recommendedChartType && recommendedChartType !== config.chartType && (
             <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-3"
             >
-              <div className="flex items-start gap-3">
-                <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                    <Brain className="w-4 h-4 text-blue-600" />
-                  </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Brain className="w-4 h-4 text-blue-600" />
+                  <span className="text-sm font-medium text-blue-900">
+                    Try {CHART_TYPES.find(t => t.value === recommendedChartType)?.label}?
+                  </span>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Lightbulb className="w-4 h-4 text-blue-600" />
-                    <h4 className="text-sm font-semibold text-blue-900">Smart Recommendation</h4>
-                  </div>
-                  <p className="text-sm text-blue-800 mb-2">
-                    {getRecommendationReason(recommendedChartType, config.categories, config.period)}
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      size="sm"
-                      onClick={applyRecommendation}
-                      className="bg-blue-600 hover:bg-blue-700 text-white"
-                    >
-                      <Zap className="w-3 h-3 mr-1" />
-                      Apply {CHART_TYPES.find(t => t.value === recommendedChartType)?.label}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => setShowRecommendation(false)}
-                      className="text-blue-600 hover:text-blue-700"
-                    >
-                      Dismiss
-                    </Button>
-                  </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    onClick={applyRecommendation}
+                    className="h-7 px-3 bg-blue-600 hover:bg-blue-700 text-white text-xs"
+                  >
+                    <Zap className="w-3 h-3 mr-1" />
+                    Apply
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setShowRecommendation(false)}
+                    className="h-7 px-2 text-blue-600 hover:text-blue-700"
+                  >
+                    ×
+                  </Button>
                 </div>
               </div>
             </motion.div>
           )}
 
-          {/* Quick Actions */}
-          <div className="flex flex-wrap gap-2 pt-4 border-t">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={() => {
-                if (recommendedChartType) {
-                  setConfig(prev => ({ ...prev, chartType: recommendedChartType as any }));
-                }
-              }}
-              className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 text-blue-700 hover:bg-blue-100"
-            >
-              <Brain className="w-4 h-4 mr-1" />
-              Auto-Recommend
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => setConfig(prev => ({ ...prev, chartType: 'bar' }))}>
-              <BarChart3 className="w-4 h-4 mr-1" />
-              Bar
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => setConfig(prev => ({ ...prev, chartType: 'pie' }))}>
-              <PieChart className="w-4 h-4 mr-1" />
-              Pie
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => setConfig(prev => ({ ...prev, chartType: 'line' }))}>
-              <TrendingUp className="w-4 h-4 mr-1" />
-              Line
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => setConfig(prev => ({ ...prev, chartType: 'area' }))}>
-              <AreaChart className="w-4 h-4 mr-1" />
-              Area
-            </Button>
+          {/* Chart Type Selector - Clean */}
+          <div className="flex items-center gap-1 pt-4 border-t">
+            <span className="text-sm text-muted-foreground mr-2">Chart:</span>
+            {CHART_TYPES.map((type) => (
+              <Button
+                key={type.value}
+                variant={config.chartType === type.value ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setConfig(prev => ({ ...prev, chartType: type.value as any }))}
+                className={`h-8 px-3 text-xs ${
+                  config.chartType === type.value 
+                    ? 'bg-primary text-primary-foreground' 
+                    : 'hover:bg-muted'
+                }`}
+              >
+                <type.icon className="w-3 h-3 mr-1" />
+                {type.label}
+              </Button>
+            ))}
+            {recommendedChartType && recommendedChartType !== config.chartType && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setConfig(prev => ({ ...prev, chartType: recommendedChartType as any }))}
+                className="h-8 px-3 text-xs bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 text-blue-700 hover:bg-blue-100"
+              >
+                <Brain className="w-3 h-3 mr-1" />
+                Smart
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>

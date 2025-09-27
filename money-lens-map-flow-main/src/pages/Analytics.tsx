@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { useState } from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -22,7 +22,10 @@ import {
   TrendingUp as TrendingUpIcon,
   AlertCircle,
   CheckCircle,
-  Info
+  Info,
+  ChevronLeft,
+  ChevronRight,
+  Sparkles
 } from "lucide-react";
 import {
   ChartContainer,
@@ -108,6 +111,24 @@ export default function Analytics() {
   const [isInsightsDialogOpen, setIsInsightsDialogOpen] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState("6months");
   const [isExporting, setIsExporting] = useState(false);
+  const [currentView, setCurrentView] = useState(0);
+
+  // Define all available views
+  const views = [
+    { id: 'ava', name: 'Auto Visualization Agent', icon: Sparkles, component: 'ava' },
+    { id: 'monthly', name: 'Monthly Trends', icon: BarChart3, component: 'monthly' },
+    { id: 'merchants', name: 'Top Merchants', icon: Target, component: 'merchants' },
+    { id: 'caps', name: 'Spending vs Caps', icon: AlertTriangle, component: 'caps' },
+    { id: 'projection', name: 'Spending Projection', icon: TrendingUp, component: 'projection' }
+  ];
+
+  const nextView = () => {
+    setCurrentView((prev) => (prev + 1) % views.length);
+  };
+
+  const prevView = () => {
+    setCurrentView((prev) => (prev - 1 + views.length) % views.length);
+  };
 
   // Comprehensive insights data
   const allInsights = [
@@ -556,378 +577,297 @@ export default function Analytics() {
         </Card>
       </div>
 
-      {/* Auto Visualization Agent */}
-      <AutoVisualizationAgent className="mb-8" />
-
-      {/* Charts Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Monthly Spending Trends */}
-        <Card className="card-gradient">
-          <CardHeader className="pb-4">
+      {/* Unified Analytics Panel */}
+      <Card className="card-gradient border-2 border-primary/20">
+        <CardHeader className="pb-4">
+          <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
-              <BarChart3 className="w-5 h-5" />
-              Monthly Spending by Category
+              {React.createElement(views[currentView].icon, { className: "w-5 h-5 text-primary" })}
+              {views[currentView].name}
             </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0">
-            <ChartContainer config={chartConfig} className="h-[280px] w-full">
-              <AreaChart data={monthlyData}>
-                <XAxis 
-                  dataKey="month" 
-                  tick={{ fontSize: 12 }}
-                  axisLine={{ stroke: '#e5e7eb' }}
-                  tickLine={{ stroke: '#e5e7eb' }}
-                />
-                <YAxis 
-                  tick={{ fontSize: 12 }}
-                  axisLine={{ stroke: '#e5e7eb' }}
-                  tickLine={{ stroke: '#e5e7eb' }}
-                />
-                <ChartTooltip 
-                  content={<ChartTooltipContent />}
-                  labelStyle={{ color: '#374151', fontSize: '14px', fontWeight: '600', lineHeight: '1.5' }}
-                  contentStyle={{ 
-                    backgroundColor: '#ffffff',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '8px',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                    padding: '8px 12px'
-                  }}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="dining"
-                  stackId="1"
-                  stroke={chartConfig.dining.color}
-                  fill={chartConfig.dining.color}
-                  fillOpacity={0.6}
-                  strokeWidth={2}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="shopping"
-                  stackId="1"
-                  stroke={chartConfig.shopping.color}
-                  fill={chartConfig.shopping.color}
-                  fillOpacity={0.6}
-                  strokeWidth={2}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="transport"
-                  stackId="1"
-                  stroke={chartConfig.transport.color}
-                  fill={chartConfig.transport.color}
-                  fillOpacity={0.6}
-                  strokeWidth={2}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="utilities"
-                  stackId="1"
-                  stroke={chartConfig.utilities.color}
-                  fill={chartConfig.utilities.color}
-                  fillOpacity={0.6}
-                  strokeWidth={2}
-                />
-              </AreaChart>
-            </ChartContainer>
-          </CardContent>
-        </Card>
-
-        {/* Top Merchants */}
-        <Card className="card-gradient">
-          <CardHeader className="pb-4">
-            <CardTitle>Top 5 Merchants</CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0">
-            <ChartContainer config={{}} className="h-[280px] w-full">
-              <BarChart data={formattedMerchants} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                <XAxis 
-                  dataKey="name"
-                  tick={{ fontSize: 12 }}
-                  axisLine={{ stroke: '#e5e7eb' }}
-                  tickLine={{ stroke: '#e5e7eb' }}
-                  angle={-45}
-                  textAnchor="end"
-                  height={60}
-                />
-                <YAxis 
-                  tick={{ fontSize: 12 }}
-                  axisLine={{ stroke: '#e5e7eb' }}
-                  tickLine={{ stroke: '#e5e7eb' }}
-                />
-                <ChartTooltip 
-                  content={<ChartTooltipContent />}
-                  labelStyle={{ color: '#374151', fontSize: '14px', fontWeight: '600', lineHeight: '1.5' }}
-                  contentStyle={{ 
-                    backgroundColor: '#ffffff',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '8px',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                    padding: '8px 12px'
-                  }}
-                  formatter={(value, name) => [`$${value}`, 'Amount Spent']}
-                />
-                <Bar 
-                  dataKey="amount" 
-                  radius={[4, 4, 0, 0]}
-                  name="Amount Spent"
-                >
-                  {formattedMerchants.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ChartContainer>
-          </CardContent>
-        </Card>
-
-        {/* Spending vs Caps */}
-        <Card className="card-gradient">
-          <CardHeader className="pb-4">
-            <CardTitle>Spending vs Caps Comparison</CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0">
-            <ChartContainer config={{}} className="h-[280px] w-full">
-              <ComposedChart data={spendingVsCaps}>
-                <XAxis 
-                  dataKey="category" 
-                  tick={{ fontSize: 12 }}
-                  axisLine={{ stroke: '#e5e7eb' }}
-                  tickLine={{ stroke: '#e5e7eb' }}
-                />
-                <YAxis 
-                  tick={{ fontSize: 12 }}
-                  axisLine={{ stroke: '#e5e7eb' }}
-                  tickLine={{ stroke: '#e5e7eb' }}
-                />
-                <ChartTooltip 
-                  content={<ChartTooltipContent />}
-                  labelStyle={{ color: '#374151', fontSize: '14px', fontWeight: '600', lineHeight: '1.5' }}
-                  contentStyle={{ 
-                    backgroundColor: '#ffffff',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '8px',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                    padding: '8px 12px'
-                  }}
-                />
-                <Bar 
-                  dataKey="spent" 
-                  fill="#3B82F6" 
-                  name="Spent"
-                  radius={[4, 4, 0, 0]}
-                />
-                <Bar 
-                  dataKey="cap" 
-                  fill="#10B981" 
-                  name="Cap"
-                  radius={[4, 4, 0, 0]}
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="target" 
-                  stroke="#F59E0B" 
-                  strokeWidth={2}
-                  name="Target"
-                  dot={{ fill: '#F59E0B', strokeWidth: 2, r: 4 }}
-                />
-              </ComposedChart>
-            </ChartContainer>
-          </CardContent>
-        </Card>
-
-        {/* Spending Projection */}
-        <Card className="card-gradient">
-          <CardHeader className="pb-4">
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="w-5 h-5" />
-              Spending Projection
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0">
-            <ChartContainer config={projectionChartConfig} className="h-[280px] w-full">
-              <AreaChart data={spendingProjection} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                <XAxis 
-                  dataKey="month"
-                  tick={{ fontSize: 12 }}
-                  axisLine={{ stroke: '#e5e7eb' }}
-                  tickLine={{ stroke: '#e5e7eb' }}
-                />
-                <YAxis 
-                  tick={{ fontSize: 12 }}
-                  axisLine={{ stroke: '#e5e7eb' }}
-                  tickLine={{ stroke: '#e5e7eb' }}
-                  domain={[2500, 3500]}
-                />
-                <ChartTooltip 
-                  content={({ active, payload, label }) => {
-                    if (active && payload && payload.length) {
-                      return (
-                        <div style={{
-                          backgroundColor: '#ffffff',
-                          border: '1px solid #e5e7eb',
-                          borderRadius: '8px',
-                          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                          padding: '8px 12px',
-                          lineHeight: '1.5'
-                        }}>
-                          <p style={{ color: '#374151', fontSize: '14px', fontWeight: '600', margin: '0 0 4px 0' }}>
-                            {label} 2024
-                          </p>
-                          <p style={{ color: '#374151', fontSize: '14px', margin: '0' }}>
-                            ${payload[0].value} Actual
-                          </p>
-                        </div>
-                      );
-                    }
-                    return null;
-                  }}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="projected"
-                  stroke={projectionChartConfig.projected.color}
-                  fill={projectionChartConfig.projected.color}
-                  fillOpacity={0.3}
-                  strokeWidth={3}
-                  name="Projected Spending"
-                  dot={{ fill: projectionChartConfig.projected.color, strokeWidth: 2, r: 4 }}
-                />
-              </AreaChart>
-            </ChartContainer>
-            <div className="mt-4 p-3 bg-primary/10 rounded-lg border border-primary/20">
-              <div className="flex items-center gap-2 mb-2">
-                <TrendingUp className="w-4 h-4 text-primary" />
-                <h4 className="font-semibold text-primary text-sm">Projection Insights</h4>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={prevView}
+                className="h-8 w-8 p-0"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+              <div className="flex items-center gap-1">
+                {views.map((_, index) => (
+                  <div
+                    key={index}
+                    className={`w-2 h-2 rounded-full ${
+                      index === currentView ? 'bg-primary' : 'bg-muted'
+                    }`}
+                  />
+                ))}
               </div>
-              <div className="grid grid-cols-2 gap-3 text-xs">
-                <div>
-                  <p className="text-muted-foreground">Current Average</p>
-                  <p className="font-semibold text-primary">$2,847</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">Year-End</p>
-                  <p className="font-semibold text-primary">$3,289</p>
-                </div>
-              </div>
-              <div className="mt-2 p-2 bg-background/50 rounded border border-primary/10">
-                <p className="text-xs text-foreground">
-                  <strong className="text-primary">Forecast:</strong> Gradual increase with holiday spike in December.
-                </p>
-              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={nextView}
+                className="h-8 w-8 p-0"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </Button>
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Insights Panel */}
-        <Card className="card-gradient lg:col-span-2">
-          <CardHeader className="pb-4">
-            <CardTitle className="flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5" />
-              AI-Generated Insights
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0 space-y-4">
-            <div className="p-4 bg-primary/10 rounded-lg border border-primary/20">
-              <h4 className="font-semibold text-primary mb-2">Spending Pattern Alert</h4>
-              <p className="text-sm">
-                Your dining expenses have increased 15% compared to last month. 
-                Consider setting a stricter cap to maintain your budget goals.
-              </p>
-            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="pt-0">
+          <motion.div
+            key={currentView}
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.3 }}
+            className="min-h-[400px]"
+          >
+            {views[currentView].component === 'ava' && (
+              <AutoVisualizationAgent />
+            )}
             
-            <div className="p-4 bg-success/10 rounded-lg border border-success/20">
-              <h4 className="font-semibold text-success mb-2">Savings Opportunity</h4>
-              <p className="text-sm">
-                You're consistently under budget on transportation. 
-                You could reallocate $50/month to your savings goal.
-              </p>
-            </div>
+            {views[currentView].component === 'monthly' && (
+              <div>
+                <ChartContainer config={chartConfig} className="h-[400px] w-full">
+                  <AreaChart data={monthlyData}>
+                    <XAxis 
+                      dataKey="month" 
+                      tick={{ fontSize: 12 }}
+                      axisLine={{ stroke: '#e5e7eb' }}
+                      tickLine={{ stroke: '#e5e7eb' }}
+                    />
+                    <YAxis 
+                      tick={{ fontSize: 12 }}
+                      axisLine={{ stroke: '#e5e7eb' }}
+                      tickLine={{ stroke: '#e5e7eb' }}
+                    />
+                    <ChartTooltip 
+                      content={<ChartTooltipContent />}
+                      labelStyle={{ color: '#374151', fontSize: '14px', fontWeight: '600', lineHeight: '1.5' }}
+                      contentStyle={{ 
+                        backgroundColor: '#ffffff',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '8px',
+                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                        padding: '8px 12px'
+                      }}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="dining"
+                      stackId="1"
+                      stroke={chartConfig.dining.color}
+                      fill={chartConfig.dining.color}
+                      fillOpacity={0.6}
+                      strokeWidth={2}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="shopping"
+                      stackId="1"
+                      stroke={chartConfig.shopping.color}
+                      fill={chartConfig.shopping.color}
+                      fillOpacity={0.6}
+                      strokeWidth={2}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="transport"
+                      stackId="1"
+                      stroke={chartConfig.transport.color}
+                      fill={chartConfig.transport.color}
+                      fillOpacity={0.6}
+                      strokeWidth={2}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="utilities"
+                      stackId="1"
+                      stroke={chartConfig.utilities.color}
+                      fill={chartConfig.utilities.color}
+                      fillOpacity={0.6}
+                      strokeWidth={2}
+                    />
+                  </AreaChart>
+                </ChartContainer>
+              </div>
+            )}
             
-            <div className="p-4 bg-warning/10 rounded-lg border border-warning/20">
-              <h4 className="font-semibold text-warning mb-2">Seasonal Trend</h4>
-              <p className="text-sm">
-                Shopping expenses typically increase 20% in December. 
-                Consider adjusting your caps accordingly.
-              </p>
-            </div>
-
-            <Dialog open={isInsightsDialogOpen} onOpenChange={setIsInsightsDialogOpen}>
-              <DialogTrigger asChild>
-                <Button className="w-full" variant="outline">
-                  <Eye className="w-4 h-4 mr-2" />
-                  View All Insights
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle className="flex items-center gap-2">
-                    <Lightbulb className="w-5 h-5" />
-                    AI-Generated Insights
-                  </DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  {allInsights.map((insight) => {
-                    const IconComponent = insight.icon;
-                    const getTypeStyles = (type: string) => {
-                      switch (type) {
-                        case "alert":
-                          return "bg-red-50 border-red-200 text-red-800";
-                        case "success":
-                          return "bg-green-50 border-green-200 text-green-800";
-                        case "warning":
-                          return "bg-yellow-50 border-yellow-200 text-yellow-800";
-                        case "info":
-                          return "bg-blue-50 border-blue-200 text-blue-800";
-                        default:
-                          return "bg-gray-50 border-gray-200 text-gray-800";
-                      }
-                    };
-                    
-                    const getImpactBadge = (impact: string) => {
-                      const baseClasses = "inline-flex items-center px-2 py-1 rounded-full text-xs font-medium";
-                      
-                      switch (impact) {
-                        case "High":
-                          return <span className={`${baseClasses} bg-red-500 text-white`}>High Impact</span>;
-                        case "Medium":
-                          return <span className={`${baseClasses} bg-yellow-500 text-white`}>Medium Impact</span>;
-                        case "Positive":
-                          return <span className={`${baseClasses} bg-green-500 text-white`}>Positive</span>;
-                        default:
-                          return <span className={`${baseClasses} bg-gray-100 text-gray-700 border border-gray-300`}>{impact}</span>;
-                      }
-                    };
-
-                    return (
-                      <div key={insight.id} className={`p-4 rounded-lg border ${getTypeStyles(insight.type)}`}>
-                        <div className="flex items-start justify-between mb-3">
-                          <div className="flex items-center gap-2">
-                            <IconComponent className="w-5 h-5" />
-                            <h4 className="font-semibold">{insight.title}</h4>
-                          </div>
-                          <div className="flex items-center gap-2 flex-shrink-0">
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700 border border-gray-300">{insight.category}</span>
-                            {getImpactBadge(insight.impact)}
-                          </div>
-                        </div>
-                        <p className="text-sm mb-3">{insight.description}</p>
-                        <div className="bg-white/50 p-3 rounded border">
-                          <p className="text-sm font-medium text-gray-700">
-                            💡 <strong>Recommendation:</strong> {insight.recommendation}
-                          </p>
-                        </div>
-                      </div>
-                    );
-                  })}
+            {views[currentView].component === 'merchants' && (
+              <div>
+                <ChartContainer config={{}} className="h-[400px] w-full">
+                  <BarChart data={formattedMerchants} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                    <XAxis 
+                      dataKey="name"
+                      tick={{ fontSize: 12 }}
+                      axisLine={{ stroke: '#e5e7eb' }}
+                      tickLine={{ stroke: '#e5e7eb' }}
+                      angle={-45}
+                      textAnchor="end"
+                      height={60}
+                    />
+                    <YAxis 
+                      tick={{ fontSize: 12 }}
+                      axisLine={{ stroke: '#e5e7eb' }}
+                      tickLine={{ stroke: '#e5e7eb' }}
+                    />
+                    <ChartTooltip 
+                      content={<ChartTooltipContent />}
+                      labelStyle={{ color: '#374151', fontSize: '14px', fontWeight: '600', lineHeight: '1.5' }}
+                      contentStyle={{ 
+                        backgroundColor: '#ffffff',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '8px',
+                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                        padding: '8px 12px'
+                      }}
+                      formatter={(value, name) => [`$${value}`, 'Amount Spent']}
+                    />
+                    <Bar 
+                      dataKey="amount" 
+                      radius={[4, 4, 0, 0]}
+                      name="Amount Spent"
+                    >
+                      {formattedMerchants.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ChartContainer>
+              </div>
+            )}
+            
+            {views[currentView].component === 'caps' && (
+              <div>
+                <ChartContainer config={{}} className="h-[400px] w-full">
+                  <ComposedChart data={spendingVsCaps}>
+                    <XAxis 
+                      dataKey="category" 
+                      tick={{ fontSize: 12 }}
+                      axisLine={{ stroke: '#e5e7eb' }}
+                      tickLine={{ stroke: '#e5e7eb' }}
+                    />
+                    <YAxis 
+                      tick={{ fontSize: 12 }}
+                      axisLine={{ stroke: '#e5e7eb' }}
+                      tickLine={{ stroke: '#e5e7eb' }}
+                    />
+                    <ChartTooltip 
+                      content={<ChartTooltipContent />}
+                      labelStyle={{ color: '#374151', fontSize: '14px', fontWeight: '600', lineHeight: '1.5' }}
+                      contentStyle={{ 
+                        backgroundColor: '#ffffff',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '8px',
+                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                        padding: '8px 12px'
+                      }}
+                    />
+                    <Bar 
+                      dataKey="spent" 
+                      fill="#3B82F6" 
+                      name="Spent"
+                      radius={[4, 4, 0, 0]}
+                    />
+                    <Bar 
+                      dataKey="cap" 
+                      fill="#10B981" 
+                      name="Cap"
+                      radius={[4, 4, 0, 0]}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="target" 
+                      stroke="#F59E0B" 
+                      strokeWidth={2}
+                      name="Target"
+                      dot={{ fill: '#F59E0B', strokeWidth: 2, r: 4 }}
+                    />
+                  </ComposedChart>
+                </ChartContainer>
+              </div>
+            )}
+            
+            {views[currentView].component === 'projection' && (
+              <div>
+                <ChartContainer config={projectionChartConfig} className="h-[400px] w-full">
+                  <AreaChart data={spendingProjection} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                    <XAxis 
+                      dataKey="month"
+                      tick={{ fontSize: 12 }}
+                      axisLine={{ stroke: '#e5e7eb' }}
+                      tickLine={{ stroke: '#e5e7eb' }}
+                    />
+                    <YAxis 
+                      tick={{ fontSize: 12 }}
+                      axisLine={{ stroke: '#e5e7eb' }}
+                      tickLine={{ stroke: '#e5e7eb' }}
+                      domain={[2500, 3500]}
+                    />
+                    <ChartTooltip 
+                      content={({ active, payload, label }) => {
+                        if (active && payload && payload.length) {
+                          return (
+                            <div style={{
+                              backgroundColor: '#ffffff',
+                              border: '1px solid #e5e7eb',
+                              borderRadius: '8px',
+                              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                              padding: '8px 12px',
+                              lineHeight: '1.5'
+                            }}>
+                              <p style={{ color: '#374151', fontSize: '14px', fontWeight: '600', margin: '0 0 4px 0' }}>
+                                {label} 2024
+                              </p>
+                              <p style={{ color: '#374151', fontSize: '14px', margin: '0' }}>
+                                ${payload[0].value} Actual
+                              </p>
+                            </div>
+                          );
+                        }
+                        return null;
+                      }}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="projected"
+                      stroke={projectionChartConfig.projected.color}
+                      fill={projectionChartConfig.projected.color}
+                      fillOpacity={0.3}
+                      strokeWidth={3}
+                      name="Projected Spending"
+                      dot={{ fill: projectionChartConfig.projected.color, strokeWidth: 2, r: 4 }}
+                    />
+                  </AreaChart>
+                </ChartContainer>
+                <div className="mt-4 p-3 bg-primary/10 rounded-lg border border-primary/20">
+                  <div className="flex items-center gap-2 mb-2">
+                    <TrendingUp className="w-4 h-4 text-primary" />
+                    <h4 className="font-semibold text-primary text-sm">Projection Insights</h4>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 text-xs">
+                    <div>
+                      <p className="text-muted-foreground">Current Average</p>
+                      <p className="font-semibold text-primary">$2,847</p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground">Year-End</p>
+                      <p className="font-semibold text-primary">$3,289</p>
+                    </div>
+                  </div>
+                  <div className="mt-2 p-2 bg-background/50 rounded border border-primary/10">
+                    <p className="text-xs text-foreground">
+                      <strong className="text-primary">Forecast:</strong> Gradual increase with holiday spike in December.
+                    </p>
+                  </div>
                 </div>
-              </DialogContent>
-            </Dialog>
-          </CardContent>
-        </Card>
-      </div>
+              </div>
+            )}
+          </motion.div>
+        </CardContent>
+      </Card>
 
       {/* Detailed Analytics */}
       <Card className="card-gradient">
