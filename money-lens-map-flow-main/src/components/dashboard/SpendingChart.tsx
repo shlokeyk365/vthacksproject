@@ -71,10 +71,10 @@ export function SpendingChart() {
                 <LineChart 
                   data={spendingData}
                   margin={{ 
-                    top: 20, 
-                    right: 30, 
-                    left: 20, 
-                    bottom: 20 
+                    top: 30, 
+                    right: 40, 
+                    left: 50, 
+                    bottom: 30 
                   }}
                 >
                   <CartesianGrid 
@@ -85,33 +85,41 @@ export function SpendingChart() {
                   <XAxis 
                     dataKey="date" 
                     tick={{ 
-                      fontSize: 11, 
+                      fontSize: 12, 
                       fill: "hsl(var(--muted-foreground))" 
                     }}
                     tickLine={false}
                     axisLine={false}
                     tickFormatter={formatDate}
                     interval="preserveStartEnd"
+                    tickMargin={8}
                   />
                   <YAxis 
                     tick={{ 
-                      fontSize: 11, 
+                      fontSize: 12, 
                       fill: "hsl(var(--muted-foreground))" 
                     }}
                     tickLine={false}
                     axisLine={false}
                     tickFormatter={(value) => `$${value}`}
                     domain={['dataMin - 10', 'dataMax + 10']}
+                    tickMargin={8}
                   />
                   <ChartTooltip 
                     content={({ active, payload, label }) => {
                       if (active && payload && payload.length) {
                         return (
-                          <div className="bg-background border border-border rounded-lg shadow-lg p-3">
-                            <p className="text-sm font-medium text-foreground">
+                          <div className="bg-background border border-border rounded-lg shadow-lg p-4" style={{
+                            backgroundColor: '#ffffff',
+                            border: '1px solid #e5e7eb',
+                            borderRadius: '12px',
+                            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                            padding: '12px 16px'
+                          }}>
+                            <p className="text-sm font-semibold text-foreground mb-1" style={{ fontSize: '14px', fontWeight: '600' }}>
                               {formatDate(label)}
                             </p>
-                            <p className="text-sm text-primary">
+                            <p className="text-sm text-primary font-medium">
                               {formatCurrency(payload[0].value as number)}
                             </p>
                           </div>

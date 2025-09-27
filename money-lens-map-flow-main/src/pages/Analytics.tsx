@@ -567,26 +567,31 @@ export default function Analytics() {
           </CardHeader>
           <CardContent className="pt-0">
             <ChartContainer config={chartConfig} className="h-[280px] w-full">
-              <AreaChart data={monthlyData}>
+              <AreaChart data={monthlyData} margin={{ top: 30, right: 40, left: 50, bottom: 30 }}>
                 <XAxis 
                   dataKey="month" 
-                  tick={{ fontSize: 12 }}
+                  tick={{ fontSize: 12, fill: '#6B7280' }}
                   axisLine={{ stroke: '#e5e7eb' }}
                   tickLine={{ stroke: '#e5e7eb' }}
+                  tickMargin={8}
+                  interval={0}
                 />
                 <YAxis 
-                  tick={{ fontSize: 12 }}
+                  tick={{ fontSize: 12, fill: '#6B7280' }}
                   axisLine={{ stroke: '#e5e7eb' }}
                   tickLine={{ stroke: '#e5e7eb' }}
+                  tickMargin={8}
+                  tickFormatter={(value) => `$${value}`}
                 />
                 <ChartTooltip 
                   content={<ChartTooltipContent />}
-                  labelStyle={{ color: '#374151' }}
+                  labelStyle={{ color: '#374151', fontSize: '14px', fontWeight: '600' }}
                   contentStyle={{ 
                     backgroundColor: '#ffffff',
                     border: '1px solid #e5e7eb',
-                    borderRadius: '8px',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                    borderRadius: '12px',
+                    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                    padding: '12px 16px'
                   }}
                 />
                 <Area
@@ -637,31 +642,36 @@ export default function Analytics() {
           </CardHeader>
           <CardContent className="pt-0">
             <ChartContainer config={{}} className="h-[280px] w-full">
-              <BarChart data={formattedMerchants} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+              <BarChart data={formattedMerchants} margin={{ top: 30, right: 40, left: 50, bottom: 50 }}>
                 <XAxis 
                   dataKey="name"
-                  tick={{ fontSize: 12 }}
+                  tick={{ fontSize: 12, fill: '#6B7280' }}
                   axisLine={{ stroke: '#e5e7eb' }}
                   tickLine={{ stroke: '#e5e7eb' }}
                   angle={-45}
                   textAnchor="end"
                   height={60}
+                  tickMargin={8}
+                  interval={0}
                 />
                 <YAxis 
-                  tick={{ fontSize: 12 }}
+                  tick={{ fontSize: 12, fill: '#6B7280' }}
                   axisLine={{ stroke: '#e5e7eb' }}
                   tickLine={{ stroke: '#e5e7eb' }}
+                  tickMargin={8}
+                  tickFormatter={(value) => `$${value}`}
                 />
                 <ChartTooltip 
                   content={<ChartTooltipContent />}
-                  labelStyle={{ color: '#374151' }}
+                  labelStyle={{ color: '#374151', fontSize: '14px', fontWeight: '600' }}
                   contentStyle={{ 
                     backgroundColor: '#ffffff',
                     border: '1px solid #e5e7eb',
-                    borderRadius: '8px',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                    borderRadius: '12px',
+                    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                    padding: '12px 16px'
                   }}
-                  formatter={(value, name) => [`$${value}`, 'Amount Spent']}
+                  formatter={(value, name) => [`$${value.toLocaleString()}`, 'Amount Spent']}
                 />
                 <Bar 
                   dataKey="amount" 
@@ -741,29 +751,35 @@ export default function Analytics() {
           </CardHeader>
           <CardContent className="pt-0">
             <ChartContainer config={projectionChartConfig} className="h-[280px] w-full">
-              <AreaChart data={spendingProjection} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+              <AreaChart data={spendingProjection} margin={{ top: 30, right: 40, left: 50, bottom: 30 }}>
                 <XAxis 
                   dataKey="month"
-                  tick={{ fontSize: 12 }}
+                  tick={{ fontSize: 12, fill: '#6B7280' }}
                   axisLine={{ stroke: '#e5e7eb' }}
                   tickLine={{ stroke: '#e5e7eb' }}
+                  tickMargin={8}
+                  interval={0}
                 />
                 <YAxis 
-                  tick={{ fontSize: 12 }}
+                  tick={{ fontSize: 12, fill: '#6B7280' }}
                   axisLine={{ stroke: '#e5e7eb' }}
                   tickLine={{ stroke: '#e5e7eb' }}
+                  tickMargin={8}
                   domain={[2500, 3500]}
+                  tickFormatter={(value) => `$${value.toLocaleString()}`}
                 />
                 <ChartTooltip 
                   content={<ChartTooltipContent />}
-                  labelStyle={{ color: '#374151' }}
+                  labelStyle={{ color: '#374151', fontSize: '14px', fontWeight: '600' }}
                   contentStyle={{ 
                     backgroundColor: '#ffffff',
                     border: '1px solid #e5e7eb',
-                    borderRadius: '8px',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                    borderRadius: '12px',
+                    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                    padding: '12px 16px'
                   }}
-                  formatter={(value, name) => [`$${value}`, name === 'projected' ? 'Projected' : 'Actual']}
+                  formatter={(value, name) => [`$${value.toLocaleString()}`, name === 'projected' ? 'Projected' : 'Actual']}
+                  labelFormatter={(label) => `${label} 2024`}
                 />
                 <Area
                   type="monotone"
