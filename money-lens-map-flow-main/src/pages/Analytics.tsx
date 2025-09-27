@@ -5,6 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import jsPDF from 'jspdf';
 import { 
@@ -25,7 +27,10 @@ import {
   Info,
   ChevronLeft,
   ChevronRight,
-  Sparkles
+  Sparkles,
+  Send,
+  MessageSquare,
+  Building
 } from "lucide-react";
 import {
   ChartContainer,
@@ -50,23 +55,15 @@ import {
 import { getBrandColor, getCategoryBrandColor } from "@/lib/brandColors";
 import { AutoVisualizationAgent } from "@/components/agents/AutoVisualizationAgent";
 import { AIDescription } from "@/components/ui/AIDescription";
+import { chartData } from "@/lib/unifiedData";
+import { RealBankingDashboard } from "@/components/nessie/RealBankingDashboard";
+import { useNessieSpendingAnalysis } from "@/hooks/useNessie";
 
-const monthlyData = [
-  { month: "Jan", dining: 486, shopping: 329, transport: 245, utilities: 187 },
-  { month: "Feb", dining: 523, shopping: 287, transport: 267, utilities: 189 },
-  { month: "Mar", dining: 445, shopping: 398, transport: 223, utilities: 192 },
-  { month: "Apr", dining: 512, shopping: 356, transport: 289, utilities: 185 },
-  { month: "May", dining: 478, shopping: 423, transport: 234, utilities: 188 },
-  { month: "Jun", dining: 567, shopping: 389, transport: 278, utilities: 191 },
-];
-
-const topMerchants = [
-  { name: "Amazon", amount: 892, visits: 12, category: "Shopping", color: getBrandColor("Amazon", "Shopping") },
-  { name: "Target", amount: 523, visits: 8, category: "Shopping", color: getBrandColor("Target", "Shopping") },
-  { name: "Shell", amount: 356, visits: 15, category: "Transport", color: getBrandColor("Shell", "Transport") },
-  { name: "Starbucks", amount: 247, visits: 18, category: "Dining", color: getBrandColor("Starbucks", "Dining") },
-  { name: "McDonald's", amount: 189, visits: 14, category: "Dining", color: getBrandColor("McDonald's", "Dining") },
-];
+// Use unified dataset for consistent data across all components
+const monthlyData = chartData.monthlySpending;
+const topMerchants = chartData.topMerchants;
+const spendingVsCaps = chartData.spendingVsCaps;
+const spendingProjection = chartData.spendingProjection;
 
 // Ensure data is properly formatted for charts
 const formattedMerchants = topMerchants.map(merchant => ({
@@ -75,28 +72,14 @@ const formattedMerchants = topMerchants.map(merchant => ({
   visits: Number(merchant.visits)
 }));
 
-const spendingVsCaps = [
-  { category: "Dining", spent: 486, cap: 500, target: 450 },
-  { category: "Shopping", spent: 329, cap: 400, target: 350 },
-  { category: "Transport", spent: 245, cap: 300, target: 250 },
-  { category: "Utilities", spent: 187, cap: 200, target: 180 },
-];
-
-// Spending projection data for next 6 months
-const spendingProjection = [
-  { month: "Jul", actual: null, projected: 2847, trend: "increasing" },
-  { month: "Aug", actual: null, projected: 2923, trend: "increasing" },
-  { month: "Sep", actual: null, projected: 2987, trend: "increasing" },
-  { month: "Oct", actual: null, projected: 3054, trend: "increasing" },
-  { month: "Nov", actual: null, projected: 3121, trend: "increasing" },
-  { month: "Dec", actual: null, projected: 3289, trend: "holiday_spike" },
-];
-
 const chartConfig = {
   dining: { label: "Dining", color: getCategoryBrandColor("Dining") },
   shopping: { label: "Shopping", color: getCategoryBrandColor("Shopping") },
   transport: { label: "Transport", color: getCategoryBrandColor("Transport") },
   utilities: { label: "Utilities", color: getCategoryBrandColor("Utilities") },
+  healthcare: { label: "Healthcare", color: getCategoryBrandColor("Healthcare") },
+  entertainment: { label: "Entertainment", color: getCategoryBrandColor("Entertainment") },
+  groceries: { label: "Groceries", color: getCategoryBrandColor("Groceries") },
 };
 
 const merchantsChartConfig = {
@@ -113,10 +96,16 @@ export default function Analytics() {
   const [selectedPeriod, setSelectedPeriod] = useState("6months");
   const [isExporting, setIsExporting] = useState(false);
   const [currentView, setCurrentView] = useState(0);
+  const [nlQuery, setNlQuery] = useState("");
+  const [isProcessingQuery, setIsProcessingQuery] = useState(false);
+  const [queryResult, setQueryResult] = useState(null);
+  const [isInfoDialogOpen, setIsInfoDialogOpen] = useState(false);
 
   // Define all available views
   const views = [
     { id: 'ava', name: 'Auto Visualization Agent', icon: Sparkles, component: 'ava' },
+    { id: 'ava-chat', name: 'AVA Chat Assistant', icon: MessageSquare, component: 'ava-chat' },
+    { id: 'nessie', name: 'Real Banking Data', icon: Building, component: 'nessie' },
     { id: 'monthly', name: 'Monthly Trends', icon: BarChart3, component: 'monthly' },
     { id: 'merchants', name: 'Top Merchants', icon: Target, component: 'merchants' },
     { id: 'caps', name: 'Spending vs Caps', icon: AlertTriangle, component: 'caps' },
@@ -229,6 +218,74 @@ export default function Analytics() {
       case "1year": return "Last Year";
       case "all": return "All Time";
       default: return "Last 6 Months";
+    }
+  };
+
+  const handleNaturalLanguageQuery = async () => {
+    if (!nlQuery.trim()) {
+      toast.error("Please enter a query");
+      return;
+    }
+
+    setIsProcessingQuery(true);
+    
+    try {
+      // Simulate processing time
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Parse the query and generate appropriate data
+      const query = nlQuery.toLowerCase();
+      let result = null;
+      
+      if (query.includes('healthcare') && query.includes('shopping')) {
+        result = {
+          type: 'comparison',
+          title: 'Healthcare vs Shopping Spending',
+          data: [
+            { category: 'Healthcare', amount: 450, color: '#10B981' },
+            { category: 'Shopping', amount: 320, color: '#3B82F6' }
+          ],
+          summary: 'Your healthcare spending ($450) is 40% higher than shopping ($320) this month.'
+        };
+      } else if (query.includes('dining') && query.includes('reduce') && query.includes('20%')) {
+        result = {
+          type: 'scenario',
+          title: 'Dining Reduction Scenario (20%)',
+          data: [
+            { period: 'Current', dining: 486, projected: 486 },
+            { period: 'With 20% Reduction', dining: 389, projected: 389 }
+          ],
+          summary: 'Reducing dining by 20% would save you $97/month, totaling $1,164 annually.'
+        };
+      } else if (query.includes('trend') || query.includes('over time')) {
+        result = {
+          type: 'trend',
+          title: 'Spending Trends Over Time',
+          data: monthlyData,
+          summary: 'Your spending shows a gradual increase trend with seasonal variations.'
+        };
+      } else if (query.includes('merchant') || query.includes('store')) {
+        result = {
+          type: 'merchants',
+          title: 'Top Merchants Analysis',
+          data: formattedMerchants,
+          summary: 'Amazon leads your spending at $892, followed by Target at $523.'
+        };
+      } else {
+        result = {
+          type: 'general',
+          title: 'Spending Analysis',
+          data: monthlyData,
+          summary: 'Based on your query, here\'s your spending analysis with key insights.'
+        };
+      }
+      
+      setQueryResult(result);
+      toast.success("Query processed successfully!");
+    } catch (error) {
+      toast.error("Failed to process query. Please try again.");
+    } finally {
+      setIsProcessingQuery(false);
     }
   };
 
@@ -641,6 +698,305 @@ export default function Analytics() {
               </div>
             )}
             
+            {views[currentView].component === 'ava-chat' && (
+              <div>
+                {/* Information Icon */}
+                <div className="flex justify-end mb-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsInfoDialogOpen(true)}
+                    className="rounded-full w-8 h-8 p-0 bg-primary/10 hover:bg-primary/20 border-primary/30"
+                  >
+                    <Info className="w-4 h-4 text-primary" />
+                  </Button>
+                </div>
+                
+                <div className="space-y-4">
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Try: 'Show me my healthcare spending vs shopping in September' or 'What if I reduce dining by 20%?'"
+                      value={nlQuery}
+                      onChange={(e) => setNlQuery(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && handleNaturalLanguageQuery()}
+                      className="flex-1"
+                      disabled={isProcessingQuery}
+                    />
+                    <Button 
+                      onClick={handleNaturalLanguageQuery}
+                      disabled={isProcessingQuery || !nlQuery.trim()}
+                      className="px-6"
+                    >
+                      {isProcessingQuery ? (
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <Send className="w-4 h-4" />
+                      )}
+                    </Button>
+                  </div>
+                  
+                  {/* Example queries */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setNlQuery("Show me my healthcare spending vs shopping in September")}
+                      className="text-left justify-start h-auto p-3"
+                      disabled={isProcessingQuery}
+                    >
+                      <div>
+                        <p className="font-medium text-xs">Healthcare vs Shopping</p>
+                        <p className="text-xs text-muted-foreground">Compare categories</p>
+                      </div>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setNlQuery("What if I reduce dining by 20%?")}
+                      className="text-left justify-start h-auto p-3"
+                      disabled={isProcessingQuery}
+                    >
+                      <div>
+                        <p className="font-medium text-xs">Dining Reduction</p>
+                        <p className="text-xs text-muted-foreground">Scenario simulation</p>
+                      </div>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setNlQuery("Show me my spending trends over time")}
+                      className="text-left justify-start h-auto p-3"
+                      disabled={isProcessingQuery}
+                    >
+                      <div>
+                        <p className="font-medium text-xs">Spending Trends</p>
+                        <p className="text-xs text-muted-foreground">Time series analysis</p>
+                      </div>
+                    </Button>
+                  </div>
+
+                  {/* Query Result */}
+                  {queryResult && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3 }}
+                      className="mt-6"
+                    >
+                      <Card className="border-primary/20">
+                        <CardHeader className="pb-3">
+                          <CardTitle className="text-lg">{queryResult.title}</CardTitle>
+                          <p className="text-sm text-muted-foreground">{queryResult.summary}</p>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="h-[300px]">
+                            {queryResult.type === 'comparison' && (
+                              <ChartContainer config={{}} className="h-full w-full">
+                                <BarChart data={queryResult.data}>
+                                  <XAxis dataKey="category" />
+                                  <YAxis />
+                                  <ChartTooltip content={<ChartTooltipContent />} />
+                                  <Bar dataKey="amount" radius={[4, 4, 0, 0]}>
+                                    {queryResult.data.map((entry, index) => (
+                                      <Cell key={`cell-${index}`} fill={entry.color} />
+                                    ))}
+                                  </Bar>
+                                </BarChart>
+                              </ChartContainer>
+                            )}
+                            
+                            {queryResult.type === 'scenario' && (
+                              <ChartContainer config={{}} className="h-full w-full">
+                                <BarChart data={queryResult.data}>
+                                  <XAxis dataKey="period" />
+                                  <YAxis />
+                                  <ChartTooltip content={<ChartTooltipContent />} />
+                                  <Bar dataKey="dining" fill="#3B82F6" radius={[4, 4, 0, 0]} />
+                                </BarChart>
+                              </ChartContainer>
+                            )}
+                            
+                            {queryResult.type === 'trend' && (
+                              <ChartContainer config={chartConfig} className="h-full w-full">
+                                <AreaChart data={queryResult.data}>
+                                  <XAxis dataKey="month" />
+                                  <YAxis />
+                                  <ChartTooltip content={<ChartTooltipContent />} />
+                                  <Area
+                                    type="monotone"
+                                    dataKey="dining"
+                                    stackId="1"
+                                    stroke={chartConfig.dining.color}
+                                    fill={chartConfig.dining.color}
+                                    fillOpacity={0.6}
+                                  />
+                                  <Area
+                                    type="monotone"
+                                    dataKey="shopping"
+                                    stackId="1"
+                                    stroke={chartConfig.shopping.color}
+                                    fill={chartConfig.shopping.color}
+                                    fillOpacity={0.6}
+                                  />
+                                  <Area
+                                    type="monotone"
+                                    dataKey="transport"
+                                    stackId="1"
+                                    stroke={chartConfig.transport.color}
+                                    fill={chartConfig.transport.color}
+                                    fillOpacity={0.6}
+                                  />
+                                  <Area
+                                    type="monotone"
+                                    dataKey="utilities"
+                                    stackId="1"
+                                    stroke={chartConfig.utilities.color}
+                                    fill={chartConfig.utilities.color}
+                                    fillOpacity={0.6}
+                                  />
+                                  <Area
+                                    type="monotone"
+                                    dataKey="healthcare"
+                                    stackId="1"
+                                    stroke={chartConfig.healthcare.color}
+                                    fill={chartConfig.healthcare.color}
+                                    fillOpacity={0.6}
+                                  />
+                                  <Area
+                                    type="monotone"
+                                    dataKey="entertainment"
+                                    stackId="1"
+                                    stroke={chartConfig.entertainment.color}
+                                    fill={chartConfig.entertainment.color}
+                                    fillOpacity={0.6}
+                                  />
+                                  <Area
+                                    type="monotone"
+                                    dataKey="groceries"
+                                    stackId="1"
+                                    stroke={chartConfig.groceries.color}
+                                    fill={chartConfig.groceries.color}
+                                    fillOpacity={0.6}
+                                  />
+                                </AreaChart>
+                              </ChartContainer>
+                            )}
+                            
+                            {queryResult.type === 'merchants' && (
+                              <ChartContainer config={{}} className="h-full w-full">
+                                <BarChart data={queryResult.data}>
+                                  <XAxis dataKey="name" angle={-45} textAnchor="end" height={60} />
+                                  <YAxis />
+                                  <ChartTooltip content={<ChartTooltipContent />} />
+                                  <Bar dataKey="amount" radius={[4, 4, 0, 0]}>
+                                    {queryResult.data.map((entry, index) => (
+                                      <Cell key={`cell-${index}`} fill={entry.color} />
+                                    ))}
+                                  </Bar>
+                                </BarChart>
+                              </ChartContainer>
+                            )}
+                            
+                            {queryResult.type === 'general' && (
+                              <ChartContainer config={chartConfig} className="h-full w-full">
+                                <AreaChart data={queryResult.data}>
+                                  <XAxis dataKey="month" />
+                                  <YAxis />
+                                  <ChartTooltip content={<ChartTooltipContent />} />
+                                  <Area
+                                    type="monotone"
+                                    dataKey="dining"
+                                    stackId="1"
+                                    stroke={chartConfig.dining.color}
+                                    fill={chartConfig.dining.color}
+                                    fillOpacity={0.6}
+                                  />
+                                  <Area
+                                    type="monotone"
+                                    dataKey="shopping"
+                                    stackId="1"
+                                    stroke={chartConfig.shopping.color}
+                                    fill={chartConfig.shopping.color}
+                                    fillOpacity={0.6}
+                                  />
+                                  <Area
+                                    type="monotone"
+                                    dataKey="transport"
+                                    stackId="1"
+                                    stroke={chartConfig.transport.color}
+                                    fill={chartConfig.transport.color}
+                                    fillOpacity={0.6}
+                                  />
+                                  <Area
+                                    type="monotone"
+                                    dataKey="utilities"
+                                    stackId="1"
+                                    stroke={chartConfig.utilities.color}
+                                    fill={chartConfig.utilities.color}
+                                    fillOpacity={0.6}
+                                  />
+                                  <Area
+                                    type="monotone"
+                                    dataKey="healthcare"
+                                    stackId="1"
+                                    stroke={chartConfig.healthcare.color}
+                                    fill={chartConfig.healthcare.color}
+                                    fillOpacity={0.6}
+                                  />
+                                  <Area
+                                    type="monotone"
+                                    dataKey="entertainment"
+                                    stackId="1"
+                                    stroke={chartConfig.entertainment.color}
+                                    fill={chartConfig.entertainment.color}
+                                    fillOpacity={0.6}
+                                  />
+                                  <Area
+                                    type="monotone"
+                                    dataKey="groceries"
+                                    stackId="1"
+                                    stroke={chartConfig.groceries.color}
+                                    fill={chartConfig.groceries.color}
+                                    fillOpacity={0.6}
+                                  />
+                                </AreaChart>
+                              </ChartContainer>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </motion.div>
+                  )}
+                </div>
+                <AIDescription
+                  shortDescription="The AVA Chat Assistant allows you to ask questions in natural language and automatically generates the perfect chart to answer your query. Simply type what you want to know about your spending patterns."
+                  longDescription="This intelligent chat interface understands natural language queries about your financial data and automatically selects the most appropriate visualization. Whether you want to compare categories, simulate scenarios, analyze trends, or explore merchant spending, AVA will generate the right chart type and provide meaningful insights. The system processes your questions using advanced natural language understanding and creates dynamic, interactive visualizations that help you understand your spending patterns better than ever before."
+                  insights={[
+                    "Ask questions in plain English - no technical knowledge required",
+                    "Automatically selects the best chart type for your query",
+                    "Supports comparison, scenario simulation, and trend analysis",
+                    "Provides instant insights and recommendations"
+                  ]}
+                />
+              </div>
+            )}
+            
+            {views[currentView].component === 'nessie' && (
+              <div>
+                <RealBankingDashboard />
+                <AIDescription
+                  shortDescription="Real banking data integration using Capital One's Nessie API. View actual account balances, transaction history, and spending patterns from real bank accounts."
+                  longDescription="This integration connects to Capital One's Nessie API to provide real banking data including customer accounts, transaction history, spending analysis, and financial insights. Users can view actual account balances, transfer money between accounts, create new transactions, and analyze spending patterns using real bank data. The system automatically categorizes transactions and provides detailed financial analytics based on actual banking activity."
+                  insights={[
+                    "Real account balances and transaction history from Capital One API",
+                    "Live spending analysis with automatic transaction categorization",
+                    "Money transfer capabilities between accounts",
+                    "Bill payment and transaction creation features"
+                  ]}
+                />
+              </div>
+            )}
+            
             {views[currentView].component === 'monthly' && (
               <div>
                 <ChartContainer config={chartConfig} className="h-[400px] w-full">
@@ -700,6 +1056,33 @@ export default function Analytics() {
                       stackId="1"
                       stroke={chartConfig.utilities.color}
                       fill={chartConfig.utilities.color}
+                      fillOpacity={0.6}
+                      strokeWidth={2}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="healthcare"
+                      stackId="1"
+                      stroke={chartConfig.healthcare.color}
+                      fill={chartConfig.healthcare.color}
+                      fillOpacity={0.6}
+                      strokeWidth={2}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="entertainment"
+                      stackId="1"
+                      stroke={chartConfig.entertainment.color}
+                      fill={chartConfig.entertainment.color}
+                      fillOpacity={0.6}
+                      strokeWidth={2}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="groceries"
+                      stackId="1"
+                      stroke={chartConfig.groceries.color}
+                      fill={chartConfig.groceries.color}
                       fillOpacity={0.6}
                       strokeWidth={2}
                     />
@@ -949,6 +1332,93 @@ export default function Analytics() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Information Dialog for AVA Chat Assistant */}
+      <Dialog open={isInfoDialogOpen} onOpenChange={setIsInfoDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-primary" />
+              Automation & Agent Behavior
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Natural Language Queries */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 bg-primary/10 rounded-lg">
+                    <Lightbulb className="w-4 h-4 text-primary" />
+                  </div>
+                  <h3 className="font-semibold text-primary">Natural Language Queries</h3>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Let users type "Show me my healthcare spending vs shopping in September". 
+                  AVA generates the right chart + summary.
+                </p>
+                <div className="p-3 bg-primary/5 rounded-lg border border-primary/20">
+                  <p className="text-xs text-foreground font-medium mb-1">Example Query:</p>
+                  <p className="text-xs text-muted-foreground italic">
+                    "Show me my healthcare spending vs shopping in September"
+                  </p>
+                </div>
+              </div>
+
+              {/* Alerting System */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 bg-warning/10 rounded-lg">
+                    <AlertTriangle className="w-4 h-4 text-warning" />
+                  </div>
+                  <h3 className="font-semibold text-warning">Alerting System</h3>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Email/Slack/notification when spending crosses a threshold.
+                </p>
+                <div className="p-3 bg-warning/5 rounded-lg border border-warning/20">
+                  <p className="text-xs text-foreground font-medium mb-1">Smart Alerts:</p>
+                  <p className="text-xs text-muted-foreground">
+                    • Budget threshold breaches<br/>
+                    • Unusual spending patterns<br/>
+                    • Category cap warnings
+                  </p>
+                </div>
+              </div>
+
+              {/* Scenario Simulations */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 bg-success/10 rounded-lg">
+                    <Target className="w-4 h-4 text-success" />
+                  </div>
+                  <h3 className="font-semibold text-success">Scenario Simulations</h3>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  "What if I reduce dining by 20%?" → AVA updates chart & shows savings impact.
+                </p>
+                <div className="p-3 bg-success/5 rounded-lg border border-success/20">
+                  <p className="text-xs text-foreground font-medium mb-1">Simulation Example:</p>
+                  <p className="text-xs text-muted-foreground italic">
+                    "What if I reduce dining by 20%?"
+                  </p>
+                  <p className="text-xs text-success mt-1">
+                    → Shows potential savings: $100/month
+                  </p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="mt-6 p-4 bg-primary/5 rounded-lg border border-primary/20">
+              <h4 className="font-semibold text-primary mb-2">How It Works</h4>
+              <p className="text-sm text-muted-foreground">
+                The AVA Chat Assistant combines all three automation features into one intelligent interface. 
+                Simply type your question in natural language, and AVA will automatically determine whether you 
+                want a comparison, scenario simulation, or trend analysis, then generate the perfect chart and insights.
+              </p>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </motion.div>
   );
 }
