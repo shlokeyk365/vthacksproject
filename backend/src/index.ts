@@ -16,6 +16,7 @@ import capRoutes from './routes/caps';
 import analyticsRoutes from './routes/analytics';
 import mapRoutes from './routes/map';
 import settingsRoutes from './routes/settings';
+import dataRoutes from './routes/data';
 
 // Import middleware
 import { errorHandler } from './middleware/errorHandler';
@@ -59,6 +60,7 @@ app.use('/api/caps', capRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/map', mapRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/data', dataRoutes);
 
 // WebSocket connection handling
 io.on('connection', (socket) => {

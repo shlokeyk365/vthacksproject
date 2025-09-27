@@ -203,6 +203,34 @@ class ApiClient {
     return this.request<{ enabled: boolean }>('/auth/2fa/status');
   }
 
+  // Data management methods
+  async exportData() {
+    return this.request<any>('/data/export');
+  }
+
+  async importData(importData: any) {
+    return this.request<{ message: string }>('/data/import', {
+      method: 'POST',
+      body: JSON.stringify({ importData }),
+    });
+  }
+
+  async deleteAllData() {
+    return this.request<{ message: string }>('/data/delete-all', {
+      method: 'DELETE',
+    });
+  }
+
+  async getDataStats() {
+    return this.request<{
+      totalTransactions: number;
+      activeCaps: number;
+      totalNotifications: number;
+      accountAgeDays: number;
+      monthlyBudgetGoal: number;
+    }>('/data/stats');
+  }
+
   async logout() {
     this.clearToken();
     return this.request('/auth/logout', { method: 'POST' });

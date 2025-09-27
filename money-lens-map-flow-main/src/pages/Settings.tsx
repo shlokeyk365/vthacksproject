@@ -8,6 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useProfile } from "@/hooks/useApi";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -81,6 +82,20 @@ export default function Settings() {
   const [verificationToken, setVerificationToken] = useState('');
   const [is2FASetupDialogOpen, setIs2FASetupDialogOpen] = useState(false);
   const [is2FAVerifyDialogOpen, setIs2FAVerifyDialogOpen] = useState(false);
+  
+  // Data management state
+  const [isExportingData, setIsExportingData] = useState(false);
+  const [isImportingData, setIsImportingData] = useState(false);
+  const [isDeletingData, setIsDeletingData] = useState(false);
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [dataStats, setDataStats] = useState({
+    totalTransactions: 0,
+    activeCaps: 0,
+    totalNotifications: 0,
+    accountAgeDays: 0,
+    monthlyBudgetGoal: 0
+  });
 
   // Load user data into form
   useEffect(() => {
@@ -108,6 +123,22 @@ export default function Settings() {
     };
 
     load2FAStatus();
+  }, []);
+
+  // Load data statistics
+  useEffect(() => {
+    const loadDataStats = async () => {
+      try {
+        const response = await apiClient.getDataStats();
+        if (response.success) {
+          setDataStats(response.data);
+        }
+      } catch (error) {
+        console.error('Failed to load data stats:', error);
+      }
+    };
+
+    loadDataStats();
   }, []);
 
   // Handle profile form changes
@@ -426,6 +457,163 @@ export default function Settings() {
     }
   };
 
+  // Handle data export
+  const handleExportData = async () => {
+    setIsExportingData(true);
+
+    const loadingToast = toast.loading('Exporting your data...', {
+      description: 'Preparing your data for download',
+    });
+
+    try {
+      const response = await apiClient.exportData();
+
+      if (response.success) {
+        // Create and download JSON file
+        const dataStr = JSON.stringify(response.data, null, 2);
+        const dataBlob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(dataBlob);
+        
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `moneylens-export-${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+
+        toast.dismiss(loadingToast);
+        toast.success('Data exported successfully!', {
+          description: 'Your data has been downloaded',
+          duration: 4000,
+        });
+      } else {
+        toast.dismiss(loadingToast);
+        toast.error('Failed to export data', {
+          description: response.message || 'Please try again',
+          duration: 5000,
+        });
+      }
+    } catch (error: any) {
+      console.error('Data export error:', error);
+      toast.dismiss(loadingToast);
+      toast.error('Failed to export data', {
+        description: error.message || 'Please try again',
+        duration: 5000,
+      });
+    } finally {
+      setIsExportingData(false);
+    }
+  };
+
+  // Handle data import
+  const handleImportData = async () => {
+    if (!importFile) {
+      toast.error('Please select a file to import', {
+        description: 'Choose a valid JSON export file',
+        duration: 4000,
+      });
+      return;
+    }
+
+    setIsImportingData(true);
+
+    const loadingToast = toast.loading('Importing your data...', {
+      description: 'Please wait while we process your data',
+    });
+
+    try {
+      const fileContent = await importFile.text();
+      const importData = JSON.parse(fileContent);
+
+      const response = await apiClient.importData(importData);
+
+      if (response.success) {
+        setIsImportDialogOpen(false);
+        setImportFile(null);
+
+        toast.dismiss(loadingToast);
+        toast.success('Data imported successfully!', {
+          description: 'Your data has been restored',
+          duration: 5000,
+        });
+
+        // Refresh data stats
+        const statsResponse = await apiClient.getDataStats();
+        if (statsResponse.success) {
+          setDataStats(statsResponse.data);
+        }
+
+        // Refresh page to show updated data
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
+      } else {
+        toast.dismiss(loadingToast);
+        toast.error('Failed to import data', {
+          description: response.message || 'Please check your file and try again',
+          duration: 5000,
+        });
+      }
+    } catch (error: any) {
+      console.error('Data import error:', error);
+      toast.dismiss(loadingToast);
+      toast.error('Failed to import data', {
+        description: error.message || 'Invalid file format. Please use a valid export file.',
+        duration: 5000,
+      });
+    } finally {
+      setIsImportingData(false);
+    }
+  };
+
+  // Handle delete all data
+  const handleDeleteAllData = async () => {
+    setIsDeletingData(true);
+
+    const loadingToast = toast.loading('Deleting all data...', {
+      description: 'This action cannot be undone',
+    });
+
+    try {
+      const response = await apiClient.deleteAllData();
+
+      if (response.success) {
+        toast.dismiss(loadingToast);
+        toast.success('All data deleted successfully!', {
+          description: 'Your account has been reset',
+          duration: 5000,
+        });
+
+        // Refresh data stats
+        const statsResponse = await apiClient.getDataStats();
+        if (statsResponse.success) {
+          setDataStats(statsResponse.data);
+        }
+
+        // Refresh page to show updated data
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
+      } else {
+        toast.dismiss(loadingToast);
+        toast.error('Failed to delete data', {
+          description: response.message || 'Please try again',
+          duration: 5000,
+        });
+      }
+    } catch (error: any) {
+      console.error('Data deletion error:', error);
+      toast.dismiss(loadingToast);
+      toast.error('Failed to delete data', {
+        description: error.message || 'Please try again',
+        duration: 5000,
+      });
+    } finally {
+      setIsDeletingData(false);
+    }
+  };
+
   return (
     <motion.div
       className="space-y-6"
@@ -678,30 +866,147 @@ export default function Settings() {
                 Data Management
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-6">
+              {/* Data Statistics */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="text-center p-3 bg-muted/30 rounded-lg">
+                  <div className="text-2xl font-bold text-primary">{dataStats.totalTransactions}</div>
+                  <div className="text-xs text-muted-foreground">Transactions</div>
+                </div>
+                <div className="text-center p-3 bg-muted/30 rounded-lg">
+                  <div className="text-2xl font-bold text-primary">{dataStats.activeCaps}</div>
+                  <div className="text-xs text-muted-foreground">Active Caps</div>
+                </div>
+                <div className="text-center p-3 bg-muted/30 rounded-lg">
+                  <div className="text-2xl font-bold text-primary">{dataStats.totalNotifications}</div>
+                  <div className="text-xs text-muted-foreground">Notifications</div>
+                </div>
+                <div className="text-center p-3 bg-muted/30 rounded-lg">
+                  <div className="text-2xl font-bold text-primary">{dataStats.accountAgeDays}</div>
+                  <div className="text-xs text-muted-foreground">Days Old</div>
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Export and Import */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Button variant="outline" className="flex items-center gap-2">
+                <Button 
+                  variant="outline" 
+                  className="flex items-center gap-2"
+                  onClick={handleExportData}
+                  disabled={isExportingData}
+                >
                   <Download className="w-4 h-4" />
-                  Export All Data
+                  {isExportingData ? 'Exporting...' : 'Export All Data'}
                 </Button>
                 
-                <Button variant="outline" className="flex items-center gap-2">
-                  <Upload className="w-4 h-4" />
-                  Import Data
-                </Button>
+                <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" className="flex items-center gap-2">
+                      <Upload className="w-4 h-4" />
+                      Import Data
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                      <DialogTitle>Import Data</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <div>
+                        <Label htmlFor="importFile" className="text-sm font-medium">
+                          Select Export File
+                        </Label>
+                        <Input
+                          id="importFile"
+                          type="file"
+                          accept=".json"
+                          onChange={(e) => setImportFile(e.target.files?.[0] || null)}
+                          className="mt-2"
+                        />
+                        <p className="text-xs text-muted-foreground mt-2">
+                          Choose a MoneyLens export file (.json)
+                        </p>
+                      </div>
+                      
+                      <div className="p-3 bg-warning/10 rounded-lg border border-warning/20">
+                        <p className="text-sm text-warning font-medium mb-1">⚠️ Warning</p>
+                        <p className="text-xs text-muted-foreground">
+                          Importing data will replace all your current data. This action cannot be undone.
+                        </p>
+                      </div>
+                      
+                      <div className="flex gap-3">
+                        <Button
+                          onClick={handleImportData}
+                          disabled={isImportingData || !importFile}
+                          className="flex-1"
+                        >
+                          {isImportingData ? 'Importing...' : 'Import Data'}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            setIsImportDialogOpen(false);
+                            setImportFile(null);
+                          }}
+                          disabled={isImportingData}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  </DialogContent>
+                </Dialog>
               </div>
               
               <Separator />
               
+              {/* Danger Zone */}
               <div className="p-4 bg-danger/10 rounded-lg border border-danger/20">
                 <h4 className="font-semibold text-danger mb-2">Danger Zone</h4>
                 <p className="text-sm text-muted-foreground mb-3">
                   This action cannot be undone. All your data will be permanently deleted.
                 </p>
-                <Button variant="destructive" size="sm" className="flex items-center gap-2">
-                  <Trash2 className="w-4 h-4" />
-                  Delete All Data
-                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button 
+                      variant="destructive" 
+                      size="sm" 
+                      className="flex items-center gap-2"
+                      disabled={isDeletingData}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      {isDeletingData ? 'Deleting...' : 'Delete All Data'}
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This action cannot be undone. This will permanently delete all your:
+                        <ul className="list-disc list-inside mt-2 space-y-1">
+                          <li>Transactions ({dataStats.totalTransactions})</li>
+                          <li>Spending caps ({dataStats.activeCaps})</li>
+                          <li>Notifications ({dataStats.totalNotifications})</li>
+                          <li>Account preferences and settings</li>
+                        </ul>
+                        <br />
+                        Your account will remain but all data will be reset to default values.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel disabled={isDeletingData}>Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={handleDeleteAllData}
+                        disabled={isDeletingData}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      >
+                        {isDeletingData ? 'Deleting...' : 'Yes, delete all data'}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
             </CardContent>
           </Card>
@@ -802,9 +1107,9 @@ export default function Settings() {
             <CardContent className="space-y-4">
               <Dialog open={isPasswordDialogOpen} onOpenChange={setIsPasswordDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button variant="outline" className="w-full">
-                    Change Password
-                  </Button>
+              <Button variant="outline" className="w-full">
+                Change Password
+              </Button>
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-md">
                   <DialogHeader>
@@ -1045,7 +1350,7 @@ export default function Settings() {
                         size="lg"
                       >
                         Cancel
-                      </Button>
+              </Button>
                     </div>
                   </div>
                 </DialogContent>
@@ -1058,9 +1363,9 @@ export default function Settings() {
                   {twoFactorEnabled ? "2FA Enabled" : "2FA Disabled"}
                 </Badge>
                 <div>
-                  <Badge variant="secondary" className="text-xs">
-                    Last login: 2 hours ago
-                  </Badge>
+                <Badge variant="secondary" className="text-xs">
+                  Last login: 2 hours ago
+                </Badge>
                 </div>
               </div>
             </CardContent>
@@ -1074,19 +1379,19 @@ export default function Settings() {
             <CardContent className="space-y-3">
               <div className="flex justify-between text-sm">
                 <span>Total Transactions</span>
-                <span className="font-semibold">1,247</span>
+                <span className="font-semibold">{dataStats.totalTransactions}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span>Active Caps</span>
-                <span className="font-semibold">8</span>
+                <span className="font-semibold">{dataStats.activeCaps}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span>Account Age</span>
-                <span className="font-semibold">6 months</span>
+                <span className="font-semibold">{dataStats.accountAgeDays} days</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span>Data Size</span>
-                <span className="font-semibold">2.4 MB</span>
+                <span>Monthly Budget</span>
+                <span className="font-semibold">${dataStats.monthlyBudgetGoal}</span>
               </div>
             </CardContent>
           </Card>
