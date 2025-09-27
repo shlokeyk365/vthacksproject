@@ -15,6 +15,7 @@ import Transactions from "./pages/Transactions";
 import Analytics from "./pages/Analytics";
 import Settings from "./pages/Settings";
 import { FinancialBodyguardPage } from "./pages/FinancialBodyguard";
+import Leaderboard from "./pages/Leaderboard";
 import NotFound from "./pages/NotFound";
 import toast, { Toaster as HotToast } from 'react-hot-toast';
 
@@ -53,6 +54,7 @@ const AppRoutes = () => {
           <Route path="caps" element={<SpendingCaps />} />
           <Route path="transactions" element={<Transactions />} />
           <Route path="analytics" element={<Analytics />} />
+          <Route path="leaderboard" element={<Leaderboard />} />
           <Route path="settings" element={<Settings />} />
           <Route path="bodyguard" element={<FinancialBodyguardPage />} />
         </Route>
