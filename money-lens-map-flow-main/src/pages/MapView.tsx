@@ -196,15 +196,15 @@ export default function MapView() {
 
   return (
     <motion.div
-      className="h-full space-y-6"
+      className="h-full min-h-screen space-y-6 p-6"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
     >
       {/* Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
         <div className="space-y-1">
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+          <h1 className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
             Geographic Spending
           </h1>
           <p className="text-muted-foreground text-sm">
@@ -212,11 +212,11 @@ export default function MapView() {
           </p>
         </div>
         
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 lg:gap-3">
           <div className="flex items-center gap-2">
             <Calendar className="w-4 h-4 text-muted-foreground" />
             <Select value={period} onValueChange={setPeriod}>
-              <SelectTrigger className="w-36 h-9">
+              <SelectTrigger className="w-32 h-9">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -234,7 +234,7 @@ export default function MapView() {
               placeholder="Search merchants..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 w-64 h-9"
+              className="pl-10 w-48 lg:w-64 h-9"
             />
           </div>
           
@@ -246,14 +246,15 @@ export default function MapView() {
             className="h-9"
           >
             <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
-            Refresh
+            <span className="hidden sm:inline">Refresh</span>
           </Button>
 
           <Dialog open={isSimulatorOpen} onOpenChange={setIsSimulatorOpen}>
             <DialogTrigger asChild>
               <Button size="sm" className="h-9 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary">
                 <Plus className="w-4 h-4 mr-2" />
-                Add Transaction
+                <span className="hidden sm:inline">Add Transaction</span>
+                <span className="sm:hidden">Add</span>
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-lg">
@@ -438,10 +439,10 @@ export default function MapView() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-[calc(100vh-12rem)]">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 lg:gap-6 min-h-[600px]">
         {/* Map Container */}
-        <div className="lg:col-span-3">
-          <Card className="h-full border-0 shadow-lg bg-gradient-to-br from-background to-muted/20">
+        <div className="lg:col-span-3 order-1 lg:order-1">
+          <Card className="h-full min-h-[400px] lg:min-h-[500px] border-0 shadow-lg bg-gradient-to-br from-background to-muted/20">
             <CardContent className="p-0 h-full">
               {/* Map Visualization */}
               <div className="h-full bg-gradient-to-br from-primary/5 via-background to-success/5 rounded-lg relative overflow-hidden">
@@ -611,7 +612,7 @@ export default function MapView() {
         </div>
 
         {/* Sidebar Panel */}
-        <div className="space-y-6 overflow-y-auto max-h-[calc(100vh-12rem)]">
+        <div className="space-y-4 lg:space-y-6 overflow-y-auto max-h-[400px] lg:max-h-[600px] order-2 lg:order-2">
           {/* Selected Merchant Details */}
           {selectedMerchant && (
             <motion.div
@@ -735,7 +736,7 @@ export default function MapView() {
                     return (
                       <motion.div
                         key={merchant.id}
-                        className={`p-4 rounded-xl cursor-pointer transition-all duration-200 hover:shadow-md ${
+                        className={`p-3 lg:p-4 rounded-xl cursor-pointer transition-all duration-200 hover:shadow-md ${
                           selectedMerchant?.id === merchant.id
                             ? 'bg-primary/10 border border-primary/20 shadow-md'
                             : 'bg-muted/20 hover:bg-muted/30'
@@ -747,9 +748,9 @@ export default function MapView() {
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                       >
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-                            <IconComponent className="w-5 h-5 text-primary" />
+                        <div className="flex items-center gap-2 lg:gap-3">
+                          <div className="w-8 h-8 lg:w-10 lg:h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                            <IconComponent className="w-4 h-4 lg:w-5 lg:h-5 text-primary" />
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="font-semibold text-sm truncate">
