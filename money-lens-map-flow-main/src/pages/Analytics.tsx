@@ -1,7 +1,9 @@
 import { motion } from "framer-motion";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -11,7 +13,13 @@ import {
   Download,
   BarChart3,
   PieChart as PieChartIcon,
-  AlertTriangle
+  AlertTriangle,
+  Eye,
+  Lightbulb,
+  TrendingUp as TrendingUpIcon,
+  AlertCircle,
+  CheckCircle,
+  Info
 } from "lucide-react";
 import {
   ChartContainer,
@@ -66,6 +74,92 @@ const chartConfig = {
 };
 
 export default function Analytics() {
+  const [isInsightsDialogOpen, setIsInsightsDialogOpen] = useState(false);
+
+  // Comprehensive insights data
+  const allInsights = [
+    {
+      id: 1,
+      type: "alert",
+      icon: AlertCircle,
+      title: "Spending Pattern Alert",
+      description: "Your dining expenses have increased 15% compared to last month. Consider setting a stricter cap to maintain your budget goals.",
+      category: "Dining",
+      impact: "High",
+      recommendation: "Set dining cap to $400/month"
+    },
+    {
+      id: 2,
+      type: "success",
+      icon: CheckCircle,
+      title: "Savings Opportunity",
+      description: "You're consistently under budget on transportation. You could reallocate $50/month to your savings goal.",
+      category: "Transportation",
+      impact: "Medium",
+      recommendation: "Increase transportation cap by $50"
+    },
+    {
+      id: 3,
+      type: "warning",
+      icon: AlertTriangle,
+      title: "Budget Risk Warning",
+      description: "Shopping expenses typically increase 20% in December. Consider adjusting your caps accordingly.",
+      category: "Shopping",
+      impact: "High",
+      recommendation: "Prepare for holiday spending surge"
+    },
+    {
+      id: 4,
+      type: "info",
+      icon: Info,
+      title: "Spending Trend Analysis",
+      description: "Your monthly spending has decreased by 8% over the past 3 months. Great job maintaining budget discipline!",
+      category: "Overall",
+      impact: "Positive",
+      recommendation: "Continue current spending patterns"
+    },
+    {
+      id: 5,
+      type: "alert",
+      icon: AlertCircle,
+      title: "Merchant Concentration Risk",
+      description: "45% of your spending is concentrated at just 3 merchants. Consider diversifying your spending for better budget control.",
+      category: "Merchants",
+      impact: "Medium",
+      recommendation: "Set individual merchant spending limits"
+    },
+    {
+      id: 6,
+      type: "success",
+      icon: TrendingUpIcon,
+      title: "Goal Achievement",
+      description: "You're on track to save $2,400 this year, exceeding your goal by $400. Consider increasing your savings target.",
+      category: "Savings",
+      impact: "High",
+      recommendation: "Increase annual savings goal to $3,000"
+    },
+    {
+      id: 7,
+      type: "warning",
+      icon: AlertTriangle,
+      title: "Weekend Spending Spike",
+      description: "Your weekend spending is 35% higher than weekdays. Monitor weekend activities to maintain budget balance.",
+      category: "Timing",
+      impact: "Medium",
+      recommendation: "Set weekend-specific spending caps"
+    },
+    {
+      id: 8,
+      type: "info",
+      icon: Lightbulb,
+      title: "Optimization Opportunity",
+      description: "Switching to bulk purchases for groceries could save you $80/month based on your current patterns.",
+      category: "Groceries",
+      impact: "High",
+      recommendation: "Plan monthly bulk grocery trips"
+    }
+  ];
+
   return (
     <motion.div
       className="h-full min-h-screen space-y-6 p-6"
@@ -377,9 +471,75 @@ export default function Analytics() {
               </p>
             </div>
 
-            <Button className="w-full" variant="outline">
-              View All Insights
-            </Button>
+            <Dialog open={isInsightsDialogOpen} onOpenChange={setIsInsightsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button className="w-full" variant="outline">
+                  <Eye className="w-4 h-4 mr-2" />
+                  View All Insights
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <Lightbulb className="w-5 h-5" />
+                    AI-Generated Insights
+                  </DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  {allInsights.map((insight) => {
+                    const IconComponent = insight.icon;
+                    const getTypeStyles = (type: string) => {
+                      switch (type) {
+                        case "alert":
+                          return "bg-red-50 border-red-200 text-red-800";
+                        case "success":
+                          return "bg-green-50 border-green-200 text-green-800";
+                        case "warning":
+                          return "bg-yellow-50 border-yellow-200 text-yellow-800";
+                        case "info":
+                          return "bg-blue-50 border-blue-200 text-blue-800";
+                        default:
+                          return "bg-gray-50 border-gray-200 text-gray-800";
+                      }
+                    };
+                    
+                    const getImpactBadge = (impact: string) => {
+                      switch (impact) {
+                        case "High":
+                          return <Badge variant="destructive">High Impact</Badge>;
+                        case "Medium":
+                          return <Badge variant="secondary">Medium Impact</Badge>;
+                        case "Positive":
+                          return <Badge variant="default" className="bg-green-500">Positive</Badge>;
+                        default:
+                          return <Badge variant="outline">{impact}</Badge>;
+                      }
+                    };
+
+                    return (
+                      <div key={insight.id} className={`p-4 rounded-lg border ${getTypeStyles(insight.type)}`}>
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex items-center gap-2">
+                            <IconComponent className="w-5 h-5" />
+                            <h4 className="font-semibold">{insight.title}</h4>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline">{insight.category}</Badge>
+                            {getImpactBadge(insight.impact)}
+                          </div>
+                        </div>
+                        <p className="text-sm mb-3">{insight.description}</p>
+                        <div className="bg-white/50 p-3 rounded border">
+                          <p className="text-sm font-medium text-gray-700">
+                            💡 <strong>Recommendation:</strong> {insight.recommendation}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </DialogContent>
+            </Dialog>
           </CardContent>
         </Card>
       </div>
