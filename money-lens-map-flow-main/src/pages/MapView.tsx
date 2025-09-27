@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import { 
   MapPin, 
   Search, 
@@ -20,7 +22,8 @@ import {
   TrendingUp,
   Calendar,
   Filter,
-  RefreshCw
+  RefreshCw,
+  Plus
 } from "lucide-react";
 import { apiClient } from "@/lib/api";
 import { toast } from "sonner";
@@ -61,6 +64,18 @@ export default function MapView() {
   const [period, setPeriod] = useState("30");
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  
+  // Transaction simulator state
+  const [isSimulatorOpen, setIsSimulatorOpen] = useState(false);
+  const [isSimulating, setIsSimulating] = useState(false);
+  const [simulatorForm, setSimulatorForm] = useState({
+    merchant: '',
+    amount: '',
+    category: 'Food & Dining',
+    location: '',
+    latitude: '',
+    longitude: ''
+  });
 
   // Load map data
   useEffect(() => {
@@ -118,6 +133,67 @@ export default function MapView() {
     return categoryIcons[category] || DollarSign;
   };
 
+  // Handle transaction simulation
+  const handleSimulateTransaction = async () => {
+    if (!simulatorForm.merchant || !simulatorForm.amount) {
+      toast.error('Please fill in merchant and amount', {
+        description: 'These fields are required',
+        duration: 4000,
+      });
+      return;
+    }
+
+    setIsSimulating(true);
+
+    try {
+      const transactionData = {
+        merchant: simulatorForm.merchant,
+        amount: parseFloat(simulatorForm.amount),
+        category: simulatorForm.category,
+        location: simulatorForm.location || undefined,
+        latitude: simulatorForm.latitude ? parseFloat(simulatorForm.latitude) : undefined,
+        longitude: simulatorForm.longitude ? parseFloat(simulatorForm.longitude) : undefined
+      };
+
+      const response = await apiClient.simulateTransaction(transactionData);
+
+      if (response.success) {
+        const responseData = response.data as any;
+        toast.success('Transaction simulated successfully!', {
+          description: responseData.wouldBeApproved ? 'This transaction would be approved' : 'This transaction would violate spending caps',
+          duration: 5000,
+        });
+
+        // Reset form
+        setSimulatorForm({
+          merchant: '',
+          amount: '',
+          category: 'Food & Dining',
+          location: '',
+          latitude: '',
+          longitude: ''
+        });
+        setIsSimulatorOpen(false);
+
+        // Refresh map data to show new transaction
+        await loadMapData();
+      } else {
+        toast.error('Failed to simulate transaction', {
+          description: response.message || 'Please try again',
+          duration: 5000,
+        });
+      }
+    } catch (error: any) {
+      console.error('Transaction simulation error:', error);
+      toast.error('Failed to simulate transaction', {
+        description: error.message || 'Please try again',
+        duration: 5000,
+      });
+    } finally {
+      setIsSimulating(false);
+    }
+  };
+
   return (
     <motion.div
       className="h-full space-y-6"
@@ -166,6 +242,129 @@ export default function MapView() {
             <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
+
+          <Dialog open={isSimulatorOpen} onOpenChange={setIsSimulatorOpen}>
+            <DialogTrigger asChild>
+              <Button size="sm">
+                <Plus className="w-4 h-4 mr-2" />
+                Add Transaction
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Simulate Transaction</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="merchant" className="text-sm font-medium">
+                    Merchant *
+                  </Label>
+                  <Input
+                    id="merchant"
+                    placeholder="e.g., Starbucks Coffee"
+                    value={simulatorForm.merchant}
+                    onChange={(e) => setSimulatorForm(prev => ({ ...prev, merchant: e.target.value }))}
+                    className="mt-2"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="amount" className="text-sm font-medium">
+                    Amount *
+                  </Label>
+                  <Input
+                    id="amount"
+                    type="number"
+                    step="0.01"
+                    placeholder="0.00"
+                    value={simulatorForm.amount}
+                    onChange={(e) => setSimulatorForm(prev => ({ ...prev, amount: e.target.value }))}
+                    className="mt-2"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="category" className="text-sm font-medium">
+                    Category
+                  </Label>
+                  <Select value={simulatorForm.category} onValueChange={(value) => setSimulatorForm(prev => ({ ...prev, category: value }))}>
+                    <SelectTrigger className="mt-2">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Food & Dining">Food & Dining</SelectItem>
+                      <SelectItem value="Shopping">Shopping</SelectItem>
+                      <SelectItem value="Transportation">Transportation</SelectItem>
+                      <SelectItem value="Entertainment">Entertainment</SelectItem>
+                      <SelectItem value="Healthcare">Healthcare</SelectItem>
+                      <SelectItem value="Other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="location" className="text-sm font-medium">
+                    Location (optional)
+                  </Label>
+                  <Input
+                    id="location"
+                    placeholder="e.g., Main St, Blacksburg"
+                    value={simulatorForm.location}
+                    onChange={(e) => setSimulatorForm(prev => ({ ...prev, location: e.target.value }))}
+                    className="mt-2"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label htmlFor="latitude" className="text-sm font-medium">
+                      Latitude (optional)
+                    </Label>
+                    <Input
+                      id="latitude"
+                      type="number"
+                      step="0.0001"
+                      placeholder="37.2296"
+                      value={simulatorForm.latitude}
+                      onChange={(e) => setSimulatorForm(prev => ({ ...prev, latitude: e.target.value }))}
+                      className="mt-2"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="longitude" className="text-sm font-medium">
+                      Longitude (optional)
+                    </Label>
+                    <Input
+                      id="longitude"
+                      type="number"
+                      step="0.0001"
+                      placeholder="-80.4139"
+                      value={simulatorForm.longitude}
+                      onChange={(e) => setSimulatorForm(prev => ({ ...prev, longitude: e.target.value }))}
+                      className="mt-2"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex gap-3">
+                  <Button
+                    onClick={handleSimulateTransaction}
+                    disabled={isSimulating}
+                    className="flex-1"
+                  >
+                    {isSimulating ? 'Simulating...' : 'Simulate Transaction'}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsSimulatorOpen(false)}
+                    disabled={isSimulating}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 

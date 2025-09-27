@@ -279,6 +279,9 @@ class ApiClient {
     merchant: string;
     amount: number;
     category: string;
+    location?: string;
+    latitude?: number;
+    longitude?: number;
   }) {
     return this.request('/transactions/simulate', {
       method: 'POST',
