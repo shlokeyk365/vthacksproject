@@ -174,17 +174,17 @@ export default function Analytics() {
       </div>
 
       {/* Charts Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Monthly Spending Trends */}
         <Card className="card-gradient">
-          <CardHeader>
+          <CardHeader className="pb-4">
             <CardTitle className="flex items-center gap-2">
               <BarChart3 className="w-5 h-5" />
               Monthly Spending by Category
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <ChartContainer config={chartConfig} className="h-[300px]">
+          <CardContent className="pt-0">
+            <ChartContainer config={chartConfig} className="h-[280px] w-full">
               <AreaChart data={monthlyData}>
                 <XAxis 
                   dataKey="month" 
@@ -250,11 +250,11 @@ export default function Analytics() {
 
         {/* Top Merchants */}
         <Card className="card-gradient">
-          <CardHeader>
+          <CardHeader className="pb-4">
             <CardTitle>Top 5 Merchants</CardTitle>
           </CardHeader>
-          <CardContent>
-            <ChartContainer config={{}} className="h-[300px]">
+          <CardContent className="pt-0">
+            <ChartContainer config={{}} className="h-[280px] w-full">
               <BarChart data={topMerchants} layout="horizontal">
                 <XAxis 
                   type="number" 
@@ -292,11 +292,11 @@ export default function Analytics() {
 
         {/* Spending vs Caps */}
         <Card className="card-gradient">
-          <CardHeader>
+          <CardHeader className="pb-4">
             <CardTitle>Spending vs Caps Comparison</CardTitle>
           </CardHeader>
-          <CardContent>
-            <ChartContainer config={{}} className="h-[300px]">
+          <CardContent className="pt-0">
+            <ChartContainer config={{}} className="h-[280px] w-full">
               <ComposedChart data={spendingVsCaps}>
                 <XAxis 
                   dataKey="category" 
@@ -345,14 +345,14 @@ export default function Analytics() {
         </Card>
 
         {/* Insights Panel */}
-        <Card className="card-gradient">
-          <CardHeader>
+        <Card className="card-gradient lg:col-span-2">
+          <CardHeader className="pb-4">
             <CardTitle className="flex items-center gap-2">
               <AlertTriangle className="w-5 h-5" />
               AI-Generated Insights
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="pt-0 space-y-4">
             <div className="p-4 bg-primary/10 rounded-lg border border-primary/20">
               <h4 className="font-semibold text-primary mb-2">Spending Pattern Alert</h4>
               <p className="text-sm">
