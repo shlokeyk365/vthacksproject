@@ -171,6 +171,13 @@ class ApiClient {
     });
   }
 
+  async changePassword(passwordData: { currentPassword: string; newPassword: string }) {
+    return this.request<{ message: string }>('/auth/change-password', {
+      method: 'PUT',
+      body: JSON.stringify(passwordData),
+    });
+  }
+
   async logout() {
     this.clearToken();
     return this.request('/auth/logout', { method: 'POST' });

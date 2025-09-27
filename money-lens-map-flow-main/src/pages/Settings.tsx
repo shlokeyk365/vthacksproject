@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import { useProfile } from "@/hooks/useApi";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -58,6 +60,15 @@ export default function Settings() {
   const [isSavingNotifications, setIsSavingNotifications] = useState(false);
   const [isSavingMap, setIsSavingMap] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  
+  // Password change state
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+  const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
 
   // Load user data into form
   useEffect(() => {
@@ -182,6 +193,70 @@ export default function Settings() {
       });
     } finally {
       setIsSavingMap(false);
+    }
+  };
+
+  // Handle password change
+  const handleChangePassword = async () => {
+    // Validate passwords
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      toast.error('Passwords do not match', {
+        description: 'Please ensure both new passwords are identical',
+        duration: 4000,
+      });
+      return;
+    }
+
+    if (passwordForm.newPassword.length < 6) {
+      toast.error('Password too short', {
+        description: 'Password must be at least 6 characters long',
+        duration: 4000,
+      });
+      return;
+    }
+
+    setIsChangingPassword(true);
+
+    const loadingToast = toast.loading('Changing password...', {
+      description: 'Please wait while we update your password',
+    });
+
+    try {
+      const response = await apiClient.changePassword({
+        currentPassword: passwordForm.currentPassword,
+        newPassword: passwordForm.newPassword
+      });
+
+      if (response.success) {
+        toast.dismiss(loadingToast);
+        toast.success('Password changed successfully!', {
+          description: 'Your password has been updated',
+          duration: 4000,
+        });
+
+        // Reset form and close dialog
+        setPasswordForm({
+          currentPassword: '',
+          newPassword: '',
+          confirmPassword: ''
+        });
+        setIsPasswordDialogOpen(false);
+      } else {
+        toast.dismiss(loadingToast);
+        toast.error('Failed to change password', {
+          description: response.message || 'Please check your current password and try again',
+          duration: 5000,
+        });
+      }
+    } catch (error: any) {
+      console.error('Password change error:', error);
+      toast.dismiss(loadingToast);
+      toast.error('Failed to change password', {
+        description: error.message || 'Please check your current password and try again',
+        duration: 5000,
+      });
+    } finally {
+      setIsChangingPassword(false);
     }
   };
 
@@ -559,9 +634,66 @@ export default function Settings() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <Button variant="outline" className="w-full">
-                Change Password
-              </Button>
+              <Dialog open={isPasswordDialogOpen} onOpenChange={setIsPasswordDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" className="w-full">
+                    Change Password
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Change Password</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="currentPassword">Current Password</Label>
+                      <Input
+                        id="currentPassword"
+                        type="password"
+                        value={passwordForm.currentPassword}
+                        onChange={(e) => setPasswordForm(prev => ({ ...prev, currentPassword: e.target.value }))}
+                        placeholder="Enter your current password"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="newPassword">New Password</Label>
+                      <Input
+                        id="newPassword"
+                        type="password"
+                        value={passwordForm.newPassword}
+                        onChange={(e) => setPasswordForm(prev => ({ ...prev, newPassword: e.target.value }))}
+                        placeholder="Enter your new password"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                      <Input
+                        id="confirmPassword"
+                        type="password"
+                        value={passwordForm.confirmPassword}
+                        onChange={(e) => setPasswordForm(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                        placeholder="Confirm your new password"
+                      />
+                    </div>
+                    <div className="flex gap-2 pt-2">
+                      <Button
+                        onClick={handleChangePassword}
+                        disabled={isChangingPassword || !passwordForm.currentPassword || !passwordForm.newPassword || !passwordForm.confirmPassword}
+                        className="flex-1"
+                      >
+                        {isChangingPassword ? 'Changing...' : 'Change Password'}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => setIsPasswordDialogOpen(false)}
+                        disabled={isChangingPassword}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
               
               <Button variant="outline" className="w-full">
                 Enable 2FA
