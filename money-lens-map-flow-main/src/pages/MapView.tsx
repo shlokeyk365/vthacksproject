@@ -202,26 +202,31 @@ export default function MapView() {
       transition={{ duration: 0.5 }}
     >
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Geographic Spending</h1>
-          <p className="text-muted-foreground">
-            Visualize your spending patterns across locations
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div className="space-y-1">
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+            Geographic Spending
+          </h1>
+          <p className="text-muted-foreground text-sm">
+            Visualize your spending patterns across locations and discover insights
           </p>
         </div>
         
-        <div className="flex items-center gap-3">
-          <Select value={period} onValueChange={setPeriod}>
-            <SelectTrigger className="w-32">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="7">Last 7 days</SelectItem>
-              <SelectItem value="30">Last 30 days</SelectItem>
-              <SelectItem value="90">Last 90 days</SelectItem>
-              <SelectItem value="365">Last year</SelectItem>
-            </SelectContent>
-          </Select>
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2">
+            <Calendar className="w-4 h-4 text-muted-foreground" />
+            <Select value={period} onValueChange={setPeriod}>
+              <SelectTrigger className="w-36 h-9">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="7">Last 7 days</SelectItem>
+                <SelectItem value="30">Last 30 days</SelectItem>
+                <SelectItem value="90">Last 90 days</SelectItem>
+                <SelectItem value="365">Last year</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
@@ -229,7 +234,7 @@ export default function MapView() {
               placeholder="Search merchants..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 w-64"
+              className="pl-10 w-64 h-9"
             />
           </div>
           
@@ -238,6 +243,7 @@ export default function MapView() {
             size="sm"
             onClick={handleRefresh}
             disabled={isRefreshing}
+            className="h-9"
           >
             <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
             Refresh
@@ -245,65 +251,109 @@ export default function MapView() {
 
           <Dialog open={isSimulatorOpen} onOpenChange={setIsSimulatorOpen}>
             <DialogTrigger asChild>
-              <Button size="sm">
+              <Button size="sm" className="h-9 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary">
                 <Plus className="w-4 h-4 mr-2" />
                 Add Transaction
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
-              <DialogHeader>
-                <DialogTitle>Simulate Transaction</DialogTitle>
+            <DialogContent className="sm:max-w-lg">
+              <DialogHeader className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                    <Plus className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <DialogTitle className="text-lg">Add New Transaction</DialogTitle>
+                    <p className="text-sm text-muted-foreground">Simulate a transaction with location data</p>
+                  </div>
+                </div>
               </DialogHeader>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="merchant" className="text-sm font-medium">
-                    Merchant *
-                  </Label>
-                  <Input
-                    id="merchant"
-                    placeholder="e.g., Starbucks Coffee"
-                    value={simulatorForm.merchant}
-                    onChange={(e) => setSimulatorForm(prev => ({ ...prev, merchant: e.target.value }))}
-                    className="mt-2"
-                  />
+              <div className="space-y-6 py-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="merchant" className="text-sm font-medium flex items-center gap-2">
+                      <ShoppingBag className="w-4 h-4" />
+                      Merchant *
+                    </Label>
+                    <Input
+                      id="merchant"
+                      placeholder="e.g., Starbucks Coffee"
+                      value={simulatorForm.merchant}
+                      onChange={(e) => setSimulatorForm(prev => ({ ...prev, merchant: e.target.value }))}
+                      className="h-10"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="amount" className="text-sm font-medium flex items-center gap-2">
+                      <DollarSign className="w-4 h-4" />
+                      Amount *
+                    </Label>
+                    <Input
+                      id="amount"
+                      type="number"
+                      step="0.01"
+                      placeholder="0.00"
+                      value={simulatorForm.amount}
+                      onChange={(e) => setSimulatorForm(prev => ({ ...prev, amount: e.target.value }))}
+                      className="h-10"
+                    />
+                  </div>
                 </div>
 
-                <div>
-                  <Label htmlFor="amount" className="text-sm font-medium">
-                    Amount *
-                  </Label>
-                  <Input
-                    id="amount"
-                    type="number"
-                    step="0.01"
-                    placeholder="0.00"
-                    value={simulatorForm.amount}
-                    onChange={(e) => setSimulatorForm(prev => ({ ...prev, amount: e.target.value }))}
-                    className="mt-2"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="category" className="text-sm font-medium">
+                <div className="space-y-2">
+                  <Label htmlFor="category" className="text-sm font-medium flex items-center gap-2">
+                    <Filter className="w-4 h-4" />
                     Category
                   </Label>
                   <Select value={simulatorForm.category} onValueChange={(value) => setSimulatorForm(prev => ({ ...prev, category: value }))}>
-                    <SelectTrigger className="mt-2">
+                    <SelectTrigger className="h-10">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Food & Dining">Food & Dining</SelectItem>
-                      <SelectItem value="Shopping">Shopping</SelectItem>
-                      <SelectItem value="Transportation">Transportation</SelectItem>
-                      <SelectItem value="Entertainment">Entertainment</SelectItem>
-                      <SelectItem value="Healthcare">Healthcare</SelectItem>
-                      <SelectItem value="Other">Other</SelectItem>
+                      <SelectItem value="Food & Dining">
+                        <div className="flex items-center gap-2">
+                          <Coffee className="w-4 h-4" />
+                          Food & Dining
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="Shopping">
+                        <div className="flex items-center gap-2">
+                          <ShoppingBag className="w-4 h-4" />
+                          Shopping
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="Transportation">
+                        <div className="flex items-center gap-2">
+                          <Car className="w-4 h-4" />
+                          Transportation
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="Entertainment">
+                        <div className="flex items-center gap-2">
+                          <TrendingUp className="w-4 h-4" />
+                          Entertainment
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="Healthcare">
+                        <div className="flex items-center gap-2">
+                          <MapPin className="w-4 h-4" />
+                          Healthcare
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="Other">
+                        <div className="flex items-center gap-2">
+                          <DollarSign className="w-4 h-4" />
+                          Other
+                        </div>
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
-                <div>
-                  <Label htmlFor="location" className="text-sm font-medium">
+                <div className="space-y-2">
+                  <Label htmlFor="location" className="text-sm font-medium flex items-center gap-2">
+                    <MapPin className="w-4 h-4" />
                     Location (optional)
                   </Label>
                   <Input
@@ -311,53 +361,73 @@ export default function MapView() {
                     placeholder="e.g., Main St, Blacksburg"
                     value={simulatorForm.location}
                     onChange={(e) => setSimulatorForm(prev => ({ ...prev, location: e.target.value }))}
-                    className="mt-2"
+                    className="h-10"
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label htmlFor="latitude" className="text-sm font-medium">
-                      Latitude (optional)
-                    </Label>
-                    <Input
-                      id="latitude"
-                      type="number"
-                      step="0.0001"
-                      placeholder="37.2296"
-                      value={simulatorForm.latitude}
-                      onChange={(e) => setSimulatorForm(prev => ({ ...prev, latitude: e.target.value }))}
-                      className="mt-2"
-                    />
+                <div className="space-y-3">
+                  <Label className="text-sm font-medium flex items-center gap-2">
+                    <Navigation className="w-4 h-4" />
+                    Coordinates (optional)
+                  </Label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                      <Label htmlFor="latitude" className="text-xs text-muted-foreground">
+                        Latitude
+                      </Label>
+                      <Input
+                        id="latitude"
+                        type="number"
+                        step="0.0001"
+                        placeholder="37.2296"
+                        value={simulatorForm.latitude}
+                        onChange={(e) => setSimulatorForm(prev => ({ ...prev, latitude: e.target.value }))}
+                        className="h-9"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="longitude" className="text-xs text-muted-foreground">
+                        Longitude
+                      </Label>
+                      <Input
+                        id="longitude"
+                        type="number"
+                        step="0.0001"
+                        placeholder="-80.4139"
+                        value={simulatorForm.longitude}
+                        onChange={(e) => setSimulatorForm(prev => ({ ...prev, longitude: e.target.value }))}
+                        className="h-9"
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <Label htmlFor="longitude" className="text-sm font-medium">
-                      Longitude (optional)
-                    </Label>
-                    <Input
-                      id="longitude"
-                      type="number"
-                      step="0.0001"
-                      placeholder="-80.4139"
-                      value={simulatorForm.longitude}
-                      onChange={(e) => setSimulatorForm(prev => ({ ...prev, longitude: e.target.value }))}
-                      className="mt-2"
-                    />
-                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    💡 Tip: Include coordinates to see this transaction on the map visualization
+                  </p>
                 </div>
 
-                <div className="flex gap-3">
+                <div className="flex gap-3 pt-2">
                   <Button
                     onClick={handleSimulateTransaction}
                     disabled={isSimulating}
-                    className="flex-1"
+                    className="flex-1 h-10 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary"
                   >
-                    {isSimulating ? 'Simulating...' : 'Simulate Transaction'}
+                    {isSimulating ? (
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        Simulating...
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <Plus className="w-4 h-4" />
+                        Add Transaction
+                      </div>
+                    )}
                   </Button>
                   <Button
                     variant="outline"
                     onClick={() => setIsSimulatorOpen(false)}
                     disabled={isSimulating}
+                    className="h-10"
                   >
                     Cancel
                   </Button>
@@ -371,39 +441,60 @@ export default function MapView() {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-[calc(100vh-12rem)]">
         {/* Map Container */}
         <div className="lg:col-span-3">
-          <Card className="h-full">
+          <Card className="h-full border-0 shadow-lg bg-gradient-to-br from-background to-muted/20">
             <CardContent className="p-0 h-full">
               {/* Map Visualization */}
-              <div className="h-full bg-gradient-to-br from-primary/5 to-success/5 rounded-lg relative overflow-hidden">
+              <div className="h-full bg-gradient-to-br from-primary/5 via-background to-success/5 rounded-lg relative overflow-hidden">
                 {isLoading ? (
                   <div className="flex items-center justify-center h-full">
-                    <div className="text-center">
-                      <RefreshCw className="w-8 h-8 text-primary mx-auto mb-4 animate-spin" />
-                      <h3 className="text-lg font-semibold mb-2">Loading Map Data</h3>
-                      <p className="text-muted-foreground">
-                        Fetching your spending locations...
-                      </p>
+                    <div className="text-center space-y-4">
+                      <div className="relative">
+                        <div className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin mx-auto"></div>
+                        <MapPin className="w-6 h-6 text-primary absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
+                      </div>
+                      <div className="space-y-2">
+                        <h3 className="text-lg font-semibold text-foreground">Loading Map Data</h3>
+                        <p className="text-muted-foreground text-sm">
+                          Fetching your spending locations...
+                        </p>
+                      </div>
                     </div>
                   </div>
                 ) : merchants.length === 0 ? (
                   <div className="flex items-center justify-center h-full">
-                    <div className="text-center">
-                      <MapPin className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                      <h3 className="text-xl font-semibold mb-2">No Location Data</h3>
-                      <p className="text-muted-foreground mb-4">
-                        No transactions with location data found for the selected period.
-                      </p>
-                      <Button onClick={handleRefresh}>
-                        <RefreshCw className="w-4 h-4 mr-2" />
-                        Refresh Data
-                      </Button>
+                    <div className="text-center space-y-6 max-w-md mx-auto px-6">
+                      <div className="relative">
+                        <div className="w-20 h-20 bg-muted/30 rounded-full flex items-center justify-center mx-auto">
+                          <MapPin className="w-10 h-10 text-muted-foreground" />
+                        </div>
+                        <div className="absolute -top-2 -right-2 w-6 h-6 bg-warning/20 rounded-full flex items-center justify-center">
+                          <span className="text-xs text-warning">!</span>
+                        </div>
+                      </div>
+                      <div className="space-y-3">
+                        <h3 className="text-xl font-semibold text-foreground">No Location Data Found</h3>
+                        <p className="text-muted-foreground text-sm leading-relaxed">
+                          No transactions with location data found for the selected period. 
+                          Try adding a transaction with location information or adjust your time range.
+                        </p>
+                      </div>
+                      <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                        <Button onClick={handleRefresh} variant="outline" className="flex items-center gap-2">
+                          <RefreshCw className="w-4 h-4" />
+                          Refresh Data
+                        </Button>
+                        <Button onClick={() => setIsSimulatorOpen(true)} className="flex items-center gap-2">
+                          <Plus className="w-4 h-4" />
+                          Add Transaction
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 ) : (
                   <>
                     {/* Map Grid Visualization */}
-                    <div className="absolute inset-0 p-4">
-                      <div className="grid grid-cols-8 grid-rows-6 gap-2 h-full">
+                    <div className="absolute inset-0 p-6">
+                      <div className="grid grid-cols-8 grid-rows-6 gap-3 h-full">
                         {Array.from({ length: 48 }).map((_, index) => {
                           const merchant = merchants[index % merchants.length];
                           const heatmapPoint = heatmapData[index % heatmapData.length];
@@ -411,66 +502,105 @@ export default function MapView() {
                           const isSelected = selectedMerchant?.id === merchant.id;
                           
                           return (
-                            <div
+                            <motion.div
                               key={index}
-                              className={`relative rounded-lg cursor-pointer transition-all hover:scale-105 ${
+                              className={`relative rounded-xl cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-lg ${
                                 showHeatmap 
                                   ? `bg-gradient-to-br from-success/20 via-warning/30 to-danger/40 opacity-${Math.floor(intensity * 100)}`
                                   : 'bg-muted/20 hover:bg-muted/30'
-                              } ${isSelected ? 'ring-2 ring-primary ring-opacity-50' : ''}`}
+                              } ${isSelected ? 'ring-2 ring-primary ring-opacity-60 shadow-lg scale-105' : ''}`}
                               onClick={() => setSelectedMerchant(merchant)}
                               title={`${merchant.name} - $${merchant.totalSpent.toFixed(2)}`}
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              initial={{ opacity: 0, scale: 0.8 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              transition={{ delay: index * 0.01 }}
                             >
                               {showMerchantPins && (
-                                <div className="absolute top-1 left-1">
-                                  <div className={`w-3 h-3 rounded-full ${
+                                <div className="absolute top-2 left-2">
+                                  <div className={`w-4 h-4 rounded-full shadow-sm ${
                                     merchant.category === 'Food & Dining' ? 'bg-orange-500' :
                                     merchant.category === 'Shopping' ? 'bg-blue-500' :
                                     merchant.category === 'Transportation' ? 'bg-green-500' :
-                                    'bg-purple-500'
+                                    merchant.category === 'Healthcare' ? 'bg-red-500' :
+                                    merchant.category === 'Entertainment' ? 'bg-purple-500' :
+                                    'bg-gray-500'
                                   }`} />
                                 </div>
                               )}
                               
                               {isSelected && (
-                                <div className="absolute inset-0 bg-primary/10 rounded-lg flex items-center justify-center">
-                                  <div className="text-xs font-semibold text-primary">
+                                <motion.div 
+                                  className="absolute inset-0 bg-primary/10 rounded-xl flex items-center justify-center backdrop-blur-sm"
+                                  initial={{ opacity: 0 }}
+                                  animate={{ opacity: 1 }}
+                                  transition={{ duration: 0.2 }}
+                                >
+                                  <div className="text-xs font-bold text-primary bg-background/80 px-2 py-1 rounded-lg">
                                     ${merchant.totalSpent.toFixed(0)}
                                   </div>
-                                </div>
+                                </motion.div>
                               )}
-                            </div>
+
+                              {/* Hover effect */}
+                              <div className="absolute inset-0 rounded-xl bg-gradient-to-t from-black/10 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-200" />
+                            </motion.div>
                           );
                         })}
                       </div>
                     </div>
 
                     {/* Map Controls */}
-                    <div className="absolute top-4 right-4 flex flex-col gap-2">
-                      <Button variant="outline" size="sm">
-                        <ZoomIn className="w-4 h-4" />
-                      </Button>
-                      <Button variant="outline" size="sm">
-                        <ZoomOut className="w-4 h-4" />
-                      </Button>
-                      <Button variant="outline" size="sm">
-                        <Navigation className="w-4 h-4" />
-                      </Button>
+                    <div className="absolute top-6 right-6 flex flex-col gap-3">
+                      <div className="bg-background/80 backdrop-blur-sm rounded-lg p-2 shadow-lg border">
+                        <div className="flex flex-col gap-2">
+                          <Button variant="outline" size="sm" className="h-8 w-8 p-0">
+                            <ZoomIn className="w-4 h-4" />
+                          </Button>
+                          <Button variant="outline" size="sm" className="h-8 w-8 p-0">
+                            <ZoomOut className="w-4 h-4" />
+                          </Button>
+                          <Button variant="outline" size="sm" className="h-8 w-8 p-0">
+                            <Navigation className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
                     </div>
                     
-                    {/* Legend */}
-                    <div className="absolute bottom-4 left-4 bg-card/90 backdrop-blur-sm p-4 rounded-lg shadow-lg">
-                      <h4 className="font-semibold mb-2">Spending Intensity</h4>
-                      <div className="flex items-center gap-2 text-sm">
-                        <div className="flex gap-1">
-                          <div className="w-4 h-4 bg-success/30 rounded"></div>
-                          <div className="w-4 h-4 bg-warning/50 rounded"></div>
-                          <div className="w-4 h-4 bg-danger/70 rounded"></div>
+                    {/* Enhanced Legend */}
+                    <div className="absolute bottom-6 left-6 bg-background/90 backdrop-blur-sm p-4 rounded-xl shadow-lg border max-w-xs">
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2">
+                          <MapPin className="w-4 h-4 text-primary" />
+                          <h4 className="font-semibold text-sm">Spending Intensity</h4>
                         </div>
-                        <span className="text-muted-foreground">Low → High</span>
-                      </div>
-                      <div className="mt-2 text-xs text-muted-foreground">
-                        {merchants.length} merchants • {heatmapData.length} locations
+                        <div className="flex items-center gap-2 text-xs">
+                          <div className="flex gap-1">
+                            <div className="w-3 h-3 bg-success/40 rounded"></div>
+                            <div className="w-3 h-3 bg-warning/60 rounded"></div>
+                            <div className="w-3 h-3 bg-danger/80 rounded"></div>
+                          </div>
+                          <span className="text-muted-foreground">Low → High</span>
+                        </div>
+                        <div className="pt-2 border-t border-border/50">
+                          <div className="text-xs text-muted-foreground space-y-1">
+                            <div className="flex justify-between">
+                              <span>Merchants:</span>
+                              <span className="font-medium text-foreground">{merchants.length}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Locations:</span>
+                              <span className="font-medium text-foreground">{heatmapData.length}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Total Spent:</span>
+                              <span className="font-medium text-primary">
+                                ${merchants.reduce((sum, m) => sum + m.totalSpent, 0).toFixed(0)}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </>
@@ -481,107 +611,165 @@ export default function MapView() {
         </div>
 
         {/* Sidebar Panel */}
-        <div className="space-y-4 overflow-y-auto">
+        <div className="space-y-6 overflow-y-auto max-h-[calc(100vh-12rem)]">
           {/* Selected Merchant Details */}
           {selectedMerchant && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  {(() => {
-                    const IconComponent = getCategoryIcon(selectedMerchant.category);
-                    return <IconComponent className="w-5 h-5" />;
-                  })()}
-                  Merchant Details
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <h3 className="font-semibold">{selectedMerchant.name}</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {selectedMerchant.address}
-                  </p>
-                </div>
-                
-                <Separator />
-                
-                <div className="space-y-3">
-                  <div className="flex justify-between">
-                    <span className="text-sm">Total Spent</span>
-                    <span className="font-semibold text-primary">
-                      ${selectedMerchant.totalSpent.toFixed(2)}
-                    </span>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <Card className="border-0 shadow-lg bg-gradient-to-br from-background to-muted/20">
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                      {(() => {
+                        const IconComponent = getCategoryIcon(selectedMerchant.category);
+                        return <IconComponent className="w-5 h-5 text-primary" />;
+                      })()}
+                    </div>
+                    <div>
+                      <div className="text-lg font-semibold">Merchant Details</div>
+                      <div className="text-sm text-muted-foreground">Selected location</div>
+                    </div>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="space-y-3">
+                    <div>
+                      <h3 className="font-semibold text-lg">{selectedMerchant.name}</h3>
+                      <p className="text-sm text-muted-foreground flex items-center gap-2">
+                        <MapPin className="w-4 h-4" />
+                        {selectedMerchant.address}
+                      </p>
+                    </div>
                   </div>
                   
-                  <div className="flex justify-between">
-                    <span className="text-sm">Visits</span>
-                    <Badge variant="secondary">{selectedMerchant.visits}</Badge>
+                  <Separator />
+                  
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="text-center p-3 bg-primary/5 rounded-lg">
+                        <div className="text-2xl font-bold text-primary">
+                          ${selectedMerchant.totalSpent.toFixed(0)}
+                        </div>
+                        <div className="text-xs text-muted-foreground">Total Spent</div>
+                      </div>
+                      <div className="text-center p-3 bg-success/5 rounded-lg">
+                        <div className="text-2xl font-bold text-success">
+                          {selectedMerchant.visits}
+                        </div>
+                        <div className="text-xs text-muted-foreground">Visits</div>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium">Category</span>
+                        <Badge variant="outline" className="flex items-center gap-1">
+                          {(() => {
+                            const IconComponent = getCategoryIcon(selectedMerchant.category);
+                            return <IconComponent className="w-3 h-3" />;
+                          })()}
+                          {selectedMerchant.category}
+                        </Badge>
+                      </div>
+                      
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium">Avg per Visit</span>
+                        <span className="font-semibold text-foreground">
+                          ${(selectedMerchant.totalSpent / selectedMerchant.visits).toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
                   </div>
                   
-                  <div className="flex justify-between">
-                    <span className="text-sm">Category</span>
-                    <Badge variant="outline">{selectedMerchant.category}</Badge>
-                  </div>
+                  <Separator />
                   
-                  <div className="flex justify-between">
-                    <span className="text-sm">Avg per Visit</span>
-                    <span className="font-medium">
-                      ${(selectedMerchant.totalSpent / selectedMerchant.visits).toFixed(2)}
-                    </span>
-                  </div>
-                </div>
-                
-                <Separator />
-                
-                <Button className="w-full" variant="outline">
-                  Set Spending Cap
-                </Button>
-              </CardContent>
-            </Card>
+                  <Button className="w-full h-10" variant="outline">
+                    <TrendingUp className="w-4 h-4 mr-2" />
+                    Set Spending Cap
+                  </Button>
+                </CardContent>
+              </Card>
+            </motion.div>
           )}
           
           {/* Merchant List */}
-          <Card>
-            <CardHeader>
+          <Card className="border-0 shadow-lg bg-gradient-to-br from-background to-muted/20">
+            <CardHeader className="pb-4">
               <CardTitle className="flex items-center justify-between">
-                Top Merchants
-                <Badge variant="outline">{filteredMerchants.length}</Badge>
+                <div className="flex items-center gap-2">
+                  <ShoppingBag className="w-5 h-5 text-primary" />
+                  <span>Top Merchants</span>
+                </div>
+                <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
+                  {filteredMerchants.length}
+                </Badge>
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
                 {filteredMerchants.length === 0 ? (
-                  <div className="text-center py-4">
+                  <div className="text-center py-8">
+                    <div className="w-12 h-12 bg-muted/30 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <Search className="w-6 h-6 text-muted-foreground" />
+                    </div>
                     <p className="text-sm text-muted-foreground">
                       {searchQuery ? 'No merchants match your search' : 'No merchants found'}
                     </p>
+                    {searchQuery && (
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="mt-3"
+                        onClick={() => setSearchQuery('')}
+                      >
+                        Clear Search
+                      </Button>
+                    )}
                   </div>
                 ) : (
-                  filteredMerchants.map((merchant) => {
+                  filteredMerchants.map((merchant, index) => {
                     const IconComponent = getCategoryIcon(merchant.category);
                     return (
-                      <div
+                      <motion.div
                         key={merchant.id}
-                        className={`p-3 rounded-lg cursor-pointer transition-colors ${
+                        className={`p-4 rounded-xl cursor-pointer transition-all duration-200 hover:shadow-md ${
                           selectedMerchant?.id === merchant.id
-                            ? 'bg-primary/10 border border-primary/20'
+                            ? 'bg-primary/10 border border-primary/20 shadow-md'
                             : 'bg-muted/20 hover:bg-muted/30'
                         }`}
                         onClick={() => setSelectedMerchant(merchant)}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.05 }}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
                       >
                         <div className="flex items-center gap-3">
-                          <div className="p-2 bg-primary/10 rounded-lg">
-                            <IconComponent className="w-4 h-4 text-primary" />
+                          <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                            <IconComponent className="w-5 h-5 text-primary" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="font-medium text-sm truncate">
+                            <p className="font-semibold text-sm truncate">
                               {merchant.name}
                             </p>
-                            <p className="text-xs text-muted-foreground">
-                              ${merchant.totalSpent.toFixed(2)} • {merchant.visits} visits
-                            </p>
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className="text-xs text-primary font-medium">
+                                ${merchant.totalSpent.toFixed(2)}
+                              </span>
+                              <span className="text-xs text-muted-foreground">•</span>
+                              <span className="text-xs text-muted-foreground">
+                                {merchant.visits} visits
+                              </span>
+                            </div>
                           </div>
+                          {selectedMerchant?.id === merchant.id && (
+                            <div className="w-2 h-2 bg-primary rounded-full" />
+                          )}
                         </div>
-                      </div>
+                      </motion.div>
                     );
                   })
                 )}
@@ -590,38 +778,54 @@ export default function MapView() {
           </Card>
           
           {/* Map Controls */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Map Controls</CardTitle>
+          <Card className="border-0 shadow-lg bg-gradient-to-br from-background to-muted/20">
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center gap-2">
+                <Layers className="w-5 h-5 text-primary" />
+                Map Controls
+              </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm">Spending Heatmap</span>
-                <Button
-                  variant={showHeatmap ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setShowHeatmap(!showHeatmap)}
-                >
-                  {showHeatmap ? "On" : "Off"}
-                </Button>
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <span className="text-sm">Merchant Pins</span>
-                <Button 
-                  variant={showMerchantPins ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setShowMerchantPins(!showMerchantPins)}
-                >
-                  {showMerchantPins ? "On" : "Off"}
-                </Button>
+            <CardContent className="space-y-4">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-gradient-to-r from-success/40 to-danger/80 rounded-full"></div>
+                    <span className="text-sm font-medium">Spending Heatmap</span>
+                  </div>
+                  <Button
+                    variant={showHeatmap ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setShowHeatmap(!showHeatmap)}
+                    className="h-8"
+                  >
+                    {showHeatmap ? "On" : "Off"}
+                  </Button>
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-primary rounded-full"></div>
+                    <span className="text-sm font-medium">Merchant Pins</span>
+                  </div>
+                  <Button 
+                    variant={showMerchantPins ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setShowMerchantPins(!showMerchantPins)}
+                    className="h-8"
+                  >
+                    {showMerchantPins ? "On" : "Off"}
+                  </Button>
+                </div>
               </div>
               
               <Separator />
               
-              <div className="space-y-2">
-                <div className="text-sm font-medium">Category Legend</div>
-                <div className="space-y-1 text-xs">
+              <div className="space-y-3">
+                <div className="text-sm font-medium flex items-center gap-2">
+                  <Filter className="w-4 h-4" />
+                  Category Legend
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-xs">
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
                     <span>Food & Dining</span>
@@ -635,7 +839,15 @@ export default function MapView() {
                     <span>Transportation</span>
                   </div>
                   <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                    <span>Healthcare</span>
+                  </div>
+                  <div className="flex items-center gap-2">
                     <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
+                    <span>Entertainment</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-gray-500 rounded-full"></div>
                     <span>Other</span>
                   </div>
                 </div>
