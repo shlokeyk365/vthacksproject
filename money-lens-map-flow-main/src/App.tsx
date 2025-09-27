@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { FinancialBodyguardProvider } from "./contexts/FinancialBodyguardContext";
 import { LoginForm } from "./components/auth/LoginForm";
 import { MainLayout } from "./components/layout/MainLayout";
 import Dashboard from "./pages/Dashboard";
@@ -13,6 +14,7 @@ import SpendingCaps from "./pages/SpendingCaps";
 import Transactions from "./pages/Transactions";
 import Analytics from "./pages/Analytics";
 import Settings from "./pages/Settings";
+import { FinancialBodyguardPage } from "./pages/FinancialBodyguard";
 import NotFound from "./pages/NotFound";
 import toast, { Toaster as HotToast } from 'react-hot-toast';
 
@@ -52,6 +54,7 @@ const AppRoutes = () => {
           <Route path="transactions" element={<Transactions />} />
           <Route path="analytics" element={<Analytics />} />
           <Route path="settings" element={<Settings />} />
+          <Route path="bodyguard" element={<FinancialBodyguardPage />} />
         </Route>
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<NotFound />} />
@@ -64,22 +67,24 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
       <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <HotToast 
-            position="top-right"
-            toastOptions={{
-              duration: 4000,
-              style: {
-                background: 'hsl(var(--card))',
-                color: 'hsl(var(--card-foreground))',
-                border: '1px solid hsl(var(--border))',
-              },
-            }}
-          />
-          <AppRoutes />
-        </TooltipProvider>
+        <FinancialBodyguardProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <HotToast 
+              position="top-right"
+              toastOptions={{
+                duration: 4000,
+                style: {
+                  background: 'hsl(var(--card))',
+                  color: 'hsl(var(--card-foreground))',
+                  border: '1px solid hsl(var(--border))',
+                },
+              }}
+            />
+            <AppRoutes />
+          </TooltipProvider>
+        </FinancialBodyguardProvider>
       </AuthProvider>
     </ThemeProvider>
   </QueryClientProvider>
