@@ -61,6 +61,13 @@ const topMerchants = [
   { name: "McDonald's", amount: 189, visits: 14, category: "Dining" },
 ];
 
+// Ensure data is properly formatted for charts
+const formattedMerchants = topMerchants.map(merchant => ({
+  ...merchant,
+  amount: Number(merchant.amount),
+  visits: Number(merchant.visits)
+}));
+
 const spendingVsCaps = [
   { category: "Dining", spent: 486, cap: 500, target: 450 },
   { category: "Shopping", spent: 329, cap: 400, target: 350 },
@@ -434,19 +441,18 @@ export default function Analytics() {
             <CardTitle>Top 5 Merchants</CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
-            <ChartContainer config={merchantsChartConfig} className="h-[280px] w-full">
-              <BarChart data={topMerchants} layout="horizontal" margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+            <ChartContainer config={{}} className="h-[280px] w-full">
+              <BarChart data={formattedMerchants} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                 <XAxis 
-                  type="number" 
+                  dataKey="name"
                   tick={{ fontSize: 12 }}
                   axisLine={{ stroke: '#e5e7eb' }}
                   tickLine={{ stroke: '#e5e7eb' }}
-                  domain={[0, 'dataMax']}
+                  angle={-45}
+                  textAnchor="end"
+                  height={60}
                 />
                 <YAxis 
-                  dataKey="name" 
-                  type="category" 
-                  width={100}
                   tick={{ fontSize: 12 }}
                   axisLine={{ stroke: '#e5e7eb' }}
                   tickLine={{ stroke: '#e5e7eb' }}
@@ -464,8 +470,8 @@ export default function Analytics() {
                 />
                 <Bar 
                   dataKey="amount" 
-                  fill={merchantsChartConfig.amount.color}
-                  radius={[0, 4, 4, 0]}
+                  fill="#3B82F6"
+                  radius={[4, 4, 0, 0]}
                   name="Amount Spent"
                 />
               </BarChart>
