@@ -1,12 +1,12 @@
 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
   <!-- Outer circle -->
-  <circle cx="12" cy="12" r="11" stroke="#D4AF37" stroke-width="2" fill="black"/>
+  <circle cx="12" cy="12" r="11" stroke="#D4AF37" stroke-width="2" fill="transparent"/>
   
   <!-- Inner circle -->
-  <circle cx="12" cy="12" r="8" stroke="#D4AF37" stroke-width="1" fill="black"/>
+  <circle cx="12" cy="12" r="8" stroke="#D4AF37" stroke-width="1" fill="transparent"/>
   
-  <!-- ML Text -->
-  <text x="12" y="16" text-anchor="middle" font-family="serif" font-size="8" font-weight="bold" fill="#D4AF37">ML</text>
+  <!-- ML Text - slightly larger -->
+  <text x="12" y="16" text-anchor="middle" font-family="serif" font-size="9" font-weight="bold" fill="#D4AF37">ML</text>
   
   <!-- Stethoscope-like curve -->
   <path d="M 16 8 Q 18 10 16 12" stroke="#D4AF37" stroke-width="1.5" fill="none"/>
