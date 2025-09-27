@@ -125,7 +125,7 @@ export function AppSidebar() {
             {!collapsed && "Navigation"}
           </SidebarGroupLabel>
           <SidebarGroupContent className="px-3">
-            <SidebarMenu className="space-y-2">
+            <SidebarMenu className="space-y-3">
               {navigationItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild className="w-full">
