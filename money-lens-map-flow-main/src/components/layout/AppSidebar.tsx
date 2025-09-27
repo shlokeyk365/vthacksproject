@@ -80,7 +80,7 @@ export function AppSidebar() {
   const isActive = (path: string) => currentPath === path;
   const getNavCls = ({ isActive }: { isActive: boolean }) =>
     isActive
-      ? "bg-primary text-primary-foreground font-semibold shadow-lg border-l-4 border-primary-foreground transform scale-[1.02] px-5 py-6"
+      ? "bg-primary text-primary-foreground font-semibold shadow-lg border-l-4 border-primary-foreground transform scale-[1.02] px-5 py-5 pb-4"
       : "hover:bg-accent hover:text-accent-foreground transition-all duration-200 hover:scale-[1.01] hover:shadow-sm";
 
   const cycleTheme = () => {
