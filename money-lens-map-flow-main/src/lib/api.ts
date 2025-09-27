@@ -87,6 +87,7 @@ class ApiClient {
   constructor(baseURL: string) {
     this.baseURL = baseURL;
     this.token = localStorage.getItem('authToken');
+    console.log('API Client initialized with baseURL:', baseURL);
   }
 
   private async request<T>(
@@ -104,9 +105,14 @@ class ApiClient {
       ...options,
     };
 
+    console.log('API Request:', { url, config });
+
     try {
       const response = await fetch(url, config);
+      console.log('API Response:', { status: response.status, statusText: response.statusText });
+      
       const data = await response.json();
+      console.log('API Data:', data);
 
       if (!response.ok) {
         throw new Error(data.error || `HTTP error! status: ${response.status}`);
@@ -134,6 +140,7 @@ class ApiClient {
 
     if (response.data?.token) {
       this.setToken(response.data.token);
+      console.log('Token set after registration:', response.data.token);
     }
 
     return response;
@@ -147,6 +154,7 @@ class ApiClient {
 
     if (response.data?.token) {
       this.setToken(response.data.token);
+      console.log('Token set after login:', response.data.token);
     }
 
     return response;
@@ -361,6 +369,7 @@ class ApiClient {
   setToken(token: string) {
     this.token = token;
     localStorage.setItem('authToken', token);
+    console.log('Token stored in localStorage:', token);
   }
 
   clearToken() {

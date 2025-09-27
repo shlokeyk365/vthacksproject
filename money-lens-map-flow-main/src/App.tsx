@@ -25,7 +25,9 @@ const queryClient = new QueryClient({
 });
 
 const AppRoutes = () => {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
+
+  console.log('AppRoutes render:', { isAuthenticated, isLoading, user });
 
   if (isLoading) {
     return (

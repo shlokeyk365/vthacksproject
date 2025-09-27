@@ -49,9 +49,11 @@ export const LoginForm: React.FC = () => {
   });
 
   const onLoginSubmit = async (data: LoginFormData) => {
+    console.log('Login attempt:', data);
     setIsLoading(true);
     try {
-      await login(data.email, data.password);
+      const result = await login(data.email, data.password);
+      console.log('Login result:', result);
     } catch (error: any) {
       console.error('Login error:', error);
     } finally {
@@ -60,9 +62,11 @@ export const LoginForm: React.FC = () => {
   };
 
   const onRegisterSubmit = async (data: RegisterFormData) => {
+    console.log('Register attempt:', data);
     setIsLoading(true);
     try {
-      await register(data);
+      const result = await register(data);
+      console.log('Register result:', result);
     } catch (error: any) {
       console.error('Registration error:', error);
     } finally {

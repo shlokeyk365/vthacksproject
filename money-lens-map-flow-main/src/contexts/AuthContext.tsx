@@ -34,29 +34,36 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(apiClient.isAuthenticated());
 
   const { data: profileData, isLoading: profileLoading } = useProfile();
   const logoutMutation = useLogout();
 
-  const isAuthenticated = apiClient.isAuthenticated();
-
   useEffect(() => {
+    const currentAuthState = apiClient.isAuthenticated();
+    setIsAuthenticated(currentAuthState);
+    
     if (profileData) {
       setUser(profileData);
-    } else if (!isAuthenticated) {
+    } else if (!currentAuthState) {
       setUser(null);
     }
     setIsLoading(profileLoading);
-  }, [profileData, profileLoading, isAuthenticated]);
+  }, [profileData, profileLoading]);
 
   const login = async (email: string, password: string) => {
+    console.log('AuthContext login called with:', { email });
     try {
       const response = await apiClient.login({ email, password });
+      console.log('AuthContext login response:', response);
       if (response.data?.user) {
         setUser(response.data.user);
+        setIsAuthenticated(true);
+        console.log('User set in context:', response.data.user);
       }
       return response;
     } catch (error) {
+      console.error('AuthContext login error:', error);
       throw error;
     }
   };
@@ -72,6 +79,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const response = await apiClient.register(userData);
       if (response.data?.user) {
         setUser(response.data.user);
+        setIsAuthenticated(true);
       }
       return response;
     } catch (error) {
@@ -82,6 +90,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const logout = () => {
     logoutMutation.mutate();
     setUser(null);
+    setIsAuthenticated(false);
   };
 
   const value: AuthContextType = {
