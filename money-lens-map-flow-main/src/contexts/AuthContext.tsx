@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { apiClient, type User } from '../lib/api';
 import { useProfile, useLogout } from '../hooks/useApi';
+import { toast } from 'sonner';
 
 interface AuthContextType {
   user: User | null;
@@ -88,9 +89,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const logout = () => {
-    logoutMutation.mutate();
-    setUser(null);
-    setIsAuthenticated(false);
+    logoutMutation.mutate(undefined, {
+      onSuccess: () => {
+        setUser(null);
+        setIsAuthenticated(false);
+        toast.success('Logged out successfully');
+      },
+      onError: () => {
+        // Even if logout fails, clear local state
+        setUser(null);
+        setIsAuthenticated(false);
+        toast.error('Logout failed');
+      }
+    });
   };
 
   const value: AuthContextType = {

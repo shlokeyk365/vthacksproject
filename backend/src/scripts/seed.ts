@@ -72,8 +72,10 @@ async function main() {
 
   console.log('✅ Spending caps created:', caps.length);
 
-  // Create sample transactions
+  // Create sample transactions with recent dates and location data
+  const now = new Date();
   const transactions = await Promise.all([
+    // Recent transactions with location data
     prisma.transaction.create({
       data: {
         userId: user.id,
@@ -84,18 +86,7 @@ async function main() {
         location: 'Main St, Blacksburg',
         latitude: 37.2296,
         longitude: -80.4139,
-        date: new Date('2024-01-15T08:30:00Z')
-      }
-    }),
-    prisma.transaction.create({
-      data: {
-        userId: user.id,
-        merchant: 'Amazon',
-        amount: 129.99,
-        category: 'Shopping',
-        description: 'Online purchase',
-        location: 'Online',
-        date: new Date('2024-01-14T14:20:00Z')
+        date: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000) // 2 days ago
       }
     }),
     prisma.transaction.create({
@@ -108,18 +99,7 @@ async function main() {
         location: 'University Blvd, Blacksburg',
         latitude: 37.2431,
         longitude: -80.4242,
-        date: new Date('2024-01-14T16:45:00Z')
-      }
-    }),
-    prisma.transaction.create({
-      data: {
-        userId: user.id,
-        merchant: 'Electric Company',
-        amount: 156.78,
-        category: 'Utilities',
-        description: 'Monthly electric bill',
-        location: 'Monthly Bill',
-        date: new Date('2024-01-13T09:00:00Z')
+        date: new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000) // 3 days ago
       }
     }),
     prisma.transaction.create({
@@ -132,7 +112,7 @@ async function main() {
         location: 'South Main St, Blacksburg',
         latitude: 37.2176,
         longitude: -80.4118,
-        date: new Date('2024-01-13T12:15:00Z')
+        date: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000) // 5 days ago
       }
     }),
     prisma.transaction.create({
@@ -145,7 +125,108 @@ async function main() {
         location: 'University Blvd, Blacksburg',
         latitude: 37.2431,
         longitude: -80.4242,
-        date: new Date('2024-01-12T15:30:00Z')
+        date: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000) // 7 days ago
+      }
+    }),
+    prisma.transaction.create({
+      data: {
+        userId: user.id,
+        merchant: 'Chipotle',
+        amount: 15.67,
+        category: 'Food & Dining',
+        description: 'Burrito bowl',
+        location: 'North Main St, Blacksburg',
+        latitude: 37.2350,
+        longitude: -80.4200,
+        date: new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000) // 10 days ago
+      }
+    }),
+    prisma.transaction.create({
+      data: {
+        userId: user.id,
+        merchant: 'Walmart',
+        amount: 67.89,
+        category: 'Shopping',
+        description: 'Household supplies',
+        location: 'South Main St, Blacksburg',
+        latitude: 37.2176,
+        longitude: -80.4118,
+        date: new Date(now.getTime() - 12 * 24 * 60 * 60 * 1000) // 12 days ago
+      }
+    }),
+    prisma.transaction.create({
+      data: {
+        userId: user.id,
+        merchant: 'Subway',
+        amount: 8.99,
+        category: 'Food & Dining',
+        description: 'Sandwich',
+        location: 'University Blvd, Blacksburg',
+        latitude: 37.2431,
+        longitude: -80.4242,
+        date: new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000) // 15 days ago
+      }
+    }),
+    prisma.transaction.create({
+      data: {
+        userId: user.id,
+        merchant: 'CVS Pharmacy',
+        amount: 23.45,
+        category: 'Healthcare',
+        description: 'Prescription and toiletries',
+        location: 'Main St, Blacksburg',
+        latitude: 37.2296,
+        longitude: -80.4139,
+        date: new Date(now.getTime() - 18 * 24 * 60 * 60 * 1000) // 18 days ago
+      }
+    }),
+    prisma.transaction.create({
+      data: {
+        userId: user.id,
+        merchant: 'Pizza Hut',
+        amount: 24.99,
+        category: 'Food & Dining',
+        description: 'Pizza delivery',
+        location: 'North Main St, Blacksburg',
+        latitude: 37.2350,
+        longitude: -80.4200,
+        date: new Date(now.getTime() - 20 * 24 * 60 * 60 * 1000) // 20 days ago
+      }
+    }),
+    prisma.transaction.create({
+      data: {
+        userId: user.id,
+        merchant: 'Best Buy',
+        amount: 299.99,
+        category: 'Shopping',
+        description: 'Electronics',
+        location: 'University Blvd, Blacksburg',
+        latitude: 37.2431,
+        longitude: -80.4242,
+        date: new Date(now.getTime() - 25 * 24 * 60 * 60 * 1000) // 25 days ago
+      }
+    }),
+    // Online transactions without location data
+    prisma.transaction.create({
+      data: {
+        userId: user.id,
+        merchant: 'Amazon',
+        amount: 129.99,
+        category: 'Shopping',
+        description: 'Online purchase',
+        location: 'Online',
+        date: new Date(now.getTime() - 4 * 24 * 60 * 60 * 1000) // 4 days ago
+      }
+    }),
+    prisma.transaction.create({
+      data: {
+        userId: user.id,
+        merchant: 'Netflix',
+        amount: 15.99,
+        category: 'Entertainment',
+        description: 'Monthly subscription',
+        location: 'Online',
+        date: new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000) // 1 day ago
       }
     })
   ]);

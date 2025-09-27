@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
+import logo from "@/assets/logo.svg";
 import {
   BarChart3,
   CreditCard,
@@ -107,7 +108,7 @@ export function AppSidebar() {
       <div className="p-4 border-b border-sidebar-border">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-primary rounded-lg">
-            <DollarSign className="w-6 h-6 text-primary-foreground" />
+            <img src={logo} alt="MoneyLens Logo" className="w-6 h-6" />
           </div>
           {!collapsed && (
             <div>

@@ -171,9 +171,84 @@ class ApiClient {
     });
   }
 
+  async changePassword(passwordData: { currentPassword: string; newPassword: string }) {
+    return this.request<{ message: string }>('/auth/change-password', {
+      method: 'PUT',
+      body: JSON.stringify(passwordData),
+    });
+  }
+
+  // 2FA methods
+  async setup2FA() {
+    return this.request<{ secret: string; qrCode: string; manualEntryKey: string }>('/auth/2fa/setup', {
+      method: 'POST',
+    });
+  }
+
+  async verify2FASetup(token: string) {
+    return this.request<{ message: string }>('/auth/2fa/verify-setup', {
+      method: 'POST',
+      body: JSON.stringify({ token }),
+    });
+  }
+
+  async disable2FA(token: string) {
+    return this.request<{ message: string }>('/auth/2fa/disable', {
+      method: 'POST',
+      body: JSON.stringify({ token }),
+    });
+  }
+
+  async get2FAStatus() {
+    return this.request<{ enabled: boolean }>('/auth/2fa/status');
+  }
+
+  // Data management methods
+  async exportData() {
+    return this.request<any>('/data/export');
+  }
+
+  async importData(importData: any) {
+    return this.request<{ message: string }>('/data/import', {
+      method: 'POST',
+      body: JSON.stringify({ importData }),
+    });
+  }
+
+  async deleteAllData() {
+    return this.request<{ message: string }>('/data/delete-all', {
+      method: 'DELETE',
+    });
+  }
+
+  async getDataStats() {
+    return this.request<{
+      totalTransactions: number;
+      activeCaps: number;
+      totalNotifications: number;
+      accountAgeDays: number;
+      monthlyBudgetGoal: number;
+    }>('/data/stats');
+  }
+
   async logout() {
-    this.clearToken();
-    return this.request('/auth/logout', { method: 'POST' });
+    try {
+      // Try to make the logout request, but don't fail if it doesn't work
+      await this.request('/auth/logout', { method: 'POST' });
+    } catch (error) {
+      // Log the error but don't throw it - logout is primarily client-side
+      console.log('Logout request failed (non-critical):', error);
+    } finally {
+      // Always clear the token regardless of request success/failure
+      this.token = null;
+      localStorage.removeItem('authToken');
+    }
+    
+    // Return a successful response since logout is primarily client-side
+    return {
+      success: true,
+      message: 'Logout successful'
+    };
   }
 
   // Transactions
@@ -219,6 +294,9 @@ class ApiClient {
     merchant: string;
     amount: number;
     category: string;
+    location?: string;
+    latitude?: number;
+    longitude?: number;
   }) {
     return this.request('/transactions/simulate', {
       method: 'POST',

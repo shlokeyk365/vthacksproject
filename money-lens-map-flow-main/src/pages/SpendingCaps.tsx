@@ -56,7 +56,7 @@ export default function SpendingCaps() {
 
   return (
     <motion.div
-      className="space-y-6"
+      className="h-full min-h-screen space-y-6 p-6"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}

@@ -1,7 +1,11 @@
 import { motion } from "framer-motion";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { toast } from "sonner";
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -11,7 +15,13 @@ import {
   Download,
   BarChart3,
   PieChart as PieChartIcon,
-  AlertTriangle
+  AlertTriangle,
+  Eye,
+  Lightbulb,
+  TrendingUp as TrendingUpIcon,
+  AlertCircle,
+  CheckCircle,
+  Info
 } from "lucide-react";
 import {
   ChartContainer,
@@ -44,18 +54,35 @@ const monthlyData = [
 ];
 
 const topMerchants = [
-  { name: "Starbucks", amount: 247, visits: 18 },
-  { name: "Amazon", amount: 892, visits: 12 },
-  { name: "Shell", amount: 356, visits: 15 },
-  { name: "Target", amount: 523, visits: 8 },
-  { name: "McDonald's", amount: 189, visits: 14 },
+  { name: "Amazon", amount: 892, visits: 12, category: "Shopping", color: "#3B82F6" },
+  { name: "Target", amount: 523, visits: 8, category: "Shopping", color: "#10B981" },
+  { name: "Shell", amount: 356, visits: 15, category: "Transport", color: "#F59E0B" },
+  { name: "Starbucks", amount: 247, visits: 18, category: "Dining", color: "#EF4444" },
+  { name: "McDonald's", amount: 189, visits: 14, category: "Dining", color: "#8B5CF6" },
 ];
+
+// Ensure data is properly formatted for charts
+const formattedMerchants = topMerchants.map(merchant => ({
+  ...merchant,
+  amount: Number(merchant.amount),
+  visits: Number(merchant.visits)
+}));
 
 const spendingVsCaps = [
   { category: "Dining", spent: 486, cap: 500, target: 450 },
   { category: "Shopping", spent: 329, cap: 400, target: 350 },
   { category: "Transport", spent: 245, cap: 300, target: 250 },
   { category: "Utilities", spent: 187, cap: 200, target: 180 },
+];
+
+// Spending projection data for next 6 months
+const spendingProjection = [
+  { month: "Jul", actual: null, projected: 2847, trend: "increasing" },
+  { month: "Aug", actual: null, projected: 2923, trend: "increasing" },
+  { month: "Sep", actual: null, projected: 2987, trend: "increasing" },
+  { month: "Oct", actual: null, projected: 3054, trend: "increasing" },
+  { month: "Nov", actual: null, projected: 3121, trend: "increasing" },
+  { month: "Dec", actual: null, projected: 3289, trend: "holiday_spike" },
 ];
 
 const chartConfig = {
@@ -65,31 +92,210 @@ const chartConfig = {
   utilities: { label: "Utilities", color: "#EF4444" },
 };
 
+const merchantsChartConfig = {
+  amount: { label: "Amount Spent", color: "#3B82F6" },
+};
+
+const projectionChartConfig = {
+  projected: { label: "Projected Spending", color: "#8B5CF6" },
+  actual: { label: "Actual Spending", color: "#3B82F6" },
+};
+
 export default function Analytics() {
+  const [isInsightsDialogOpen, setIsInsightsDialogOpen] = useState(false);
+  const [selectedPeriod, setSelectedPeriod] = useState("6months");
+  const [isExporting, setIsExporting] = useState(false);
+
+  // Comprehensive insights data
+  const allInsights = [
+    {
+      id: 1,
+      type: "alert",
+      icon: AlertCircle,
+      title: "Spending Pattern Alert",
+      description: "Your dining expenses have increased 15% compared to last month. Consider setting a stricter cap to maintain your budget goals.",
+      category: "Dining",
+      impact: "High",
+      recommendation: "Set dining cap to $400/month"
+    },
+    {
+      id: 2,
+      type: "success",
+      icon: CheckCircle,
+      title: "Savings Opportunity",
+      description: "You're consistently under budget on transportation. You could reallocate $50/month to your savings goal.",
+      category: "Transportation",
+      impact: "Medium",
+      recommendation: "Increase transportation cap by $50"
+    },
+    {
+      id: 3,
+      type: "warning",
+      icon: AlertTriangle,
+      title: "Budget Risk Warning",
+      description: "Shopping expenses typically increase 20% in December. Consider adjusting your caps accordingly.",
+      category: "Shopping",
+      impact: "High",
+      recommendation: "Prepare for holiday spending surge"
+    },
+    {
+      id: 4,
+      type: "info",
+      icon: Info,
+      title: "Spending Trend Analysis",
+      description: "Your monthly spending has decreased by 8% over the past 3 months. Great job maintaining budget discipline!",
+      category: "Overall",
+      impact: "Positive",
+      recommendation: "Continue current spending patterns"
+    },
+    {
+      id: 5,
+      type: "alert",
+      icon: AlertCircle,
+      title: "Merchant Concentration Risk",
+      description: "45% of your spending is concentrated at just 3 merchants. Consider diversifying your spending for better budget control.",
+      category: "Merchants",
+      impact: "Medium",
+      recommendation: "Set individual merchant spending limits"
+    },
+    {
+      id: 6,
+      type: "success",
+      icon: TrendingUpIcon,
+      title: "Goal Achievement",
+      description: "You're on track to save $2,400 this year, exceeding your goal by $400. Consider increasing your savings target.",
+      category: "Savings",
+      impact: "High",
+      recommendation: "Increase annual savings goal to $3,000"
+    },
+    {
+      id: 7,
+      type: "warning",
+      icon: AlertTriangle,
+      title: "Weekend Spending Spike",
+      description: "Your weekend spending is 35% higher than weekdays. Monitor weekend activities to maintain budget balance.",
+      category: "Timing",
+      impact: "Medium",
+      recommendation: "Set weekend-specific spending caps"
+    },
+    {
+      id: 8,
+      type: "info",
+      icon: Lightbulb,
+      title: "Optimization Opportunity",
+      description: "Switching to bulk purchases for groceries could save you $80/month based on your current patterns.",
+      category: "Groceries",
+      impact: "High",
+      recommendation: "Plan monthly bulk grocery trips"
+    }
+  ];
+
+  // Handler functions
+  const handlePeriodChange = (period: string) => {
+    setSelectedPeriod(period);
+    toast.success(`Analytics updated for ${getPeriodLabel(period)}`);
+  };
+
+  const getPeriodLabel = (period: string) => {
+    switch (period) {
+      case "1month": return "Last Month";
+      case "3months": return "Last 3 Months";
+      case "6months": return "Last 6 Months";
+      case "1year": return "Last Year";
+      case "all": return "All Time";
+      default: return "Last 6 Months";
+    }
+  };
+
+  const handleExportReport = async () => {
+    setIsExporting(true);
+    try {
+      // Simulate export process
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Create a mock report data
+      const reportData = {
+        period: getPeriodLabel(selectedPeriod),
+        generatedAt: new Date().toISOString(),
+        summary: {
+          totalSpending: 2847.50,
+          averageMonthly: 474.58,
+          topCategory: "Dining",
+          topMerchant: "Starbucks Coffee",
+          savingsRate: 12.5
+        },
+        insights: allInsights.slice(0, 5), // Top 5 insights
+        charts: {
+          monthlySpending: monthlyData,
+          topMerchants: topMerchants,
+          spendingVsCaps: spendingVsCaps
+        }
+      };
+
+      // Create and download the report
+      const dataStr = JSON.stringify(reportData, null, 2);
+      const dataBlob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(dataBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `analytics-report-${selectedPeriod}-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast.success("Analytics report exported successfully!");
+    } catch (error) {
+      toast.error("Failed to export report. Please try again.");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <motion.div
-      className="space-y-6"
+      className="h-full min-h-screen space-y-6 p-6"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
     >
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Financial Analytics</h1>
-          <p className="text-muted-foreground">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
+        <div className="space-y-1">
+          <h1 className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+            Financial Analytics
+          </h1>
+          <p className="text-muted-foreground text-sm">
             Comprehensive insights into your spending patterns
           </p>
         </div>
         
-        <div className="flex items-center gap-3">
-          <Button variant="outline">
-            <Calendar className="w-4 h-4 mr-2" />
-            Last 6 Months
-          </Button>
-          <Button>
+        <div className="flex flex-wrap items-center gap-2 lg:gap-3">
+          <Select value={selectedPeriod} onValueChange={handlePeriodChange}>
+            <SelectTrigger className="w-[140px] h-9">
+              <SelectValue placeholder="Select period" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="1month">Last Month</SelectItem>
+              <SelectItem value="3months">Last 3 Months</SelectItem>
+              <SelectItem value="6months">Last 6 Months</SelectItem>
+              <SelectItem value="1year">Last Year</SelectItem>
+              <SelectItem value="all">All Time</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button 
+            size="sm" 
+            className="h-9"
+            onClick={handleExportReport}
+            disabled={isExporting}
+          >
             <Download className="w-4 h-4 mr-2" />
-            Export Report
+            <span className="hidden sm:inline">
+              {isExporting ? "Exporting..." : "Export Report"}
+            </span>
+            <span className="sm:hidden">
+              {isExporting ? "..." : "Export"}
+            </span>
           </Button>
         </div>
       </div>
@@ -170,52 +376,74 @@ export default function Analytics() {
       </div>
 
       {/* Charts Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Monthly Spending Trends */}
         <Card className="card-gradient">
-          <CardHeader>
+          <CardHeader className="pb-4">
             <CardTitle className="flex items-center gap-2">
               <BarChart3 className="w-5 h-5" />
               Monthly Spending by Category
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <ChartContainer config={chartConfig} className="h-[300px]">
+          <CardContent className="pt-0">
+            <ChartContainer config={chartConfig} className="h-[280px] w-full">
               <AreaChart data={monthlyData}>
-                <XAxis dataKey="month" />
-                <YAxis />
-                <ChartTooltip content={<ChartTooltipContent />} />
+                <XAxis 
+                  dataKey="month" 
+                  tick={{ fontSize: 12 }}
+                  axisLine={{ stroke: '#e5e7eb' }}
+                  tickLine={{ stroke: '#e5e7eb' }}
+                />
+                <YAxis 
+                  tick={{ fontSize: 12 }}
+                  axisLine={{ stroke: '#e5e7eb' }}
+                  tickLine={{ stroke: '#e5e7eb' }}
+                />
+                <ChartTooltip 
+                  content={<ChartTooltipContent />}
+                  labelStyle={{ color: '#374151' }}
+                  contentStyle={{ 
+                    backgroundColor: '#ffffff',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                  }}
+                />
                 <Area
                   type="monotone"
                   dataKey="dining"
                   stackId="1"
-                  stroke="var(--color-dining)"
-                  fill="var(--color-dining)"
+                  stroke={chartConfig.dining.color}
+                  fill={chartConfig.dining.color}
                   fillOpacity={0.6}
+                  strokeWidth={2}
                 />
                 <Area
                   type="monotone"
                   dataKey="shopping"
                   stackId="1"
-                  stroke="var(--color-shopping)"
-                  fill="var(--color-shopping)"
+                  stroke={chartConfig.shopping.color}
+                  fill={chartConfig.shopping.color}
                   fillOpacity={0.6}
+                  strokeWidth={2}
                 />
                 <Area
                   type="monotone"
                   dataKey="transport"
                   stackId="1"
-                  stroke="var(--color-transport)"
-                  fill="var(--color-transport)"
+                  stroke={chartConfig.transport.color}
+                  fill={chartConfig.transport.color}
                   fillOpacity={0.6}
+                  strokeWidth={2}
                 />
                 <Area
                   type="monotone"
                   dataKey="utilities"
                   stackId="1"
-                  stroke="var(--color-utilities)"
-                  fill="var(--color-utilities)"
+                  stroke={chartConfig.utilities.color}
+                  fill={chartConfig.utilities.color}
                   fillOpacity={0.6}
+                  strokeWidth={2}
                 />
               </AreaChart>
             </ChartContainer>
@@ -224,16 +452,46 @@ export default function Analytics() {
 
         {/* Top Merchants */}
         <Card className="card-gradient">
-          <CardHeader>
+          <CardHeader className="pb-4">
             <CardTitle>Top 5 Merchants</CardTitle>
           </CardHeader>
-          <CardContent>
-            <ChartContainer config={{}} className="h-[300px]">
-              <BarChart data={topMerchants} layout="horizontal">
-                <XAxis type="number" />
-                <YAxis dataKey="name" type="category" width={80} />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <Bar dataKey="amount" fill="#3B82F6" />
+          <CardContent className="pt-0">
+            <ChartContainer config={{}} className="h-[280px] w-full">
+              <BarChart data={formattedMerchants} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                <XAxis 
+                  dataKey="name"
+                  tick={{ fontSize: 12 }}
+                  axisLine={{ stroke: '#e5e7eb' }}
+                  tickLine={{ stroke: '#e5e7eb' }}
+                  angle={-45}
+                  textAnchor="end"
+                  height={60}
+                />
+                <YAxis 
+                  tick={{ fontSize: 12 }}
+                  axisLine={{ stroke: '#e5e7eb' }}
+                  tickLine={{ stroke: '#e5e7eb' }}
+                />
+                <ChartTooltip 
+                  content={<ChartTooltipContent />}
+                  labelStyle={{ color: '#374151' }}
+                  contentStyle={{ 
+                    backgroundColor: '#ffffff',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                  }}
+                  formatter={(value, name) => [`$${value}`, 'Amount Spent']}
+                />
+                <Bar 
+                  dataKey="amount" 
+                  radius={[4, 4, 0, 0]}
+                  name="Amount Spent"
+                >
+                  {formattedMerchants.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Bar>
               </BarChart>
             </ChartContainer>
           </CardContent>
@@ -241,38 +499,137 @@ export default function Analytics() {
 
         {/* Spending vs Caps */}
         <Card className="card-gradient">
-          <CardHeader>
+          <CardHeader className="pb-4">
             <CardTitle>Spending vs Caps Comparison</CardTitle>
           </CardHeader>
-          <CardContent>
-            <ChartContainer config={{}} className="h-[300px]">
+          <CardContent className="pt-0">
+            <ChartContainer config={{}} className="h-[280px] w-full">
               <ComposedChart data={spendingVsCaps}>
-                <XAxis dataKey="category" />
-                <YAxis />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <Bar dataKey="spent" fill="#3B82F6" name="Spent" />
-                <Bar dataKey="cap" fill="#10B981" name="Cap" />
+                <XAxis 
+                  dataKey="category" 
+                  tick={{ fontSize: 12 }}
+                  axisLine={{ stroke: '#e5e7eb' }}
+                  tickLine={{ stroke: '#e5e7eb' }}
+                />
+                <YAxis 
+                  tick={{ fontSize: 12 }}
+                  axisLine={{ stroke: '#e5e7eb' }}
+                  tickLine={{ stroke: '#e5e7eb' }}
+                />
+                <ChartTooltip 
+                  content={<ChartTooltipContent />}
+                  labelStyle={{ color: '#374151' }}
+                  contentStyle={{ 
+                    backgroundColor: '#ffffff',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                  }}
+                />
+                <Bar 
+                  dataKey="spent" 
+                  fill="#3B82F6" 
+                  name="Spent"
+                  radius={[4, 4, 0, 0]}
+                />
+                <Bar 
+                  dataKey="cap" 
+                  fill="#10B981" 
+                  name="Cap"
+                  radius={[4, 4, 0, 0]}
+                />
                 <Line 
                   type="monotone" 
                   dataKey="target" 
                   stroke="#F59E0B" 
                   strokeWidth={2}
                   name="Target"
+                  dot={{ fill: '#F59E0B', strokeWidth: 2, r: 4 }}
                 />
               </ComposedChart>
             </ChartContainer>
           </CardContent>
         </Card>
 
-        {/* Insights Panel */}
+        {/* Spending Projection */}
         <Card className="card-gradient">
-          <CardHeader>
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="w-5 h-5" />
+              Spending Projection
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <ChartContainer config={projectionChartConfig} className="h-[280px] w-full">
+              <AreaChart data={spendingProjection} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                <XAxis 
+                  dataKey="month"
+                  tick={{ fontSize: 12 }}
+                  axisLine={{ stroke: '#e5e7eb' }}
+                  tickLine={{ stroke: '#e5e7eb' }}
+                />
+                <YAxis 
+                  tick={{ fontSize: 12 }}
+                  axisLine={{ stroke: '#e5e7eb' }}
+                  tickLine={{ stroke: '#e5e7eb' }}
+                  domain={[2500, 3500]}
+                />
+                <ChartTooltip 
+                  content={<ChartTooltipContent />}
+                  labelStyle={{ color: '#374151' }}
+                  contentStyle={{ 
+                    backgroundColor: '#ffffff',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                  }}
+                  formatter={(value, name) => [`$${value}`, name === 'projected' ? 'Projected' : 'Actual']}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="projected"
+                  stroke={projectionChartConfig.projected.color}
+                  fill={projectionChartConfig.projected.color}
+                  fillOpacity={0.3}
+                  strokeWidth={3}
+                  name="Projected Spending"
+                  dot={{ fill: projectionChartConfig.projected.color, strokeWidth: 2, r: 4 }}
+                />
+              </AreaChart>
+            </ChartContainer>
+            <div className="mt-4 p-3 bg-primary/10 rounded-lg border border-primary/20">
+              <div className="flex items-center gap-2 mb-2">
+                <TrendingUp className="w-4 h-4 text-primary" />
+                <h4 className="font-semibold text-primary text-sm">Projection Insights</h4>
+              </div>
+              <div className="grid grid-cols-2 gap-3 text-xs">
+                <div>
+                  <p className="text-muted-foreground">Current Average</p>
+                  <p className="font-semibold text-primary">$2,847</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Year-End</p>
+                  <p className="font-semibold text-primary">$3,289</p>
+                </div>
+              </div>
+              <div className="mt-2 p-2 bg-background/50 rounded border border-primary/10">
+                <p className="text-xs text-foreground">
+                  <strong className="text-primary">Forecast:</strong> Gradual increase with holiday spike in December.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Insights Panel */}
+        <Card className="card-gradient lg:col-span-2">
+          <CardHeader className="pb-4">
             <CardTitle className="flex items-center gap-2">
               <AlertTriangle className="w-5 h-5" />
               AI-Generated Insights
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="pt-0 space-y-4">
             <div className="p-4 bg-primary/10 rounded-lg border border-primary/20">
               <h4 className="font-semibold text-primary mb-2">Spending Pattern Alert</h4>
               <p className="text-sm">
@@ -297,9 +654,77 @@ export default function Analytics() {
               </p>
             </div>
 
-            <Button className="w-full" variant="outline">
-              View All Insights
-            </Button>
+            <Dialog open={isInsightsDialogOpen} onOpenChange={setIsInsightsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button className="w-full" variant="outline">
+                  <Eye className="w-4 h-4 mr-2" />
+                  View All Insights
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <Lightbulb className="w-5 h-5" />
+                    AI-Generated Insights
+                  </DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  {allInsights.map((insight) => {
+                    const IconComponent = insight.icon;
+                    const getTypeStyles = (type: string) => {
+                      switch (type) {
+                        case "alert":
+                          return "bg-red-50 border-red-200 text-red-800";
+                        case "success":
+                          return "bg-green-50 border-green-200 text-green-800";
+                        case "warning":
+                          return "bg-yellow-50 border-yellow-200 text-yellow-800";
+                        case "info":
+                          return "bg-blue-50 border-blue-200 text-blue-800";
+                        default:
+                          return "bg-gray-50 border-gray-200 text-gray-800";
+                      }
+                    };
+                    
+                    const getImpactBadge = (impact: string) => {
+                      const baseClasses = "inline-flex items-center px-2 py-1 rounded-full text-xs font-medium";
+                      
+                      switch (impact) {
+                        case "High":
+                          return <span className={`${baseClasses} bg-red-500 text-white`}>High Impact</span>;
+                        case "Medium":
+                          return <span className={`${baseClasses} bg-yellow-500 text-white`}>Medium Impact</span>;
+                        case "Positive":
+                          return <span className={`${baseClasses} bg-green-500 text-white`}>Positive</span>;
+                        default:
+                          return <span className={`${baseClasses} bg-gray-100 text-gray-700 border border-gray-300`}>{impact}</span>;
+                      }
+                    };
+
+                    return (
+                      <div key={insight.id} className={`p-4 rounded-lg border ${getTypeStyles(insight.type)}`}>
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex items-center gap-2">
+                            <IconComponent className="w-5 h-5" />
+                            <h4 className="font-semibold">{insight.title}</h4>
+                          </div>
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700 border border-gray-300">{insight.category}</span>
+                            {getImpactBadge(insight.impact)}
+                          </div>
+                        </div>
+                        <p className="text-sm mb-3">{insight.description}</p>
+                        <div className="bg-white/50 p-3 rounded border">
+                          <p className="text-sm font-medium text-gray-700">
+                            💡 <strong>Recommendation:</strong> {insight.recommendation}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </DialogContent>
+            </Dialog>
           </CardContent>
         </Card>
       </div>
