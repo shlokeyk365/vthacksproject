@@ -659,6 +659,53 @@ export default function Transactions() {
                 )}
                 Simulate Transaction
               </Button>
+
+              {/* Spending by Category - Always Visible */}
+              <div className="mt-4">
+                <h4 className="text-sm font-medium mb-2">Spending by Category</h4>
+                <div className="h-[150px] w-full flex items-center justify-center">
+                  {filteredCategoryData.length === 0 ? (
+                    <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                      <div className="w-8 h-8 rounded-full bg-muted/20 flex items-center justify-center">
+                        <Search className="w-4 h-4" />
+                      </div>
+                      <p className="text-xs">No data available</p>
+                    </div>
+                  ) : (
+                    <PieChart width={150} height={150}>
+                      <Pie
+                        data={filteredCategoryData}
+                        cx={75}
+                        cy={75}
+                        innerRadius={30}
+                        outerRadius={60}
+                        paddingAngle={2}
+                        dataKey="value"
+                      >
+                        {filteredCategoryData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <ChartTooltip />
+                    </PieChart>
+                  )}
+                </div>
+                
+                <div className="space-y-1 mt-2">
+                  {filteredCategoryData.slice(0, 3).map((category) => (
+                    <div key={category.name} className="flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-2 min-w-0 flex-1">
+                        <div 
+                          className="w-2 h-2 rounded-sm flex-shrink-0"
+                          style={{ backgroundColor: category.color }}
+                        ></div>
+                        <span className="truncate">{category.name}</span>
+                      </div>
+                      <span className="font-semibold ml-2 flex-shrink-0">${category.value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
               
               {/* Simulation Results */}
               {simulationResult && (
@@ -732,63 +779,40 @@ export default function Transactions() {
                         <div className="font-medium">${simulationResult.monthlyBudget.toFixed(2)}</div>
                       </div>
                     )}
+                    </div>
+
+                  {/* Quick Stats */}
+                  <div className="mt-4">
+                    <h4 className="text-sm font-medium mb-2">Quick Stats</h4>
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div className="p-2 bg-muted/20 rounded text-center">
+                        <div className="font-semibold text-primary">${simulationResult.currentSpending?.toFixed(0)}</div>
+                        <div className="text-muted-foreground">Current</div>
+                      </div>
+                      <div className="p-2 bg-muted/20 rounded text-center">
+                        <div className="font-semibold text-primary">${simulationResult.wouldSpend?.toFixed(0)}</div>
+                        <div className="text-muted-foreground">After</div>
+                      </div>
+                      <div className="p-2 bg-muted/20 rounded text-center">
+                        <div className="font-semibold text-primary">{filteredCategoryData.length}</div>
+                        <div className="text-muted-foreground">Categories</div>
+                      </div>
+                      <div className="p-2 bg-muted/20 rounded text-center">
+                        <div className="font-semibold text-primary">
+                          {simulationResult.monthlyBudget ? 
+                            ((simulationResult.wouldSpend / simulationResult.monthlyBudget) * 100).toFixed(0) + '%' : 
+                            'N/A'
+                          }
+                        </div>
+                        <div className="text-muted-foreground">Budget Used</div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}
             </CardContent>
           </Card>
 
-          {/* Category Breakdown */}
-          <Card className="card-gradient">
-            <CardHeader>
-              <CardTitle>Spending by Category</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[200px] w-full flex items-center justify-center">
-                {filteredCategoryData.length === 0 ? (
-                  <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                    <div className="w-12 h-12 rounded-full bg-muted/20 flex items-center justify-center">
-                      <Search className="w-6 h-6" />
-                    </div>
-                    <p className="text-sm">No data available</p>
-                    <p className="text-xs">Try adjusting your filters</p>
-                  </div>
-                ) : (
-                  <PieChart width={200} height={200}>
-                    <Pie
-                      data={filteredCategoryData}
-                      cx={100}
-                      cy={100}
-                      innerRadius={40}
-                      outerRadius={80}
-                      paddingAngle={2}
-                      dataKey="value"
-                    >
-                      {filteredCategoryData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <ChartTooltip />
-                  </PieChart>
-                )}
-              </div>
-              
-              <div className="legend-container-responsive space-y-2 mt-4">
-                {filteredCategoryData.map((category) => (
-                  <div key={category.name} className="flex items-center justify-between text-sm legend-item">
-                    <div className="flex items-center gap-2 min-w-0 flex-1">
-                      <div 
-                        className="w-3 h-3 rounded-sm flex-shrink-0"
-                        style={{ backgroundColor: category.color }}
-                      ></div>
-                      <span className="truncate">{category.name}</span>
-                    </div>
-                    <span className="font-semibold ml-2 flex-shrink-0">${category.value}</span>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
 
           {/* Quick Stats */}
           <Card className="card-gradient">

@@ -7,6 +7,49 @@ import { ApiResponse, AuthenticatedRequest, CreateSpendingCapRequest, UpdateSpen
 const router = express.Router();
 const prisma = new PrismaClient();
 
+// Get merchants for spending caps
+router.get('/merchants', authenticate, async (req: AuthenticatedRequest, res, next) => {
+  try {
+    const userId = req.user!.id;
+    const { period = '90' } = req.query; // Default to 90 days
+
+    const days = Number(period);
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+
+    // Get merchants from user's transaction history
+    const merchantData = await prisma.transaction.groupBy({
+      by: ['merchant'],
+      where: {
+        userId,
+        date: { gte: startDate },
+        status: 'COMPLETED'
+      },
+      _sum: { amount: true },
+      _count: { merchant: true },
+      orderBy: { _sum: { amount: 'desc' } },
+      take: 50 // Limit to top 50 merchants
+    });
+
+    const merchants = merchantData.map((item: any) => ({
+      name: item.merchant,
+      totalSpent: Number(item._sum.amount || 0),
+      transactionCount: item._count.merchant,
+      averageSpent: Number(item._sum.amount || 0) / item._count.merchant
+    }));
+
+    const response: ApiResponse = {
+      success: true,
+      data: merchants,
+      message: 'Merchants retrieved successfully'
+    };
+
+    res.status(200).json(response);
+  } catch (error) {
+    next(error);
+  }
+});
+
 // Get all spending caps for user
 router.get('/', authenticate, async (req: AuthenticatedRequest, res, next) => {
   try {
