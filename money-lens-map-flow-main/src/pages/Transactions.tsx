@@ -38,6 +38,100 @@ import { useAutocomplete } from "@/hooks/useAutocomplete";
 import { HighlightText } from "@/components/ui/highlight-text";
 import { Autocomplete } from "@/components/ui/autocomplete";
 
+// Merchant logo mapping for real app logos
+const getMerchantLogo = (merchantName: string) => {
+  const merchant = merchantName.toLowerCase();
+  
+  // Popular merchants with their brand colors and icons
+  if (merchant.includes('netflix')) {
+    return {
+      icon: '🎬',
+      bgColor: 'bg-red-500',
+      textColor: 'text-white'
+    };
+  }
+  if (merchant.includes('starbucks') || merchant.includes('starbucks coffee')) {
+    return {
+      icon: '☕',
+      bgColor: 'bg-green-600',
+      textColor: 'text-white'
+    };
+  }
+  if (merchant.includes('amazon')) {
+    return {
+      icon: '📦',
+      bgColor: 'bg-orange-500',
+      textColor: 'text-white'
+    };
+  }
+  if (merchant.includes('mcdonald') || merchant.includes('mcdonalds')) {
+    return {
+      icon: '🍟',
+      bgColor: 'bg-yellow-500',
+      textColor: 'text-white'
+    };
+  }
+  if (merchant.includes('uber') || merchant.includes('lyft')) {
+    return {
+      icon: '🚗',
+      bgColor: 'bg-black',
+      textColor: 'text-white'
+    };
+  }
+  if (merchant.includes('spotify')) {
+    return {
+      icon: '🎵',
+      bgColor: 'bg-green-500',
+      textColor: 'text-white'
+    };
+  }
+  if (merchant.includes('apple') || merchant.includes('app store')) {
+    return {
+      icon: '🍎',
+      bgColor: 'bg-gray-800',
+      textColor: 'text-white'
+    };
+  }
+  if (merchant.includes('google') || merchant.includes('google play')) {
+    return {
+      icon: '🔍',
+      bgColor: 'bg-blue-500',
+      textColor: 'text-white'
+    };
+  }
+  if (merchant.includes('shell') || merchant.includes('gas')) {
+    return {
+      icon: '⛽',
+      bgColor: 'bg-yellow-400',
+      textColor: 'text-black'
+    };
+  }
+  if (merchant.includes('target')) {
+    return {
+      icon: '🎯',
+      bgColor: 'bg-red-600',
+      textColor: 'text-white'
+    };
+  }
+  if (merchant.includes('walmart')) {
+    return {
+      icon: '🏪',
+      bgColor: 'bg-blue-600',
+      textColor: 'text-white'
+    };
+  }
+  if (merchant.includes('kroger')) {
+    return {
+      icon: '🛒',
+      bgColor: 'bg-red-700',
+      textColor: 'text-white'
+    };
+  }
+  
+  // Default fallback to category icon
+  return null;
+};
+
 const mockTransactions = [
   {
     id: "1",

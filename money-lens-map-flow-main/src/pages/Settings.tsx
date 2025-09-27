@@ -14,6 +14,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { toast } from "sonner";
 import { apiClient } from "@/lib/api";
+import { generatePDFExport } from "@/lib/pdfExport";
 import { 
   User, 
   Bell, 
@@ -27,13 +28,16 @@ import {
   Palette,
   Database,
   Key,
-  Monitor
+  Monitor,
+  Settings as SettingsIcon
 } from "lucide-react";
+import { ColorPicker } from "@/components/ui/ColorPicker";
 
 export default function Settings() {
   const { user } = useAuth();
   const { data: profileData, isLoading: profileLoading } = useProfile();
   const { theme, setTheme, resolvedTheme, primaryColor, setPrimaryColor, colorSchemes } = useTheme();
+  
   
   // Profile form state
   const [profileForm, setProfileForm] = useState({
@@ -469,22 +473,12 @@ export default function Settings() {
       const response = await apiClient.exportData();
 
       if (response.success) {
-        // Create and download JSON file
-        const dataStr = JSON.stringify(response.data, null, 2);
-        const dataBlob = new Blob([dataStr], { type: 'application/json' });
-        const url = URL.createObjectURL(dataBlob);
-        
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `moneylens-export-${new Date().toISOString().split('T')[0]}.json`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
+        // Generate and download PDF file
+        generatePDFExport(response.data);
 
         toast.dismiss(loadingToast);
         toast.success('Data exported successfully!', {
-          description: 'Your data has been downloaded',
+          description: 'Your data has been downloaded as PDF',
           duration: 4000,
         });
       } else {
@@ -898,7 +892,7 @@ export default function Settings() {
                   disabled={isExportingData}
                 >
                   <Download className="w-4 h-4" />
-                  {isExportingData ? 'Exporting...' : 'Export All Data'}
+                  {isExportingData ? 'Exporting...' : 'Export as PDF'}
                 </Button>
                 
                 <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
@@ -1063,7 +1057,7 @@ export default function Settings() {
               
               <div>
                 <label className="text-sm font-medium mb-3 block">Primary Color</label>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 gap-2 mb-4">
                   {colorSchemes.map((scheme) => (
                     <button
                       key={scheme.primary}
@@ -1089,10 +1083,27 @@ export default function Settings() {
                     </button>
                   ))}
                 </div>
+                
+                {/* Custom Color Picker */}
+                <div className="mb-4">
+                  <ColorPicker
+                    value={primaryColor}
+                    onChange={(color) => {
+                      setPrimaryColor(color);
+                      toast.success('Custom color applied!', {
+                        description: 'Primary color updated with custom selection',
+                        duration: 2000,
+                      });
+                    }}
+                    label="Custom Primary Color"
+                  />
+                </div>
+                
                 <p className="text-xs text-muted-foreground mt-2">
-                  Current: {colorSchemes.find(s => s.primary === primaryColor)?.name || 'Financial Blue'}
+                  Current: {colorSchemes.find(s => s.primary === primaryColor)?.name || 'Custom Color'}
                 </p>
               </div>
+              
             </CardContent>
           </Card>
 

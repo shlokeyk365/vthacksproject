@@ -69,6 +69,48 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       primaryGlow: '173 80% 50%',
       primaryDark: '173 80% 30%',
       description: 'Modern and clean aesthetic'
+    },
+    {
+      name: 'Pink Elegant',
+      primary: '330 81% 60%',
+      primaryGlow: '330 81% 70%',
+      primaryDark: '330 81% 50%',
+      description: 'Elegant and sophisticated'
+    },
+    {
+      name: 'Indigo Deep',
+      primary: '238 100% 67%',
+      primaryGlow: '238 100% 77%',
+      primaryDark: '238 100% 57%',
+      description: 'Deep and mysterious'
+    },
+    {
+      name: 'Forest Green',
+      primary: '142 64% 24%',
+      primaryGlow: '142 64% 34%',
+      primaryDark: '142 64% 14%',
+      description: 'Natural and earthy'
+    },
+    {
+      name: 'Ocean Blue',
+      primary: '188 94% 42%',
+      primaryGlow: '188 94% 52%',
+      primaryDark: '188 94% 32%',
+      description: 'Calm and refreshing'
+    },
+    {
+      name: 'Sunset Orange',
+      primary: '25 95% 53%',
+      primaryGlow: '25 95% 63%',
+      primaryDark: '25 95% 43%',
+      description: 'Warm and energetic'
+    },
+    {
+      name: 'Slate Gray',
+      primary: '215 25% 27%',
+      primaryGlow: '215 25% 37%',
+      primaryDark: '215 25% 17%',
+      description: 'Professional and neutral'
     }
   ];
 
@@ -121,23 +163,80 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     root.classList.add(resolvedTheme);
     
     // Apply primary color CSS variables
-    const selectedScheme = colorSchemes.find(scheme => scheme.primary === primaryColor) || colorSchemes[0];
+    const selectedScheme = colorSchemes.find(scheme => scheme.primary === primaryColor);
     
-    root.style.setProperty('--primary', selectedScheme.primary);
-    root.style.setProperty('--primary-glow', selectedScheme.primaryGlow);
-    root.style.setProperty('--primary-dark', selectedScheme.primaryDark);
-    root.style.setProperty('--ring', selectedScheme.primary);
-    root.style.setProperty('--sidebar-primary', selectedScheme.primary);
-    root.style.setProperty('--sidebar-ring', selectedScheme.primary);
-    
-    // Update gradients
-    root.style.setProperty('--gradient-primary', `linear-gradient(135deg, hsl(${selectedScheme.primary}) 0%, hsl(${selectedScheme.primaryGlow}) 100%)`);
-    root.style.setProperty('--gradient-hero', `linear-gradient(135deg, hsl(${selectedScheme.primary}) 0%, hsl(${selectedScheme.primaryDark}) 50%, hsl(${selectedScheme.primaryDark}) 100%)`);
-    
-    // Update shadows
-    root.style.setProperty('--shadow-card', `0 4px 6px -1px hsl(${selectedScheme.primary} / 0.1), 0 2px 4px -1px hsl(${selectedScheme.primary} / 0.06)`);
-    root.style.setProperty('--shadow-card-hover', `0 10px 15px -3px hsl(${selectedScheme.primary} / 0.1), 0 4px 6px -2px hsl(${selectedScheme.primary} / 0.05)`);
-    root.style.setProperty('--shadow-primary', `0 10px 25px -5px hsl(${selectedScheme.primary} / 0.3)`);
+    if (selectedScheme) {
+      // Use predefined scheme
+      root.style.setProperty('--primary', selectedScheme.primary);
+      root.style.setProperty('--primary-glow', selectedScheme.primaryGlow);
+      root.style.setProperty('--primary-dark', selectedScheme.primaryDark);
+      root.style.setProperty('--ring', selectedScheme.primary);
+      root.style.setProperty('--sidebar-primary', selectedScheme.primary);
+      root.style.setProperty('--sidebar-ring', selectedScheme.primary);
+      
+      // Update gradients
+      root.style.setProperty('--gradient-primary', `linear-gradient(135deg, hsl(${selectedScheme.primary}) 0%, hsl(${selectedScheme.primaryGlow}) 100%)`);
+      root.style.setProperty('--gradient-hero', `linear-gradient(135deg, hsl(${selectedScheme.primary}) 0%, hsl(${selectedScheme.primaryDark}) 50%, hsl(${selectedScheme.primaryDark}) 100%)`);
+      
+      // Update shadows
+      root.style.setProperty('--shadow-card', `0 4px 6px -1px hsl(${selectedScheme.primary} / 0.1), 0 2px 4px -1px hsl(${selectedScheme.primary} / 0.06)`);
+      root.style.setProperty('--shadow-card-hover', `0 10px 15px -3px hsl(${selectedScheme.primary} / 0.1), 0 4px 6px -2px hsl(${selectedScheme.primary} / 0.05)`);
+      root.style.setProperty('--shadow-primary', `0 10px 25px -5px hsl(${selectedScheme.primary} / 0.3)`);
+    } else {
+      // Handle custom color - generate variations for glow and dark
+      const customColor = primaryColor;
+      
+      // Parse HSL values to create variations
+      const hslMatch = customColor.match(/(\d+)\s+(\d+)%\s+(\d+)%/);
+      if (hslMatch) {
+        const [, h, s, l] = hslMatch;
+        const hue = parseInt(h);
+        const sat = parseInt(s);
+        const light = parseInt(l);
+        
+        // Create glow version (lighter)
+        const glowLight = Math.min(100, light + 15);
+        const glowColor = `${hue} ${sat}% ${glowLight}%`;
+        
+        // Create dark version (darker)
+        const darkLight = Math.max(0, light - 15);
+        const darkColor = `${hue} ${sat}% ${darkLight}%`;
+        
+        root.style.setProperty('--primary', customColor);
+        root.style.setProperty('--primary-glow', glowColor);
+        root.style.setProperty('--primary-dark', darkColor);
+        root.style.setProperty('--ring', customColor);
+        root.style.setProperty('--sidebar-primary', customColor);
+        root.style.setProperty('--sidebar-ring', customColor);
+        
+        // Update gradients
+        root.style.setProperty('--gradient-primary', `linear-gradient(135deg, hsl(${customColor}) 0%, hsl(${glowColor}) 100%)`);
+        root.style.setProperty('--gradient-hero', `linear-gradient(135deg, hsl(${customColor}) 0%, hsl(${darkColor}) 50%, hsl(${darkColor}) 100%)`);
+        
+        // Update shadows
+        root.style.setProperty('--shadow-card', `0 4px 6px -1px hsl(${customColor} / 0.1), 0 2px 4px -1px hsl(${customColor} / 0.06)`);
+        root.style.setProperty('--shadow-card-hover', `0 10px 15px -3px hsl(${customColor} / 0.1), 0 4px 6px -2px hsl(${customColor} / 0.05)`);
+        root.style.setProperty('--shadow-primary', `0 10px 25px -5px hsl(${customColor} / 0.3)`);
+      } else {
+        // Fallback for invalid custom color
+        const fallbackScheme = colorSchemes[0];
+        root.style.setProperty('--primary', fallbackScheme.primary);
+        root.style.setProperty('--primary-glow', fallbackScheme.primaryGlow);
+        root.style.setProperty('--primary-dark', fallbackScheme.primaryDark);
+        root.style.setProperty('--ring', fallbackScheme.primary);
+        root.style.setProperty('--sidebar-primary', fallbackScheme.primary);
+        root.style.setProperty('--sidebar-ring', fallbackScheme.primary);
+        
+        // Update gradients
+        root.style.setProperty('--gradient-primary', `linear-gradient(135deg, hsl(${fallbackScheme.primary}) 0%, hsl(${fallbackScheme.primaryGlow}) 100%)`);
+        root.style.setProperty('--gradient-hero', `linear-gradient(135deg, hsl(${fallbackScheme.primary}) 0%, hsl(${fallbackScheme.primaryDark}) 50%, hsl(${fallbackScheme.primaryDark}) 100%)`);
+        
+        // Update shadows
+        root.style.setProperty('--shadow-card', `0 4px 6px -1px hsl(${fallbackScheme.primary} / 0.1), 0 2px 4px -1px hsl(${fallbackScheme.primary} / 0.06)`);
+        root.style.setProperty('--shadow-card-hover', `0 10px 15px -3px hsl(${fallbackScheme.primary} / 0.1), 0 4px 6px -2px hsl(${fallbackScheme.primary} / 0.05)`);
+        root.style.setProperty('--shadow-primary', `0 10px 25px -5px hsl(${fallbackScheme.primary} / 0.3)`);
+      }
+    }
   }, [resolvedTheme, primaryColor, colorSchemes]);
 
   // Save theme to localStorage
