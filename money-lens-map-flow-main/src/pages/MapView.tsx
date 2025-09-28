@@ -80,6 +80,7 @@ export default function MapView() {
   const [showHeatmap, setShowHeatmap] = useState(false);
   const [locationIntelligence, setLocationIntelligence] = useState<any>(null);
   const [isNavigating, setIsNavigating] = useState(false);
+  const [currentPopup, setCurrentPopup] = useState<mapboxgl.Popup | null>(null);
   
   const mapContainer = useRef<HTMLDivElement>(null);
   const locationAgentRef = useRef<LocationIntelligenceAgent | null>(null);
@@ -309,14 +310,27 @@ export default function MapView() {
         el.addEventListener('click', () => {
           handleMerchantClick(merchant);
           
-          // Create popup
+          // Close ALL existing popups on the map first
+          const existingPopups = document.querySelectorAll('.mapboxgl-popup');
+          existingPopups.forEach(popup => {
+            popup.remove();
+          });
+          
+          // Also close any tracked popup
+          if (currentPopup) {
+            currentPopup.remove();
+            setCurrentPopup(null);
+          }
+          
+          // Create new popup
           const pricingColor = colors.border;
           const pricingText = merchant.pricingLevel.charAt(0).toUpperCase() + merchant.pricingLevel.slice(1);
           
           const popup = new mapboxgl.Popup({
             offset: 25,
             closeButton: true,
-            closeOnClick: false
+            closeOnClick: false,
+            className: 'merchant-popup'
           }).setHTML(`
             <div class="p-3">
               <h3 class="font-semibold text-lg">${merchant.name}</h3>
@@ -345,6 +359,7 @@ export default function MapView() {
           `);
 
           marker.setPopup(popup);
+          setCurrentPopup(popup);
         });
 
         newMarkers.push(marker);
@@ -508,10 +523,10 @@ export default function MapView() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 lg:gap-6 min-h-[600px]">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 lg:gap-6 h-[calc(100vh-200px)]">
         {/* Map Container */}
         <div className="lg:col-span-3 order-1 lg:order-1">
-          <Card className="h-full min-h-[400px] lg:min-h-[500px] border-0 shadow-lg bg-gradient-to-br from-background to-muted/20">
+          <Card className="h-full border-0 shadow-lg bg-gradient-to-br from-background to-muted/20">
             <CardContent className="p-0 h-full relative">
               {/* Map Controls */}
               <div className="absolute top-4 left-4 z-10 flex flex-col gap-2">
@@ -610,22 +625,44 @@ export default function MapView() {
         </div>
 
         {/* Sidebar Panel */}
-        <div className="space-y-4 lg:space-y-6 overflow-y-auto max-h-[400px] lg:max-h-[600px] order-2 lg:order-2">
-          {/* Selected Merchant Details */}
-          {selectedMerchant && (
-            <Card className="border-0 shadow-lg bg-gradient-to-br from-background to-muted/20">
+        <div className="overflow-y-auto h-full order-2 lg:order-2">
+          {selectedMerchant ? (
+            /* Selected Merchant Details - Full View */
+            <Card className="h-full border-0 shadow-lg bg-gradient-to-br from-background to-muted/20">
               <CardHeader className="pb-4">
-                <CardTitle className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-                    {React.createElement(getCategoryIcon(selectedMerchant.category), { className: "w-5 h-5 text-primary" })}
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                      {React.createElement(getCategoryIcon(selectedMerchant.category), { className: "w-5 h-5 text-primary" })}
+                    </div>
+                    <div>
+                      <div className="text-lg font-semibold">Merchant Details</div>
+                      <div className="text-sm text-muted-foreground">Selected location</div>
+                    </div>
                   </div>
-                  <div>
-                    <div className="text-lg font-semibold">Merchant Details</div>
-                    <div className="text-sm text-muted-foreground">Selected location</div>
-                  </div>
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => {
+                      setSelectedMerchant(null);
+                      // Close ALL popups on the map
+                      const existingPopups = document.querySelectorAll('.mapboxgl-popup');
+                      existingPopups.forEach(popup => {
+                        popup.remove();
+                      });
+                      // Also close tracked popup
+                      if (currentPopup) {
+                        currentPopup.remove();
+                        setCurrentPopup(null);
+                      }
+                    }}
+                    className="text-muted-foreground hover:text-foreground"
+                  >
+                    ✕
+                  </Button>
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-6">
+              <CardContent className="space-y-6 pb-6">
                 <div className="space-y-3">
                   <div>
                     <h3 className="font-semibold text-lg">{selectedMerchant.name}</h3>
@@ -671,7 +708,7 @@ export default function MapView() {
                   </div>
                   <span className="font-medium text-right">{selectedMerchant.visits}</span>
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-2 pt-4 border-t">
                   <Button 
                     variant="outline" 
                     className="w-full"
@@ -684,57 +721,53 @@ export default function MapView() {
                 </div>
               </CardContent>
             </Card>
-          )}
-
-          {/* All Merchants List */}
-          <Card className="border-0 shadow-lg bg-gradient-to-br from-background to-muted/20">
-            <CardHeader className="pb-4">
-              <CardTitle className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-                  <ShoppingBag className="w-5 h-5 text-primary" />
-                </div>
-                <div>
-                  <div className="text-lg font-semibold">All Merchants</div>
-                  <div className="text-sm text-muted-foreground">Browse all spending locations</div>
-                </div>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="max-h-96 overflow-y-auto pr-2">
-              {isLoading ? (
-                <div className="flex items-center justify-center p-4">
-                  <RefreshCw className="h-6 w-6 animate-spin text-primary" />
-                </div>
-              ) : filteredMerchants.length > 0 ? (
-                <div className="space-y-3">
-                  {filteredMerchants.map((merchant) => (
-                    <div
-                      key={merchant.id}
-                      data-merchant-id={merchant.id}
-                      className={`p-3 lg:p-4 rounded-xl cursor-pointer transition-all duration-200 hover:shadow-md ${
-                        selectedMerchant?.id === merchant.id
-                          ? 'bg-primary/10 border-2 border-primary/30 shadow-lg ring-2 ring-primary/20'
-                          : 'bg-muted/20 hover:bg-muted/50 border border-transparent'
-                      }`}
-                      onClick={() => handleMerchantClick(merchant)}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          {React.createElement(getCategoryIcon(merchant.category), { className: "w-5 h-5 text-muted-foreground" })}
-                          <div>
-                            <h4 className="font-semibold text-base">{merchant.name}</h4>
-                            <p className="text-xs text-muted-foreground">{merchant.address}</p>
+          ) : (
+            /* All Merchants List - Default View */
+            <Card className="h-full border-0 shadow-lg bg-gradient-to-br from-background to-muted/20">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                    <ShoppingBag className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <div className="text-lg font-semibold">All Merchants</div>
+                    <div className="text-sm text-muted-foreground">Browse all spending locations</div>
+                  </div>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="h-[calc(100%-120px)] overflow-y-auto pr-2">
+                {isLoading ? (
+                  <div className="flex items-center justify-center p-4">
+                    <RefreshCw className="h-6 w-6 animate-spin text-primary" />
+                  </div>
+                ) : filteredMerchants.length > 0 ? (
+                  <div className="space-y-3">
+                    {filteredMerchants.map((merchant) => (
+                      <div
+                        key={merchant.id}
+                        data-merchant-id={merchant.id}
+                        className="p-3 lg:p-4 rounded-xl cursor-pointer transition-all duration-200 hover:shadow-md bg-muted/20 hover:bg-muted/50 border border-transparent"
+                        onClick={() => handleMerchantClick(merchant)}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            {React.createElement(getCategoryIcon(merchant.category), { className: "w-5 h-5 text-muted-foreground" })}
+                            <div>
+                              <h4 className="font-semibold text-base">{merchant.name}</h4>
+                              <p className="text-xs text-muted-foreground">{merchant.address}</p>
+                            </div>
                           </div>
+                          <span className="font-medium text-sm">${merchant.totalSpent.toFixed(2)}</span>
                         </div>
-                        <span className="font-medium text-sm">${merchant.totalSpent.toFixed(2)}</span>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-muted-foreground text-sm text-center p-4">No merchants found for the selected period or search query.</p>
-              )}
-            </CardContent>
-          </Card>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground text-sm text-center p-4">No merchants found for the selected period or search query.</p>
+                )}
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
     </div>
