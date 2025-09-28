@@ -121,7 +121,7 @@ export function AppSidebar() {
     >
       <div className="p-4 border-b border-sidebar-border">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-primary rounded-lg">
+          <div className="p-2 rounded-lg">
             <img src={logo} alt="MoneyLens Logo" className="w-6 h-6" />
           </div>
           {!collapsed && (

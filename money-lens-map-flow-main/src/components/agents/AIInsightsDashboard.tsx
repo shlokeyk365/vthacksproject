@@ -332,39 +332,39 @@ export const AIInsightsDashboard: React.FC = () => {
         <TabsContent value="actions" className="space-y-4">
           <div className="grid gap-4">
             {autonomousActions.map((action) => (
-              <Card key={`action-${action.id}`} className={action.executed ? 'border-green-200 bg-green-50/50' : 'border-yellow-200 bg-yellow-50/50'}>
+              <Card key={`action-${action.id}`} className="border-gray-700 bg-gray-800">
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       {getActionIcon(action.type)}
-                      <CardTitle className="text-lg">
+                      <CardTitle className="text-lg text-white">
                         {action.type.replace('auto_', '').toUpperCase()} Action
                       </CardTitle>
                     </div>
                     <div className="flex items-center gap-2">
                       {action.executed ? (
-                        <Badge className="bg-green-500 text-white">
+                        <Badge className="bg-green-600 text-white border-green-700">
                           <CheckCircle className="w-3 h-3 mr-1" />
                           Executed
                         </Badge>
                       ) : (
-                        <Badge className="bg-yellow-500 text-white">
+                        <Badge className="bg-yellow-600 text-white border-yellow-700">
                           <Clock className="w-3 h-3 mr-1" />
                           Pending
                         </Badge>
                       )}
-                      <span className="text-sm text-muted-foreground">
+                      <span className="text-sm text-white">
                         {formatTimestamp(action.timestamp)}
                       </span>
                     </div>
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-muted-foreground mb-3">{action.description}</p>
+                  <p className="text-sm text-white mb-3">{action.description}</p>
                   
                   {action.parameters && (
-                    <div className="text-xs text-muted-foreground">
-                      <strong>Parameters:</strong> {JSON.stringify(action.parameters, null, 2)}
+                    <div className="text-xs text-white bg-gray-700 p-2 rounded">
+                      <strong className="text-white">Parameters:</strong> {JSON.stringify(action.parameters, null, 2)}
                     </div>
                   )}
                 </CardContent>

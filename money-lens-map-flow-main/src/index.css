@@ -232,7 +232,7 @@ All colors MUST be HSL.
 
   /* Hero Section */
   .hero-gradient {
-    background: var(--gradient-hero);
+    background: hsl(var(--primary));
     color: hsl(var(--primary-foreground));
   }
 
