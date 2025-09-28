@@ -37,6 +37,8 @@ const io = new Server(server, {
       "http://172.16.24.70:8082",
       /^http:\/\/192\.168\.\d+\.\d+:\d+$/, // Allow any local network IP
       /^http:\/\/10\.\d+\.\d+\.\d+:\d+$/,  // Allow any local network IP
+      /^https:\/\/.*\.ngrok-free\.dev$/,   // Allow ngrok domains
+      /^https:\/\/.*\.ngrok\.io$/,         // Allow ngrok domains
     ],
     methods: ["GET", "POST", "PUT", "DELETE"]
   }
@@ -56,6 +58,8 @@ app.use(cors({
     "http://172.16.24.70:8082",
     /^http:\/\/192\.168\.\d+\.\d+:\d+$/, // Allow any local network IP
     /^http:\/\/10\.\d+\.\d+\.\d+:\d+$/,  // Allow any local network IP
+    /^https:\/\/.*\.ngrok-free\.dev$/,   // Allow ngrok domains
+    /^https:\/\/.*\.ngrok\.io$/,         // Allow ngrok domains
   ],
   credentials: true
 }));

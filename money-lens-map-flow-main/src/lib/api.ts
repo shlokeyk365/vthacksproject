@@ -1,5 +1,5 @@
 // API Configuration
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://superconfidently-preallowable-wilber.ngrok-free.dev/api';
 
 // Types
 export interface User {
