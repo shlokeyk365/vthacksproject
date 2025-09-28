@@ -12,6 +12,7 @@ import { StatsCard } from "@/components/dashboard/StatsCard";
 import { RecentTransactions } from "@/components/dashboard/RecentTransactions";
 import { SpendingChart } from "@/components/dashboard/SpendingChart";
 import { QuickActions } from "@/components/dashboard/QuickActions";
+import { DemoNotificationTrigger } from "@/components/agents/DemoNotificationTrigger";
 import { useDashboardStats } from "@/hooks/useApi";
 import { useFontScaling } from "@/hooks/useFontScaling";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -160,6 +161,9 @@ export default function Dashboard() {
         
         <motion.div className="space-y-6" variants={itemVariants}>
           <QuickActions />
+          
+          {/* Demo Notification Trigger */}
+          <DemoNotificationTrigger />
           
           {/* Budget Status */}
           <div className="card-gradient p-6 rounded-lg">

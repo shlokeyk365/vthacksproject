@@ -92,7 +92,7 @@ export function MainLayout() {
                  )}
 
                  {/* Main Content */}
-                 <main className="flex-1 p-4 sm:p-6 bg-background">
+                 <main className="flex-1 bg-background">
                    <Outlet />
                  </main>
                </div>

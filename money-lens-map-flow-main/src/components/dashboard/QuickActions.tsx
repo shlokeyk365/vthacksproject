@@ -1,10 +1,32 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Target, Map, CreditCard, BarChart3, Download } from "lucide-react";
+import { Plus, Target, Map, CreditCard, BarChart3, Download, Bell, AlertTriangle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useNotifications } from "@/contexts/NotificationContext";
 
 export function QuickActions() {
   const navigate = useNavigate();
+  const { addNotification } = useNotifications();
+
+  const triggerDemoNotification = () => {
+    addNotification({
+      type: 'info',
+      title: '🎉 Welcome to VT Hacks Demo!',
+      message: 'You\'ve arrived at Owens Ballroom! This is where the MoneyLens demo is taking place. Check out the smart financial features!',
+      category: 'system',
+      actionUrl: '/bodyguard'
+    });
+  };
+
+  const triggerHighRiskNotification = () => {
+    addNotification({
+      type: 'error',
+      title: '⚠️ High Risk Location Detected!',
+      message: 'You\'ve entered a high-risk spending zone! MoneyLens has detected unusual financial activity in this area.',
+      category: 'system',
+      actionUrl: '/bodyguard'
+    });
+  };
 
   const actions = [
     {
@@ -30,6 +52,18 @@ export function QuickActions() {
       icon: BarChart3,
       variant: "outline" as const,
       onClick: () => navigate("/analytics"),
+    },
+    {
+      label: "Demo Notification",
+      icon: Bell,
+      variant: "outline" as const,
+      onClick: triggerDemoNotification,
+    },
+    {
+      label: "Test High Risk",
+      icon: AlertTriangle,
+      variant: "destructive" as const,
+      onClick: triggerHighRiskNotification,
     },
   ];
 
