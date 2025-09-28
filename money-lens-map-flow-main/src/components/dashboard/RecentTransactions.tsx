@@ -95,6 +95,339 @@ const getMerchantLogo = (merchantName: string) => {
     };
   }
   
+  // Fast Food & Restaurants
+  if (merchant.includes('taco bell') || merchant.includes('tacobell')) {
+    return {
+      icon: '🌮',
+      bgColor: 'bg-purple-600',
+      textColor: 'text-white'
+    };
+  }
+  if (merchant.includes('subway')) {
+    return {
+      icon: '🥪',
+      bgColor: 'bg-green-600',
+      textColor: 'text-white'
+    };
+  }
+  if (merchant.includes('kfc') || merchant.includes('kentucky fried chicken')) {
+    return {
+      icon: '🍗',
+      bgColor: 'bg-red-600',
+      textColor: 'text-white'
+    };
+  }
+  if (merchant.includes('pizza hut') || merchant.includes('pizzahut')) {
+    return {
+      icon: '🍕',
+      bgColor: 'bg-red-500',
+      textColor: 'text-white'
+    };
+  }
+  if (merchant.includes('domino') || merchant.includes('dominos')) {
+    return {
+      icon: '🍕',
+      bgColor: 'bg-blue-600',
+      textColor: 'text-white'
+    };
+  }
+  if (merchant.includes('chipotle')) {
+    return {
+      icon: '🌯',
+      bgColor: 'bg-orange-600',
+      textColor: 'text-white'
+    };
+  }
+  if (merchant.includes('panera') || merchant.includes('panera bread')) {
+    return {
+      icon: '🥖',
+      bgColor: 'bg-yellow-600',
+      textColor: 'text-white'
+    };
+  }
+  if (merchant.includes('chick-fil-a') || merchant.includes('chickfila')) {
+    return {
+      icon: '🐔',
+      bgColor: 'bg-red-500',
+      textColor: 'text-white'
+    };
+  }
+  if (merchant.includes('wendy')) {
+    return {
+      icon: '🍔',
+      bgColor: 'bg-red-600',
+      textColor: 'text-white'
+    };
+  }
+  if (merchant.includes('burger king') || merchant.includes('burgerking')) {
+    return {
+      icon: '👑',
+      bgColor: 'bg-yellow-500',
+      textColor: 'text-black'
+    };
+  }
+  
+  // Grocery Stores
+  if (merchant.includes('whole foods') || merchant.includes('wholefoods')) {
+    return {
+      icon: '🥬',
+      bgColor: 'bg-green-600',
+      textColor: 'text-white'
+    };
+  }
+  if (merchant.includes('safeway')) {
+    return {
+      icon: '🛒',
+      bgColor: 'bg-red-600',
+      textColor: 'text-white'
+    };
+  }
+  if (merchant.includes('costco')) {
+    return {
+      icon: '🏪',
+      bgColor: 'bg-red-500',
+      textColor: 'text-white'
+    };
+  }
+  if (merchant.includes('trader joe') || merchant.includes('traderjoe')) {
+    return {
+      icon: '🛒',
+      bgColor: 'bg-green-500',
+      textColor: 'text-white'
+    };
+  }
+  
+  // Gas Stations
+  if (merchant.includes('exxon') || merchant.includes('mobil')) {
+    return {
+      icon: '⛽',
+      bgColor: 'bg-red-600',
+      textColor: 'text-white'
+    };
+  }
+  if (merchant.includes('bp') || merchant.includes('british petroleum')) {
+    return {
+      icon: '⛽',
+      bgColor: 'bg-green-600',
+      textColor: 'text-white'
+    };
+  }
+  if (merchant.includes('chevron')) {
+    return {
+      icon: '⛽',
+      bgColor: 'bg-blue-600',
+      textColor: 'text-white'
+    };
+  }
+  
+  // Entertainment & Streaming
+  if (merchant.includes('hulu')) {
+    return {
+      icon: '📺',
+      bgColor: 'bg-green-500',
+      textColor: 'text-white'
+    };
+  }
+  if (merchant.includes('disney') || merchant.includes('disney+')) {
+    return {
+      icon: '🏰',
+      bgColor: 'bg-blue-600',
+      textColor: 'text-white'
+    };
+  }
+  if (merchant.includes('hbo') || merchant.includes('max')) {
+    return {
+      icon: '🎬',
+      bgColor: 'bg-purple-600',
+      textColor: 'text-white'
+    };
+  }
+  if (merchant.includes('youtube') || merchant.includes('youtube premium')) {
+    return {
+      icon: '📺',
+      bgColor: 'bg-red-600',
+      textColor: 'text-white'
+    };
+  }
+  
+  // Transportation
+  if (merchant.includes('delta')) {
+    return {
+      icon: '✈️',
+      bgColor: 'bg-blue-600',
+      textColor: 'text-white'
+    };
+  }
+  if (merchant.includes('american airlines') || merchant.includes('americanairlines')) {
+    return {
+      icon: '✈️',
+      bgColor: 'bg-blue-500',
+      textColor: 'text-white'
+    };
+  }
+  if (merchant.includes('southwest')) {
+    return {
+      icon: '✈️',
+      bgColor: 'bg-orange-500',
+      textColor: 'text-white'
+    };
+  }
+  if (merchant.includes('amtrak')) {
+    return {
+      icon: '🚂',
+      bgColor: 'bg-blue-700',
+      textColor: 'text-white'
+    };
+  }
+  
+  // Retail & Shopping
+  if (merchant.includes('best buy') || merchant.includes('bestbuy')) {
+    return {
+      icon: '💻',
+      bgColor: 'bg-yellow-500',
+      textColor: 'text-black'
+    };
+  }
+  if (merchant.includes('home depot') || merchant.includes('homedepot')) {
+    return {
+      icon: '🔨',
+      bgColor: 'bg-orange-600',
+      textColor: 'text-white'
+    };
+  }
+  if (merchant.includes('lowes')) {
+    return {
+      icon: '🏠',
+      bgColor: 'bg-blue-600',
+      textColor: 'text-white'
+    };
+  }
+  if (merchant.includes('ikea')) {
+    return {
+      icon: '🪑',
+      bgColor: 'bg-yellow-500',
+      textColor: 'text-black'
+    };
+  }
+  if (merchant.includes('nike')) {
+    return {
+      icon: '👟',
+      bgColor: 'bg-black',
+      textColor: 'text-white'
+    };
+  }
+  if (merchant.includes('adidas')) {
+    return {
+      icon: '👟',
+      bgColor: 'bg-black',
+      textColor: 'text-white'
+    };
+  }
+  
+  // Movie Theaters & Entertainment
+  if (merchant.includes('regal') || merchant.includes('regal cinemas')) {
+    return {
+      icon: '🎬',
+      bgColor: 'bg-blue-700',
+      textColor: 'text-white'
+    };
+  }
+  if (merchant.includes('amc') || merchant.includes('amc theaters')) {
+    return {
+      icon: '🍿',
+      bgColor: 'bg-red-700',
+      textColor: 'text-white'
+    };
+  }
+  if (merchant.includes('cinemark')) {
+    return {
+      icon: '🎟️',
+      bgColor: 'bg-indigo-700',
+      textColor: 'text-white'
+    };
+  }
+  if (merchant.includes('imax')) {
+    return {
+      icon: '🎥',
+      bgColor: 'bg-purple-700',
+      textColor: 'text-white'
+    };
+  }
+  
+  // Schools & Education
+  if (merchant.includes('virginia tech') || merchant.includes('vt') || merchant.includes('vtech')) {
+    return {
+      icon: '🎓',
+      bgColor: 'bg-orange-700',
+      textColor: 'text-white'
+    };
+  }
+  if (merchant.includes('university') || merchant.includes('college') || merchant.includes('school')) {
+    return {
+      icon: '🏫',
+      bgColor: 'bg-blue-800',
+      textColor: 'text-white'
+    };
+  }
+  if (merchant.includes('library')) {
+    return {
+      icon: '📚',
+      bgColor: 'bg-yellow-700',
+      textColor: 'text-white'
+    };
+  }
+  if (merchant.includes('bookstore') || merchant.includes('campus store')) {
+    return {
+      icon: '📖',
+      bgColor: 'bg-green-700',
+      textColor: 'text-white'
+    };
+  }
+  if (merchant.includes('dining hall') || merchant.includes('cafeteria') || merchant.includes('dining commons')) {
+    return {
+      icon: '🍽️',
+      bgColor: 'bg-orange-600',
+      textColor: 'text-white'
+    };
+  }
+  
+  // Utilities & Services
+  if (merchant.includes('electric') || merchant.includes('power') || merchant.includes('energy') || merchant.includes('duke energy') || merchant.includes('dominion')) {
+    return {
+      icon: '⚡',
+      bgColor: 'bg-yellow-500',
+      textColor: 'text-black'
+    };
+  }
+  if (merchant.includes('water') || merchant.includes('sewer')) {
+    return {
+      icon: '💧',
+      bgColor: 'bg-blue-500',
+      textColor: 'text-white'
+    };
+  }
+  if (merchant.includes('gas') || merchant.includes('natural gas')) {
+    return {
+      icon: '🔥',
+      bgColor: 'bg-orange-500',
+      textColor: 'text-white'
+    };
+  }
+  if (merchant.includes('internet') || merchant.includes('wifi') || merchant.includes('comcast') || merchant.includes('verizon')) {
+    return {
+      icon: '📶',
+      bgColor: 'bg-blue-600',
+      textColor: 'text-white'
+    };
+  }
+  if (merchant.includes('phone') || merchant.includes('cellular') || merchant.includes('at&t') || merchant.includes('t-mobile')) {
+    return {
+      icon: '📱',
+      bgColor: 'bg-purple-600',
+      textColor: 'text-white'
+    };
+  }
+  
   // Default fallback to category icon
   return null;
 };

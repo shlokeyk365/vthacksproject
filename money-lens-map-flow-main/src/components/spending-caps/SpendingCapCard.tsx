@@ -38,6 +38,103 @@ export default function SpendingCapCard({ cap, onUpdate }: SpendingCapCardProps)
     return { status: "safe", color: "success" };
   };
 
+  const getMerchantLogo = (merchantName: string) => {
+    const merchant = merchantName.toLowerCase();
+    
+    // Fast Food & Restaurants
+    if (merchant.includes('taco bell') || merchant.includes('tacobell')) {
+      return { icon: '🌮', bgColor: 'bg-purple-600', textColor: 'text-white' };
+    }
+    if (merchant.includes('starbucks') || merchant.includes('starbucks coffee')) {
+      return { icon: '☕', bgColor: 'bg-green-600', textColor: 'text-white' };
+    }
+    if (merchant.includes('mcdonald') || merchant.includes('mcdonalds')) {
+      return { icon: '🍟', bgColor: 'bg-yellow-500', textColor: 'text-white' };
+    }
+    if (merchant.includes('subway')) {
+      return { icon: '🥪', bgColor: 'bg-green-600', textColor: 'text-white' };
+    }
+    if (merchant.includes('chipotle')) {
+      return { icon: '🌯', bgColor: 'bg-orange-600', textColor: 'text-white' };
+    }
+    if (merchant.includes('uber') || merchant.includes('lyft')) {
+      return { icon: '🚗', bgColor: 'bg-black', textColor: 'text-white' };
+    }
+    if (merchant.includes('amazon')) {
+      return { icon: '📦', bgColor: 'bg-orange-500', textColor: 'text-white' };
+    }
+    
+    // Movie Theaters
+    if (merchant.includes('regal') || merchant.includes('regal cinemas')) {
+      return { icon: '🎬', bgColor: 'bg-blue-700', textColor: 'text-white' };
+    }
+    if (merchant.includes('amc') || merchant.includes('amc theaters')) {
+      return { icon: '🍿', bgColor: 'bg-red-700', textColor: 'text-white' };
+    }
+    
+    // Schools & Education
+    if (merchant.includes('virginia tech') || merchant.includes('vt') || merchant.includes('vtech')) {
+      return { icon: '🎓', bgColor: 'bg-orange-700', textColor: 'text-white' };
+    }
+    if (merchant.includes('university') || merchant.includes('college') || merchant.includes('school')) {
+      return { icon: '🏫', bgColor: 'bg-blue-800', textColor: 'text-white' };
+    }
+    if (merchant.includes('library')) {
+      return { icon: '📚', bgColor: 'bg-yellow-700', textColor: 'text-white' };
+    }
+    
+    // Utilities & Services
+    if (merchant.includes('electric') || merchant.includes('power') || merchant.includes('energy') || merchant.includes('duke energy') || merchant.includes('dominion')) {
+      return { icon: '⚡', bgColor: 'bg-yellow-500', textColor: 'text-black' };
+    }
+    if (merchant.includes('water') || merchant.includes('sewer')) {
+      return { icon: '💧', bgColor: 'bg-blue-500', textColor: 'text-white' };
+    }
+    if (merchant.includes('gas') || merchant.includes('natural gas')) {
+      return { icon: '🔥', bgColor: 'bg-orange-500', textColor: 'text-white' };
+    }
+    if (merchant.includes('internet') || merchant.includes('wifi') || merchant.includes('comcast') || merchant.includes('verizon')) {
+      return { icon: '📶', bgColor: 'bg-blue-600', textColor: 'text-white' };
+    }
+    if (merchant.includes('phone') || merchant.includes('cellular') || merchant.includes('at&t') || merchant.includes('t-mobile')) {
+      return { icon: '📱', bgColor: 'bg-purple-600', textColor: 'text-white' };
+    }
+    
+    return null;
+  };
+
+  const getCategoryLogo = (categoryName: string) => {
+    const category = categoryName.toLowerCase();
+    
+    // Category-specific logos
+    if (category.includes('entertainment') || category.includes('movies') || category.includes('streaming')) {
+      return { icon: '🎬', bgColor: 'bg-purple-600', textColor: 'text-white' };
+    }
+    if (category.includes('grocery') || category.includes('food') || category.includes('dining')) {
+      return { icon: '🛒', bgColor: 'bg-green-600', textColor: 'text-white' };
+    }
+    if (category.includes('transportation') || category.includes('travel')) {
+      return { icon: '🚗', bgColor: 'bg-blue-600', textColor: 'text-white' };
+    }
+    if (category.includes('utilities') || category.includes('bills')) {
+      return { icon: '⚡', bgColor: 'bg-yellow-500', textColor: 'text-black' };
+    }
+    if (category.includes('shopping') || category.includes('retail')) {
+      return { icon: '🛍️', bgColor: 'bg-pink-600', textColor: 'text-white' };
+    }
+    if (category.includes('healthcare') || category.includes('medical')) {
+      return { icon: '🏥', bgColor: 'bg-red-600', textColor: 'text-white' };
+    }
+    if (category.includes('education') || category.includes('school')) {
+      return { icon: '🎓', bgColor: 'bg-blue-700', textColor: 'text-white' };
+    }
+    if (category.includes('gas') || category.includes('fuel')) {
+      return { icon: '⛽', bgColor: 'bg-yellow-500', textColor: 'text-black' };
+    }
+    
+    return null;
+  };
+
   const getTypeIcon = (type: string) => {
     switch (type) {
       case "MERCHANT": return Store;
@@ -70,6 +167,11 @@ export default function SpendingCapCard({ cap, onUpdate }: SpendingCapCardProps)
   const { status, color } = getCapStatus(cap.spent || 0, cap.limit);
   const percentage = Math.min(((cap.spent || 0) / cap.limit) * 100, 100);
   const remaining = cap.limit - (cap.spent || 0);
+  
+  // Get appropriate logo based on cap type
+  const merchantLogo = cap.type === "MERCHANT" && cap.merchant ? getMerchantLogo(cap.merchant) : null;
+  const categoryLogo = cap.type === "CATEGORY" && cap.category ? getCategoryLogo(cap.category) : null;
+  const displayLogo = merchantLogo || categoryLogo;
 
   return (
     <>
@@ -82,15 +184,21 @@ export default function SpendingCapCard({ cap, onUpdate }: SpendingCapCardProps)
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg ${
-                  color === 'danger' ? 'bg-danger/10' :
-                  color === 'warning' ? 'bg-warning/10' : 'bg-success/10'
-                }`}>
-                  <IconComponent className={`w-5 h-5 ${
-                    color === 'danger' ? 'text-danger' :
-                    color === 'warning' ? 'text-warning' : 'text-success'
-                  }`} />
-                </div>
+                {displayLogo ? (
+                  <div className={`p-2 rounded-lg ${displayLogo.bgColor} ${displayLogo.textColor} flex items-center justify-center w-8 h-8`}>
+                    <span className="text-lg">{displayLogo.icon}</span>
+                  </div>
+                ) : (
+                  <div className={`p-2 rounded-lg ${
+                    color === 'danger' ? 'bg-danger/10' :
+                    color === 'warning' ? 'bg-warning/10' : 'bg-success/10'
+                  }`}>
+                    <IconComponent className={`w-5 h-5 ${
+                      color === 'danger' ? 'text-danger' :
+                      color === 'warning' ? 'text-warning' : 'text-success'
+                    }`} />
+                  </div>
+                )}
                 <div>
                   <h3 className="font-semibold">{cap.name}</h3>
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">

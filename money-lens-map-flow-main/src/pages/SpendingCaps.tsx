@@ -106,7 +106,7 @@ export default function SpendingCaps() {
           <CardContent className="p-6">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-primary/10 rounded-lg">
-                <Target className="w-5 h-5 text-primary" />
+                <span className="text-2xl">🎯</span>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Active Caps</p>
@@ -120,7 +120,7 @@ export default function SpendingCaps() {
           <CardContent className="p-6">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-warning/10 rounded-lg">
-                <AlertTriangle className="w-5 h-5 text-warning" />
+                <span className="text-2xl">⚠️</span>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">At Risk</p>
@@ -134,7 +134,7 @@ export default function SpendingCaps() {
           <CardContent className="p-6">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-success/10 rounded-lg">
-                <CheckCircle className="w-5 h-5 text-success" />
+                <span className="text-2xl">✅</span>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">On Track</p>
@@ -148,7 +148,7 @@ export default function SpendingCaps() {
           <CardContent className="p-6">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-primary/10 rounded-lg">
-                <DollarSign className="w-5 h-5 text-primary" />
+                <span className="text-2xl">💰</span>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Total Saved</p>

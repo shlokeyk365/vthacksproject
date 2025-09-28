@@ -866,7 +866,11 @@ export default function Analytics() {
                                 <BarChart data={queryResult.data}>
                                   <XAxis dataKey="category" />
                                   <YAxis />
-                                  <ChartTooltip content={<ChartTooltipContent />} />
+                                  <ChartTooltip 
+                                    content={<ChartTooltipContent />} 
+                                    animationDuration={0}
+                                    isAnimationActive={false}
+                                  />
                                   <Bar dataKey="amount" radius={[4, 4, 0, 0]}>
                                     {queryResult.data.map((entry, index) => (
                                       <Cell key={`cell-${index}`} fill={entry.color} />
@@ -881,7 +885,11 @@ export default function Analytics() {
                                 <BarChart data={queryResult.data}>
                                   <XAxis dataKey="period" />
                                   <YAxis />
-                                  <ChartTooltip content={<ChartTooltipContent />} />
+                                  <ChartTooltip 
+                                    content={<ChartTooltipContent />} 
+                                    animationDuration={0}
+                                    isAnimationActive={false}
+                                  />
                                   {queryResult.data[0].dining !== undefined && (
                                     <Bar dataKey="dining" fill="#EF4444" radius={[4, 4, 0, 0]} />
                                   )}
@@ -912,7 +920,11 @@ export default function Analytics() {
                                 <AreaChart data={queryResult.data}>
                                   <XAxis dataKey="month" />
                                   <YAxis />
-                                  <ChartTooltip content={<ChartTooltipContent />} />
+                                  <ChartTooltip 
+                                    content={<ChartTooltipContent />} 
+                                    animationDuration={0}
+                                    isAnimationActive={false}
+                                  />
                                   <Area
                                     type="monotone"
                                     dataKey="dining"
@@ -978,7 +990,11 @@ export default function Analytics() {
                                 <BarChart data={queryResult.data}>
                                   <XAxis dataKey="name" angle={-45} textAnchor="end" height={60} />
                                   <YAxis />
-                                  <ChartTooltip content={<ChartTooltipContent />} />
+                                  <ChartTooltip 
+                                    content={<ChartTooltipContent />} 
+                                    animationDuration={0}
+                                    isAnimationActive={false}
+                                  />
                                   <Bar dataKey="amount" radius={[4, 4, 0, 0]}>
                                     {queryResult.data.map((entry, index) => (
                                       <Cell key={`cell-${index}`} fill={entry.color} />
@@ -993,7 +1009,11 @@ export default function Analytics() {
                                 <AreaChart data={queryResult.data}>
                                   <XAxis dataKey="month" />
                                   <YAxis />
-                                  <ChartTooltip content={<ChartTooltipContent />} />
+                                  <ChartTooltip 
+                                    content={<ChartTooltipContent />} 
+                                    animationDuration={0}
+                                    isAnimationActive={false}
+                                  />
                                   <Area
                                     type="monotone"
                                     dataKey="dining"
@@ -1105,6 +1125,8 @@ export default function Analytics() {
                     />
                     <ChartTooltip 
                       content={<ChartTooltipContent />}
+                      animationDuration={0}
+                      isAnimationActive={false}
                       labelStyle={{ color: '#374151', fontSize: '14px', fontWeight: '600', lineHeight: '1.5' }}
                       contentStyle={{ 
                         backgroundColor: '#ffffff',
@@ -1212,6 +1234,8 @@ export default function Analytics() {
                     />
                     <ChartTooltip 
                       content={<ChartTooltipContent />}
+                      animationDuration={0}
+                      isAnimationActive={false}
                       labelStyle={{ color: '#374151', fontSize: '14px', fontWeight: '600', lineHeight: '1.5' }}
                       contentStyle={{ 
                         backgroundColor: '#ffffff',
@@ -1263,6 +1287,8 @@ export default function Analytics() {
                     />
                     <ChartTooltip 
                       content={<ChartTooltipContent />}
+                      animationDuration={0}
+                      isAnimationActive={false}
                       labelStyle={{ color: '#374151', fontSize: '14px', fontWeight: '600', lineHeight: '1.5' }}
                       contentStyle={{ 
                         backgroundColor: '#ffffff',

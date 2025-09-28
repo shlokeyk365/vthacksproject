@@ -2,11 +2,14 @@
 // Documentation: http://api.nessieisreal.com/
 
 const NESSIE_API_BASE = 'http://api.nessieisreal.com';
-const API_KEY = import.meta.env.VITE_NESSIE_API_KEY || 'demo-key';
+const API_KEY = import.meta.env.VITE_NESSIE_API_KEY || '0930c18c98be17fc632445ca890c85de';
 
 // Check if Nessie API is properly configured
 export const isNessieConfigured = () => {
-  return import.meta.env.VITE_NESSIE_API_KEY && import.meta.env.VITE_NESSIE_API_KEY !== 'your-api-key-here';
+  const envKey = import.meta.env.VITE_NESSIE_API_KEY;
+  const hasEnvKey = envKey && envKey !== 'your-api-key-here' && envKey !== 'demo-key';
+  const hasHardcodedKey = API_KEY !== 'demo-key';
+  return hasEnvKey || hasHardcodedKey;
 };
 
 // Demo data for hackathon demonstration

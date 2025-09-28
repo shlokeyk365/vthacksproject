@@ -331,7 +331,11 @@ export function AutoVisualizationAgent({ className }: AutoVisualizationAgentProp
             <BarChart data={chartData}>
               <XAxis dataKey="name" />
               <YAxis />
-              <ChartTooltip content={<ChartTooltipContent />} />
+              <ChartTooltip 
+                content={<ChartTooltipContent />} 
+                animationDuration={0}
+                isAnimationActive={false}
+              />
               <Bar dataKey="value" fill="#3B82F6" />
             </BarChart>
           </ChartContainer>
@@ -353,7 +357,11 @@ export function AutoVisualizationAgent({ className }: AutoVisualizationAgentProp
                   <Cell key={`cell-${index}`} fill={entry.color} />
                 ))}
               </Pie>
-              <ChartTooltip content={<ChartTooltipContent />} />
+              <ChartTooltip 
+                content={<ChartTooltipContent />} 
+                animationDuration={0}
+                isAnimationActive={false}
+              />
             </RechartsPieChart>
           </ChartContainer>
         );
@@ -364,7 +372,11 @@ export function AutoVisualizationAgent({ className }: AutoVisualizationAgentProp
             <LineChart data={chartData}>
               <XAxis dataKey="name" />
               <YAxis />
-              <ChartTooltip content={<ChartTooltipContent />} />
+              <ChartTooltip 
+                content={<ChartTooltipContent />} 
+                animationDuration={0}
+                isAnimationActive={false}
+              />
               <Line type="monotone" dataKey="value" stroke="#3B82F6" strokeWidth={2} />
             </LineChart>
           </ChartContainer>
@@ -376,7 +388,11 @@ export function AutoVisualizationAgent({ className }: AutoVisualizationAgentProp
             <RechartsAreaChart data={chartData}>
               <XAxis dataKey="name" />
               <YAxis />
-              <ChartTooltip content={<ChartTooltipContent />} />
+              <ChartTooltip 
+                content={<ChartTooltipContent />} 
+                animationDuration={0}
+                isAnimationActive={false}
+              />
               <Area type="monotone" dataKey="value" stroke="#3B82F6" fill="#3B82F6" fillOpacity={0.6} />
             </RechartsAreaChart>
           </ChartContainer>
@@ -588,14 +604,14 @@ export function AutoVisualizationAgent({ className }: AutoVisualizationAgentProp
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: index * 0.05 }}
-                    className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-3"
+                    className="border-blue-800 bg-blue-900/20 hover:border-white hover:ring-2 hover:ring-white rounded-lg p-3 transition-all duration-200"
                   >
                     <div className="flex items-center gap-2">
                       <insight.icon className={`w-4 h-4 ${insight.color}`} />
-                      <span className="text-sm font-medium text-blue-900">
+                      <span className="text-sm font-medium text-blue-100">
                         {insight.title}:
                       </span>
-                      <span className="text-sm text-blue-800">
+                      <span className="text-sm text-blue-200">
                         {insight.description}
                       </span>
                     </div>
@@ -627,16 +643,16 @@ export function AutoVisualizationAgent({ className }: AutoVisualizationAgentProp
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: index * 0.05 }}
-                    className="bg-gradient-to-r from-orange-50 to-red-50 border border-orange-200 rounded-lg p-3"
+                    className="border-orange-800 bg-orange-900/20 hover:border-white hover:ring-2 hover:ring-white rounded-lg p-3 transition-all duration-200"
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <AlertTriangle className="w-4 h-4 text-orange-600" />
-                        <span className="text-sm font-medium text-orange-900">
+                        <AlertTriangle className="w-4 h-4 text-orange-400" />
+                        <span className="text-sm font-medium text-orange-100">
                           {anomaly.category} +{anomaly.deviation}%
                         </span>
                       </div>
-                      <div className="flex items-center gap-2 text-xs text-orange-700">
+                      <div className="flex items-center gap-2 text-xs text-orange-200">
                         <span>${anomaly.amount.toFixed(2)}</span>
                         <span>•</span>
                         <span>{anomaly.date}</span>
@@ -653,12 +669,12 @@ export function AutoVisualizationAgent({ className }: AutoVisualizationAgentProp
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-3"
+              className="border-blue-800 bg-blue-900/20 hover:border-white hover:ring-2 hover:ring-white rounded-lg p-3 transition-all duration-200"
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Brain className="w-4 h-4 text-blue-600" />
-                  <span className="text-sm font-medium text-blue-900">
+                  <Brain className="w-4 h-4 text-blue-400" />
+                  <span className="text-sm font-medium text-blue-100">
                     Try {CHART_TYPES.find(t => t.value === recommendedChartType)?.label}?
                   </span>
                 </div>
@@ -675,7 +691,7 @@ export function AutoVisualizationAgent({ className }: AutoVisualizationAgentProp
                     size="sm"
                     variant="ghost"
                     onClick={() => setShowRecommendation(false)}
-                    className="h-7 px-2 text-blue-600 hover:text-blue-700"
+                    className="h-7 px-2 text-blue-300 hover:text-blue-100 hover:bg-blue-800/30"
                   >
                     ×
                   </Button>
@@ -708,7 +724,7 @@ export function AutoVisualizationAgent({ className }: AutoVisualizationAgentProp
                 variant="outline"
                 size="sm"
                 onClick={() => setConfig(prev => ({ ...prev, chartType: recommendedChartType as any }))}
-                className="h-8 px-3 text-xs bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 text-blue-700 hover:bg-blue-100"
+                className="h-8 px-3 text-xs border-blue-800 bg-blue-900/20 text-blue-100 hover:border-white hover:ring-2 hover:ring-white hover:bg-blue-800/30"
               >
                 <Brain className="w-3 h-3 mr-1" />
                 Smart

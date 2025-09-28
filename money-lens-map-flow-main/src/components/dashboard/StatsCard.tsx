@@ -44,7 +44,7 @@ export function StatsCard({
             <div className="flex flex-col gap-0.5">
               <h3 className="font-bold">{value}</h3>
               {change && (
-                <span className={cn("font-medium", changeClasses[changeType])}>
+                <span className={cn("font-medium text-lg", changeClasses[changeType])}>
                   {change}
                 </span>
               )}

@@ -119,6 +119,8 @@ export function SpendingChart() {
                       }
                       return null;
                     }}
+                    animationDuration={0}
+                    isAnimationActive={false}
                     cursor={{ 
                       stroke: "hsl(var(--primary))", 
                       strokeWidth: 1, 

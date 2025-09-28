@@ -46,7 +46,7 @@ export default function Settings() {
     firstName: "",
     lastName: "",
     email: "",
-    monthlyBudgetGoal: 0,
+    monthlyBudgetGoal: "" as string | number,
   });
 
   const [notifications, setNotifications] = useState({
@@ -160,6 +160,15 @@ export default function Settings() {
   const handleSaveProfile = async () => {
     if (!profileData) return;
     
+    // Validate budget goal
+    if (!profileForm.monthlyBudgetGoal || profileForm.monthlyBudgetGoal === '' || profileForm.monthlyBudgetGoal === 0) {
+      toast.error('Invalid budget goal', {
+        description: 'Please enter a valid monthly budget goal greater than $0',
+        duration: 5000,
+      });
+      return;
+    }
+    
     setIsSaving(true);
     
     // Show loading notification
@@ -168,8 +177,16 @@ export default function Settings() {
     });
     
     try {
+      // Convert budget to number for API
+      const profileDataToSend = {
+        ...profileForm,
+        monthlyBudgetGoal: typeof profileForm.monthlyBudgetGoal === 'string' 
+          ? parseFloat(profileForm.monthlyBudgetGoal) 
+          : profileForm.monthlyBudgetGoal
+      };
+      
       // Include email in profile update (backend now supports email changes)
-      const response = await apiClient.updateProfile(profileForm);
+      const response = await apiClient.updateProfile(profileDataToSend);
       
       if (response.success) {
         // Dismiss loading toast and show success
@@ -677,12 +694,23 @@ export default function Settings() {
                     $
                   </span>
                   <Input 
-                    value={profileForm.monthlyBudgetGoal}
-                    onChange={(e) => handleProfileChange('monthlyBudgetGoal', parseFloat(e.target.value) || 0)}
+                    value={profileForm.monthlyBudgetGoal === 0 ? '' : profileForm.monthlyBudgetGoal}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (value === '') {
+                        handleProfileChange('monthlyBudgetGoal', '');
+                      } else {
+                        const numValue = parseFloat(value);
+                        if (!isNaN(numValue) && numValue > 0) {
+                          handleProfileChange('monthlyBudgetGoal', numValue);
+                        }
+                      }
+                    }}
                     className="pl-8"
                     type="number"
-                    min="0"
+                    min="0.01"
                     step="0.01"
+                    placeholder="Enter your monthly budget goal"
                     disabled={profileLoading}
                   />
                 </div>
