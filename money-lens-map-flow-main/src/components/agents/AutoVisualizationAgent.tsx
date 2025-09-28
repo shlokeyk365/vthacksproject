@@ -105,7 +105,7 @@ const AVAILABLE_CATEGORIES = [
 export function AutoVisualizationAgent({ className }: AutoVisualizationAgentProps) {
   const [config, setConfig] = useState<VisualizationConfig>({
     chartType: 'bar',
-    categories: ['Dining', 'Shopping'],
+    categories: ['Dining', 'Shopping', 'Transport', 'Entertainment', 'Utilities', 'Healthcare'],
     period: '30',
     title: 'Spending Analysis'
   });
