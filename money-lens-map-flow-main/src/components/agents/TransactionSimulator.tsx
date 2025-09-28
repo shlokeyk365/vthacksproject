@@ -199,6 +199,10 @@ export const TransactionSimulatorResults: React.FC<{
   simulatedTransactions: SimulatedTransaction[];
   lastRiskAssessment: any;
 }> = ({ simulatedTransactions, lastRiskAssessment }) => {
+  const [showAllTransactions, setShowAllTransactions] = useState(false);
+  const [showAllCategories, setShowAllCategories] = useState(false);
+  const [showAllRiskFactors, setShowAllRiskFactors] = useState(false);
+  const [showAllMerchants, setShowAllMerchants] = useState(false);
   const getRiskLevelColor = (level: string) => {
     switch (level) {
       case 'critical': return 'bg-red-500';
@@ -252,39 +256,51 @@ export const TransactionSimulatorResults: React.FC<{
   const highValueTransactions = simulatedTransactions.filter(t => t.amount > 100).length;
 
   return (
-    <div className="w-full h-screen p-4 space-y-6">
-      {/* Top Row: Recent Transactions and Spending by Category */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 h-1/2">
+    <div className="w-full overflow-hidden">
+      {/* Single Row: All 4 boxes */}
+      <div className="flex w-full">
         {/* Recent Transactions */}
-        <Card className="w-full h-full flex flex-col">
+        <Card className="flex-1 flex flex-col min-w-0">
           <CardHeader className="pb-3">
             <CardTitle className="text-xl font-semibold">Recent Transactions</CardTitle>
           </CardHeader>
-          <CardContent className="flex-1 overflow-hidden">
-            <div className="space-y-3 h-full overflow-y-auto">
+          <CardContent>
+            <div className="space-y-3">
               {simulatedTransactions.length > 0 ? (
-                simulatedTransactions.map((transaction) => (
-                  <div key={transaction.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg border">
-                    <div className="flex-1 min-w-0 pr-3">
-                      <div className="font-medium text-base break-words">{transaction.merchant}</div>
-                      <div className="text-sm text-muted-foreground break-words">
-                        {transaction.category} • {new Date(transaction.timestamp).toLocaleTimeString()}
+                <>
+                  {(showAllTransactions ? simulatedTransactions : simulatedTransactions.slice(0, 3)).map((transaction) => (
+                    <div key={transaction.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg border">
+                      <div className="flex-1 min-w-0 pr-3">
+                        <div className="font-medium text-base break-words">{transaction.merchant}</div>
+                        <div className="text-sm text-muted-foreground break-words">
+                          {transaction.category} • {new Date(transaction.timestamp).toLocaleTimeString()}
+                        </div>
+                      </div>
+                      <div className="text-right flex-shrink-0">
+                        <div className="font-bold text-base">${transaction.amount.toFixed(2)}</div>
+                        {transaction.location && (
+                          <div className="text-xs text-muted-foreground flex items-center space-x-1">
+                            <MapPin className="w-3 h-3" />
+                            <span>Location tracked</span>
+                          </div>
+                        )}
                       </div>
                     </div>
-                    <div className="text-right flex-shrink-0">
-                      <div className="font-bold text-lg">${transaction.amount.toFixed(2)}</div>
-                      {transaction.location && (
-                        <div className="text-xs text-muted-foreground flex items-center space-x-1">
-                          <MapPin className="w-3 h-3" />
-                          <span>Location tracked</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))
+                  ))}
+                  {simulatedTransactions.length > 3 && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowAllTransactions(!showAllTransactions)}
+                      className="w-full"
+                    >
+                      {showAllTransactions ? 'Show Less' : `See All (${simulatedTransactions.length})`}
+                    </Button>
+                  )}
+                </>
               ) : (
-                <div className="flex items-center justify-center py-8">
-                  <p className="text-muted-foreground">No transactions yet</p>
+                <div className="flex items-center justify-center py-4">
+                  <p className="text-muted-foreground text-sm">No transactions yet</p>
                 </div>
               )}
             </div>
@@ -293,53 +309,59 @@ export const TransactionSimulatorResults: React.FC<{
 
         {/* Spending by Category */}
         {Object.keys(spendingByCategory).length > 0 && (
-          <Card className="w-full h-full flex flex-col">
+          <Card className="flex-1 flex flex-col min-w-0">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center space-x-2 text-xl font-semibold">
                 <DollarSign className="w-6 h-6" />
                 <span>Spending by Category</span>
               </CardTitle>
             </CardHeader>
-            <CardContent className="flex-1 overflow-hidden">
-              <div className="space-y-3 h-full overflow-y-auto">
-                {Object.entries(spendingByCategory)
+            <CardContent>
+              <div className="space-y-3">
+                {(showAllCategories ? Object.entries(spendingByCategory) : Object.entries(spendingByCategory).slice(0, 3))
                   .sort(([, a], [, b]) => b.total - a.total)
                   .map(([category, data]) => (
                     <div key={category} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg border">
                       <div className="flex-1 min-w-0 pr-3">
                         <div className="font-medium text-base break-words">{category}</div>
                         <div className="text-sm text-muted-foreground break-words">
-                          {data.count} transaction{data.count !== 1 ? 's' : ''} • {data.merchants.size} merchant{data.merchants.size !== 1 ? 's' : ''}
+                          {data.count} transactions • {data.merchants.size} merchants
                         </div>
                       </div>
                       <div className="text-right flex-shrink-0">
-                        <div className="font-bold text-lg">${data.total.toFixed(2)}</div>
+                        <div className="font-bold text-base">${data.total.toFixed(2)}</div>
                         <div className="text-sm text-muted-foreground">
                           Avg: ${data.average.toFixed(2)}
                         </div>
                       </div>
                     </div>
                   ))}
+                {Object.keys(spendingByCategory).length > 3 && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowAllCategories(!showAllCategories)}
+                    className="w-full"
+                  >
+                    {showAllCategories ? 'Show Less' : `See All (${Object.keys(spendingByCategory).length})`}
+                  </Button>
+                )}
               </div>
             </CardContent>
           </Card>
         )}
-      </div>
 
-
-      {/* Bottom Row: Risk Assessment and Merchant Risk Levels */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 h-1/2">
         {/* Last Risk Assessment */}
         {lastRiskAssessment && (
-          <Card className="w-full h-full flex flex-col">
+          <Card className="flex-1 flex flex-col min-w-0">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center space-x-2 text-xl font-semibold">
                 {getRiskLevelIcon(lastRiskAssessment.level)}
-                <span>Last Risk Assessment</span>
+                <span>Risk Assessment</span>
               </CardTitle>
             </CardHeader>
-            <CardContent className="flex-1 overflow-hidden">
-              <div className="space-y-4 h-full flex flex-col">
+            <CardContent>
+              <div className="space-y-3 flex flex-col">
                 <div className="flex items-center justify-between">
                   <Badge className={`${getRiskLevelColor(lastRiskAssessment.level)} text-white px-2 py-1 text-xs`}>
                     {lastRiskAssessment.level.toUpperCase()}
@@ -352,14 +374,24 @@ export const TransactionSimulatorResults: React.FC<{
                   <AlertDescription className="text-sm">{lastRiskAssessment.recommendation}</AlertDescription>
                 </Alert>
 
-                <div className="space-y-2 max-h-60 overflow-y-auto">
+                <div className="space-y-2">
                   <h4 className="font-medium text-base">Risk Factors:</h4>
-                  {lastRiskAssessment.factors.map((factor: any, index: number) => (
-                    <div key={index} className="flex items-start justify-between p-2 bg-muted/30 rounded-lg border">
+                  {(showAllRiskFactors ? lastRiskAssessment.factors : lastRiskAssessment.factors.slice(0, 3)).map((factor: any, index: number) => (
+                    <div key={index} className="flex items-start justify-between p-3 bg-muted/30 rounded-lg border">
                       <span className="text-sm flex-1 min-w-0 mr-2 break-words">{factor.message}</span>
                       <Badge variant="outline" className="text-xs flex-shrink-0">{factor.severity}</Badge>
                     </div>
                   ))}
+                  {lastRiskAssessment.factors.length > 3 && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowAllRiskFactors(!showAllRiskFactors)}
+                      className="w-full"
+                    >
+                      {showAllRiskFactors ? 'Show Less' : `See All (${lastRiskAssessment.factors.length})`}
+                    </Button>
+                  )}
                 </div>
               </div>
             </CardContent>
@@ -367,16 +399,16 @@ export const TransactionSimulatorResults: React.FC<{
         )}
 
         {/* Merchant Risk Levels */}
-        <Card className="w-full h-full flex flex-col">
+        <Card className="flex-1 flex flex-col min-w-0">
           <CardHeader className="pb-3">
             <CardTitle className="text-xl font-semibold">Merchant Risk Levels</CardTitle>
           </CardHeader>
-          <CardContent className="flex-1 overflow-hidden">
-            <div className="grid grid-cols-2 gap-3 h-full overflow-y-auto">
-              {MERCHANTS.map((merchant, index) => (
+          <CardContent>
+            <div className="space-y-3">
+              {(showAllMerchants ? MERCHANTS : MERCHANTS.slice(0, 3)).map((merchant, index) => (
                 <div key={index} className="p-3 bg-muted/30 rounded-lg border">
                   <div className="font-medium text-sm mb-1 break-words">{merchant.name}</div>
-                  <div className="text-xs text-muted-foreground mb-2 break-words">{merchant.category}</div>
+                  <div className="text-sm text-muted-foreground mb-2 break-words">{merchant.category}</div>
                   <Badge 
                     className={`${
                       merchant.riskLevel === 'high' ? 'bg-red-500 text-white' :
@@ -388,6 +420,16 @@ export const TransactionSimulatorResults: React.FC<{
                   </Badge>
                 </div>
               ))}
+              {MERCHANTS.length > 3 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowAllMerchants(!showAllMerchants)}
+                  className="w-full"
+                >
+                  {showAllMerchants ? 'Show Less' : `See All (${MERCHANTS.length})`}
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -585,9 +627,9 @@ export const TransactionSimulator: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="w-full">
       {/* Top Row: Simulator Controls */}
-      <div className="w-full">
+      <div className="w-full mb-6">
         <TransactionSimulatorControls
           isSimulating={isSimulating}
           simulationSpeed={simulationSpeed}
@@ -602,13 +644,11 @@ export const TransactionSimulator: React.FC = () => {
         />
       </div>
 
-      {/* Bottom Row: Results Grid */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-        <TransactionSimulatorResults
-          simulatedTransactions={simulatedTransactions}
-          lastRiskAssessment={lastRiskAssessment}
-        />
-      </div>
+      {/* Full Width Results */}
+      <TransactionSimulatorResults
+        simulatedTransactions={simulatedTransactions}
+        lastRiskAssessment={lastRiskAssessment}
+      />
     </div>
   );
 };

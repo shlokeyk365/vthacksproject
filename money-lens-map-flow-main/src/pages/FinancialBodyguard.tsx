@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export const FinancialBodyguardPage: React.FC = () => {
   return (
-    <div className="container mx-auto p-6">
+    <div className="w-full">
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Financial Bodyguard Agent</h1>
         <p className="text-muted-foreground">
@@ -37,7 +37,7 @@ export const FinancialBodyguardPage: React.FC = () => {
           <AIInsightsDashboard />
         </TabsContent>
         
-        <TabsContent value="simulator">
+        <TabsContent value="simulator" className="w-full">
           <TransactionSimulator />
         </TabsContent>
       </Tabs>
