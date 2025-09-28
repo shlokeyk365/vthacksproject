@@ -1,5 +1,8 @@
 import React from 'react';
 import { FinancialBodyguardDashboard } from '@/components/agents/FinancialBodyguardDashboard';
+import { FinancialBodyguardActivator } from '@/components/agents/FinancialBodyguardActivator';
+import { SampleDataLoader } from '@/components/agents/SampleDataLoader';
+import { AIInsightsDashboard } from '@/components/agents/AIInsightsDashboard';
 import { TransactionSimulator } from '@/components/agents/TransactionSimulator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -13,14 +16,25 @@ export const FinancialBodyguardPage: React.FC = () => {
         </p>
       </div>
 
-      <Tabs defaultValue="dashboard" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2">
+      <Tabs defaultValue="activator" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="activator">Quick Start</TabsTrigger>
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+          <TabsTrigger value="ai-insights">AI Insights</TabsTrigger>
           <TabsTrigger value="simulator">Transaction Simulator</TabsTrigger>
         </TabsList>
         
+        <TabsContent value="activator" className="space-y-6">
+          <SampleDataLoader />
+          <FinancialBodyguardActivator />
+        </TabsContent>
+        
         <TabsContent value="dashboard">
           <FinancialBodyguardDashboard />
+        </TabsContent>
+        
+        <TabsContent value="ai-insights">
+          <AIInsightsDashboard />
         </TabsContent>
         
         <TabsContent value="simulator">

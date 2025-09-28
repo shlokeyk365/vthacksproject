@@ -30,44 +30,50 @@ const queryClient = new QueryClient({
   },
 });
 
-const AppRoutes = () => {
-  const { isAuthenticated, isLoading, user } = useAuth();
+const App = () => {
+  const AppRoutes = () => {
+    const { isAuthenticated, isLoading, user } = useAuth();
 
-  console.log('AppRoutes render:', { isAuthenticated, isLoading, user });
+    console.log('AppRoutes render:', { isAuthenticated, isLoading, user });
 
-  if (isLoading) {
+    if (isLoading) {
+      return (
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+        </div>
+      );
+    }
+
+    if (!isAuthenticated) {
+      return <LoginForm />;
+    }
+
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
-      </div>
+      <BrowserRouter
+        future={{
+          v7_startTransition: true,
+          v7_relativeSplatPath: true,
+        }}
+      >
+        <Routes>
+          <Route path="/" element={<MainLayout />}>
+            <Route index element={<Dashboard />} />
+            <Route path="map" element={<MapView />} />
+            <Route path="caps" element={<SpendingCaps />} />
+            <Route path="transactions" element={<Transactions />} />
+            <Route path="analytics" element={<Analytics />} />
+            <Route path="leaderboard" element={<Leaderboard />} />
+            <Route path="settings" element={<Settings />} />
+            <Route path="bodyguard" element={<FinancialBodyguardPage />} />
+          </Route>
+          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </BrowserRouter>
     );
-  }
-
-  if (!isAuthenticated) {
-    return <LoginForm />;
-  }
+  };
 
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<MainLayout />}>
-          <Route index element={<Dashboard />} />
-          <Route path="map" element={<MapView />} />
-          <Route path="caps" element={<SpendingCaps />} />
-          <Route path="transactions" element={<Transactions />} />
-          <Route path="analytics" element={<Analytics />} />
-          <Route path="leaderboard" element={<Leaderboard />} />
-          <Route path="settings" element={<Settings />} />
-          <Route path="bodyguard" element={<FinancialBodyguardPage />} />
-        </Route>
-        {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </BrowserRouter>
-  );
-};
-
-const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
       <AuthProvider>
@@ -100,6 +106,7 @@ const App = () => (
       </AuthProvider>
     </ThemeProvider>
   </QueryClientProvider>
-);
+  );
+};
 
 export default App;

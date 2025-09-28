@@ -221,189 +221,177 @@ export const TransactionSimulatorResults: React.FC<{
     }
   };
 
-  // Calculate spending by category
+  // Calculate spending by category with better accuracy
   const spendingByCategory = simulatedTransactions.reduce((acc, transaction) => {
     const category = transaction.category;
     if (!acc[category]) {
-      acc[category] = { total: 0, count: 0 };
+      acc[category] = { 
+        total: 0, 
+        count: 0, 
+        average: 0,
+        merchants: new Set<string>()
+      };
     }
     acc[category].total += transaction.amount;
     acc[category].count += 1;
+    acc[category].average = acc[category].total / acc[category].count;
+    acc[category].merchants.add(transaction.merchant);
     return acc;
-  }, {} as Record<string, { total: number; count: number }>);
+  }, {} as Record<string, { total: number; count: number; average: number; merchants: Set<string> }>);
 
-  // Calculate quick stats
+  // Calculate quick stats with more precision
   const totalSpent = simulatedTransactions.reduce((sum, t) => sum + t.amount, 0);
   const averageTransaction = simulatedTransactions.length > 0 ? totalSpent / simulatedTransactions.length : 0;
   const uniqueMerchants = new Set(simulatedTransactions.map(t => t.merchant)).size;
   const uniqueCategories = new Set(simulatedTransactions.map(t => t.category)).size;
+  
+  // Calculate additional metrics
+  const maxTransaction = simulatedTransactions.length > 0 ? Math.max(...simulatedTransactions.map(t => t.amount)) : 0;
+  const minTransaction = simulatedTransactions.length > 0 ? Math.min(...simulatedTransactions.map(t => t.amount)) : 0;
+  const recentTransactions = simulatedTransactions.filter(t => Date.now() - t.timestamp < 24 * 60 * 60 * 1000).length;
+  const highValueTransactions = simulatedTransactions.filter(t => t.amount > 100).length;
 
   return (
-    <div className="space-y-6">
-      {/* Recent Transactions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Transactions</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {simulatedTransactions.length > 0 ? (
-              simulatedTransactions.map((transaction) => (
-                <div key={transaction.id} className="flex items-center justify-between p-3 border rounded">
-                  <div className="flex items-center space-x-3">
-                    <div>
-                      <div className="font-medium">{transaction.merchant}</div>
-                      <div className="text-sm text-muted-foreground">
+    <div className="w-full h-screen p-4 space-y-6">
+      {/* Top Row: Recent Transactions and Spending by Category */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 h-1/2">
+        {/* Recent Transactions */}
+        <Card className="w-full h-full flex flex-col">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-xl font-semibold">Recent Transactions</CardTitle>
+          </CardHeader>
+          <CardContent className="flex-1 overflow-hidden">
+            <div className="space-y-3 h-full overflow-y-auto">
+              {simulatedTransactions.length > 0 ? (
+                simulatedTransactions.map((transaction) => (
+                  <div key={transaction.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg border">
+                    <div className="flex-1 min-w-0 pr-3">
+                      <div className="font-medium text-base break-words">{transaction.merchant}</div>
+                      <div className="text-sm text-muted-foreground break-words">
                         {transaction.category} • {new Date(transaction.timestamp).toLocaleTimeString()}
                       </div>
                     </div>
+                    <div className="text-right flex-shrink-0">
+                      <div className="font-bold text-lg">${transaction.amount.toFixed(2)}</div>
+                      {transaction.location && (
+                        <div className="text-xs text-muted-foreground flex items-center space-x-1">
+                          <MapPin className="w-3 h-3" />
+                          <span>Location tracked</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <div className="font-bold">${transaction.amount.toFixed(2)}</div>
-                    {transaction.location && (
-                      <div className="text-xs text-muted-foreground flex items-center space-x-1">
-                        <MapPin className="w-3 h-3" />
-                        <span>Location tracked</span>
-                      </div>
-                    )}
-                  </div>
+                ))
+              ) : (
+                <div className="flex items-center justify-center py-8">
+                  <p className="text-muted-foreground">No transactions yet</p>
                 </div>
-              ))
-            ) : (
-              <p className="text-muted-foreground text-center py-4">No transactions yet</p>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+              )}
+            </div>
+          </CardContent>
+        </Card>
 
-      {/* Spending by Category */}
-      {Object.keys(spendingByCategory).length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <DollarSign className="w-5 h-5" />
-              <span>Spending by Category</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {Object.entries(spendingByCategory)
-                .sort(([, a], [, b]) => b.total - a.total)
-                .map(([category, data]) => (
-                  <div key={category} className="flex items-center justify-between p-3 border rounded">
-                    <div>
-                      <div className="font-medium">{category}</div>
-                      <div className="text-sm text-muted-foreground">
-                        {data.count} transaction{data.count !== 1 ? 's' : ''}
+        {/* Spending by Category */}
+        {Object.keys(spendingByCategory).length > 0 && (
+          <Card className="w-full h-full flex flex-col">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center space-x-2 text-xl font-semibold">
+                <DollarSign className="w-6 h-6" />
+                <span>Spending by Category</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="flex-1 overflow-hidden">
+              <div className="space-y-3 h-full overflow-y-auto">
+                {Object.entries(spendingByCategory)
+                  .sort(([, a], [, b]) => b.total - a.total)
+                  .map(([category, data]) => (
+                    <div key={category} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg border">
+                      <div className="flex-1 min-w-0 pr-3">
+                        <div className="font-medium text-base break-words">{category}</div>
+                        <div className="text-sm text-muted-foreground break-words">
+                          {data.count} transaction{data.count !== 1 ? 's' : ''} • {data.merchants.size} merchant{data.merchants.size !== 1 ? 's' : ''}
+                        </div>
+                      </div>
+                      <div className="text-right flex-shrink-0">
+                        <div className="font-bold text-lg">${data.total.toFixed(2)}</div>
+                        <div className="text-sm text-muted-foreground">
+                          Avg: ${data.average.toFixed(2)}
+                        </div>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <div className="font-bold">${data.total.toFixed(2)}</div>
-                      <div className="text-sm text-muted-foreground">
-                        Avg: ${(data.total / data.count).toFixed(2)}
-                      </div>
+                  ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
+
+      {/* Bottom Row: Risk Assessment and Merchant Risk Levels */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 h-1/2">
+        {/* Last Risk Assessment */}
+        {lastRiskAssessment && (
+          <Card className="w-full h-full flex flex-col">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center space-x-2 text-xl font-semibold">
+                {getRiskLevelIcon(lastRiskAssessment.level)}
+                <span>Last Risk Assessment</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="flex-1 overflow-hidden">
+              <div className="space-y-4 h-full flex flex-col">
+                <div className="flex items-center justify-between">
+                  <Badge className={`${getRiskLevelColor(lastRiskAssessment.level)} text-white px-2 py-1 text-xs`}>
+                    {lastRiskAssessment.level.toUpperCase()}
+                  </Badge>
+                  <span className="text-xl font-bold">{lastRiskAssessment.score}/100</span>
+                </div>
+                
+                <Alert className="flex-shrink-0">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertDescription className="text-sm">{lastRiskAssessment.recommendation}</AlertDescription>
+                </Alert>
+
+                <div className="space-y-2 max-h-60 overflow-y-auto">
+                  <h4 className="font-medium text-base">Risk Factors:</h4>
+                  {lastRiskAssessment.factors.map((factor: any, index: number) => (
+                    <div key={index} className="flex items-start justify-between p-2 bg-muted/30 rounded-lg border">
+                      <span className="text-sm flex-1 min-w-0 mr-2 break-words">{factor.message}</span>
+                      <Badge variant="outline" className="text-xs flex-shrink-0">{factor.severity}</Badge>
                     </div>
-                  </div>
-                ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+                  ))}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
-      {/* Quick Stats */}
-      {simulatedTransactions.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Activity className="w-5 h-5" />
-              <span>Quick Stats</span>
-            </CardTitle>
+        {/* Merchant Risk Levels */}
+        <Card className="w-full h-full flex flex-col">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-xl font-semibold">Merchant Risk Levels</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="text-center p-3 border rounded">
-                <div className="text-2xl font-bold text-primary">${totalSpent.toFixed(2)}</div>
-                <div className="text-sm text-muted-foreground">Total Spent</div>
-              </div>
-              <div className="text-center p-3 border rounded">
-                <div className="text-2xl font-bold text-primary">${averageTransaction.toFixed(2)}</div>
-                <div className="text-sm text-muted-foreground">Average Transaction</div>
-              </div>
-              <div className="text-center p-3 border rounded">
-                <div className="text-2xl font-bold text-primary">{uniqueMerchants}</div>
-                <div className="text-sm text-muted-foreground">Unique Merchants</div>
-              </div>
-              <div className="text-center p-3 border rounded">
-                <div className="text-2xl font-bold text-primary">{uniqueCategories}</div>
-                <div className="text-sm text-muted-foreground">Categories</div>
-              </div>
+          <CardContent className="flex-1 overflow-hidden">
+            <div className="grid grid-cols-2 gap-3 h-full overflow-y-auto">
+              {MERCHANTS.map((merchant, index) => (
+                <div key={index} className="p-3 bg-muted/30 rounded-lg border">
+                  <div className="font-medium text-sm mb-1 break-words">{merchant.name}</div>
+                  <div className="text-xs text-muted-foreground mb-2 break-words">{merchant.category}</div>
+                  <Badge 
+                    className={`${
+                      merchant.riskLevel === 'high' ? 'bg-red-500 text-white' :
+                      merchant.riskLevel === 'medium' ? 'bg-yellow-500 text-white' :
+                      'bg-green-500 text-white'
+                    } text-xs`}
+                  >
+                    {merchant.riskLevel}
+                  </Badge>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
-      )}
-
-      {/* Last Risk Assessment */}
-      {lastRiskAssessment && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              {getRiskLevelIcon(lastRiskAssessment.level)}
-              <span>Last Risk Assessment</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <Badge className={`${getRiskLevelColor(lastRiskAssessment.level)} text-white`}>
-                  {lastRiskAssessment.level.toUpperCase()}
-                </Badge>
-                <span className="text-2xl font-bold">{lastRiskAssessment.score}/100</span>
-              </div>
-              
-              <Alert>
-                <AlertTriangle className="h-4 w-4" />
-                <AlertDescription>{lastRiskAssessment.recommendation}</AlertDescription>
-              </Alert>
-
-              <div className="space-y-2">
-                <h4 className="font-medium">Risk Factors:</h4>
-                {lastRiskAssessment.factors.map((factor: any, index: number) => (
-                  <div key={index} className="flex items-center justify-between p-2 bg-muted rounded">
-                    <span className="text-sm">{factor.message}</span>
-                    <Badge variant="outline">{factor.severity}</Badge>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Merchant Risk Levels */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Merchant Risk Levels</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {MERCHANTS.map((merchant, index) => (
-              <div key={index} className="p-3 border rounded">
-                <div className="font-medium text-sm">{merchant.name}</div>
-                <div className="text-xs text-muted-foreground">{merchant.category}</div>
-                <Badge 
-                  className={`mt-2 ${
-                    merchant.riskLevel === 'high' ? 'bg-red-500' :
-                    merchant.riskLevel === 'medium' ? 'bg-yellow-500' :
-                    'bg-green-500'
-                  }`}
-                >
-                  {merchant.riskLevel}
-                </Badge>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+      </div>
     </div>
   );
 };
@@ -597,9 +585,9 @@ export const TransactionSimulator: React.FC = () => {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      {/* Left Column: Simulator Controls */}
-      <div className="space-y-6">
+    <div className="space-y-6">
+      {/* Top Row: Simulator Controls */}
+      <div className="w-full">
         <TransactionSimulatorControls
           isSimulating={isSimulating}
           simulationSpeed={simulationSpeed}
@@ -614,8 +602,8 @@ export const TransactionSimulator: React.FC = () => {
         />
       </div>
 
-      {/* Right Column: Results */}
-      <div className="space-y-6">
+      {/* Bottom Row: Results Grid */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         <TransactionSimulatorResults
           simulatedTransactions={simulatedTransactions}
           lastRiskAssessment={lastRiskAssessment}

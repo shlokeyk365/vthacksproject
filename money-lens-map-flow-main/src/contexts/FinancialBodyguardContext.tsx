@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { FinancialBodyguard, Location, Transaction, RiskAssessment, SpendingPattern } from '../agents/FinancialBodyguard';
 import { LocationTracker, Geofence } from '../agents/LocationTracker';
+import { AgenticAI, AIInsight, AIPrediction, AutonomousAction } from '../agents/AgenticAI';
 
 interface FinancialBodyguardContextType {
   // Agent state
@@ -38,6 +39,12 @@ interface FinancialBodyguardContextType {
   showAlert: (message: string, type: 'info' | 'warning' | 'error' | 'success') => void;
   clearAlerts: () => void;
   alerts: Alert[];
+  
+  // AI Insights
+  getAIInsights: () => AIInsight[];
+  getAIPredictions: () => AIPrediction[];
+  getAutonomousActions: () => AutonomousAction[];
+  runAIAnalysis: () => void;
 }
 
 interface Alert {
@@ -60,6 +67,7 @@ export const FinancialBodyguardProvider: React.FC<{ children: ReactNode }> = ({ 
   // Initialize agents
   const [bodyguard] = useState(() => new FinancialBodyguard());
   const [locationTracker] = useState(() => new LocationTracker());
+  const [agenticAI] = useState(() => new AgenticAI(bodyguard));
 
   // Load initial state
   useEffect(() => {
@@ -132,9 +140,9 @@ export const FinancialBodyguardProvider: React.FC<{ children: ReactNode }> = ({ 
     showAlert('Location tracking stopped', 'info');
   };
 
-  // Assess transaction risk
+  // Assess transaction risk with AI enhancement
   const assessTransactionRisk = (amount: number, merchant: string, category: string): RiskAssessment => {
-    const assessment = bodyguard.assessRisk(amount, merchant, category, currentLocation);
+    const assessment = agenticAI.assessRiskWithAI(amount, merchant, category, currentLocation);
     setLastRiskAssessment(assessment);
     
     // Show alerts based on risk level
@@ -149,8 +157,12 @@ export const FinancialBodyguardProvider: React.FC<{ children: ReactNode }> = ({ 
 
   // Add transaction
   const addTransaction = (transaction: Transaction) => {
-    bodyguard.addTransaction(transaction);
-    console.log('Transaction added:', transaction);
+    try {
+      bodyguard.addTransaction(transaction);
+      console.log('Transaction added:', transaction);
+    } catch (error) {
+      console.error('Error adding transaction:', error);
+    }
   };
 
   // Get spending patterns
@@ -233,6 +245,25 @@ export const FinancialBodyguardProvider: React.FC<{ children: ReactNode }> = ({ 
     setAlerts([]);
   };
 
+  // AI Insights methods
+  const getAIInsights = (): AIInsight[] => {
+    return agenticAI.getInsights();
+  };
+
+  const getAIPredictions = (): AIPrediction[] => {
+    return agenticAI.getPredictions();
+  };
+
+  const getAutonomousActions = (): AutonomousAction[] => {
+    return agenticAI.getAutonomousActions();
+  };
+
+  const runAIAnalysis = () => {
+    // Trigger manual AI analysis
+    console.log('🤖 Running manual AI analysis...');
+    showAlert('AI analysis started', 'info');
+  };
+
   // Auto-start location tracking when agent is activated
   useEffect(() => {
     if (isActive && !isTracking) {
@@ -262,7 +293,11 @@ export const FinancialBodyguardProvider: React.FC<{ children: ReactNode }> = ({ 
     getNearbyGeofences,
     showAlert,
     clearAlerts,
-    alerts
+    alerts,
+    getAIInsights,
+    getAIPredictions,
+    getAutonomousActions,
+    runAIAnalysis
   };
 
   return (

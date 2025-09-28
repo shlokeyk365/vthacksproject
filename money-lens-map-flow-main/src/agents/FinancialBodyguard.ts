@@ -117,13 +117,36 @@ export class FinancialBodyguard {
     const weeklySpending = this.getWeeklySpending(pattern.merchant);
     const monthlySpending = this.getMonthlySpending(pattern.merchant);
 
-    // High risk if: frequent visits, high amounts, or recent overspending
-    if (pattern.visitCount > 10 && pattern.averageAmount > 50) return 'high';
-    if (weeklySpending > this.userPreferences.weeklyLimit * 0.5) return 'high';
-    if (monthlySpending > this.userPreferences.monthlyLimit * 0.3) return 'high';
-    if (pattern.averageAmount > 100) return 'medium';
-    if (pattern.visitCount > 5) return 'medium';
-    
+    // Calculate risk score based on multiple factors
+    let riskScore = 0;
+
+    // Frequency factor (0-30 points)
+    if (pattern.visitCount > 20) riskScore += 30;
+    else if (pattern.visitCount > 10) riskScore += 20;
+    else if (pattern.visitCount > 5) riskScore += 10;
+
+    // Amount factor (0-30 points)
+    if (pattern.averageAmount > 200) riskScore += 30;
+    else if (pattern.averageAmount > 100) riskScore += 20;
+    else if (pattern.averageAmount > 50) riskScore += 10;
+
+    // Spending limits factor (0-25 points)
+    if (weeklySpending > this.userPreferences.weeklyLimit * 0.7) riskScore += 25;
+    else if (weeklySpending > this.userPreferences.weeklyLimit * 0.5) riskScore += 15;
+    else if (weeklySpending > this.userPreferences.weeklyLimit * 0.3) riskScore += 10;
+
+    if (monthlySpending > this.userPreferences.monthlyLimit * 0.5) riskScore += 25;
+    else if (monthlySpending > this.userPreferences.monthlyLimit * 0.3) riskScore += 15;
+    else if (monthlySpending > this.userPreferences.monthlyLimit * 0.1) riskScore += 10;
+
+    // Recency factor (0-15 points)
+    if (daysSinceLastVisit < 1) riskScore += 15;
+    else if (daysSinceLastVisit < 3) riskScore += 10;
+    else if (daysSinceLastVisit < 7) riskScore += 5;
+
+    // Determine risk level based on total score
+    if (riskScore >= 60) return 'high';
+    if (riskScore >= 30) return 'medium';
     return 'low';
   }
 
@@ -211,37 +234,63 @@ export class FinancialBodyguard {
     const weeklySpent = this.getTotalWeeklySpending();
     const monthlySpent = this.getTotalMonthlySpending();
 
-    if (amount > this.userPreferences.dailyLimit) {
+    // Calculate remaining limits
+    const remainingDaily = this.userPreferences.dailyLimit - dailySpent;
+    const remainingWeekly = this.userPreferences.weeklyLimit - weeklySpent;
+    const remainingMonthly = this.userPreferences.monthlyLimit - monthlySpent;
+
+    // Critical: Exceeds daily limit or would exceed it
+    if (amount > this.userPreferences.dailyLimit || amount > remainingDaily) {
       return {
         type: 'amount',
         severity: 'critical',
-        message: `Transaction amount ($${amount}) exceeds daily limit ($${this.userPreferences.dailyLimit})`,
-        weight: 30
+        message: `Transaction amount ($${amount.toFixed(2)}) exceeds daily limit ($${this.userPreferences.dailyLimit}) or remaining daily budget ($${remainingDaily.toFixed(2)})`,
+        weight: 40
       };
     }
 
-    if (amount > this.userPreferences.weeklyLimit * 0.3) {
+    // High: Significant portion of weekly/monthly limits
+    if (amount > this.userPreferences.weeklyLimit * 0.4 || amount > remainingWeekly * 0.6) {
       return {
         type: 'amount',
         severity: 'high',
-        message: `Transaction amount ($${amount}) is high relative to weekly limit`,
-        weight: 20
+        message: `Transaction amount ($${amount.toFixed(2)}) is high relative to weekly limit ($${this.userPreferences.weeklyLimit})`,
+        weight: 25
       };
     }
 
-    if (amount > this.userPreferences.monthlyLimit * 0.1) {
+    if (amount > this.userPreferences.monthlyLimit * 0.15 || amount > remainingMonthly * 0.2) {
+      return {
+        type: 'amount',
+        severity: 'high',
+        message: `Transaction amount ($${amount.toFixed(2)}) is high relative to monthly limit ($${this.userPreferences.monthlyLimit})`,
+        weight: 25
+      };
+    }
+
+    // Medium: Moderate relative to limits
+    if (amount > this.userPreferences.weeklyLimit * 0.2) {
       return {
         type: 'amount',
         severity: 'medium',
-        message: `Transaction amount ($${amount}) is moderate relative to monthly limit`,
-        weight: 10
+        message: `Transaction amount ($${amount.toFixed(2)}) is moderate relative to weekly limit`,
+        weight: 15
+      };
+    }
+
+    if (amount > this.userPreferences.monthlyLimit * 0.05) {
+      return {
+        type: 'amount',
+        severity: 'medium',
+        message: `Transaction amount ($${amount.toFixed(2)}) is moderate relative to monthly limit`,
+        weight: 15
       };
     }
 
     return {
       type: 'amount',
       severity: 'low',
-      message: `Transaction amount ($${amount}) is within safe limits`,
+      message: `Transaction amount ($${amount.toFixed(2)}) is within safe limits`,
       weight: 5
     };
   }
@@ -373,10 +422,13 @@ export class FinancialBodyguard {
 
   // Calculate risk level from score
   private calculateRiskLevel(score: number): 'safe' | 'caution' | 'warning' | 'danger' | 'critical' {
-    if (score >= 80) return 'critical';
-    if (score >= 60) return 'danger';
-    if (score >= 40) return 'warning';
-    if (score >= 20) return 'caution';
+    // Normalize score to 0-100 range
+    const normalizedScore = Math.min(100, Math.max(0, score));
+    
+    if (normalizedScore >= 85) return 'critical';
+    if (normalizedScore >= 70) return 'danger';
+    if (normalizedScore >= 50) return 'warning';
+    if (normalizedScore >= 25) return 'caution';
     return 'safe';
   }
 

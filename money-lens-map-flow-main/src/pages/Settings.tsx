@@ -15,6 +15,8 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { toast } from "sonner";
 import { apiClient } from "@/lib/api";
 import { generatePDFExport } from "@/lib/pdfExport";
+import { BankConnection } from "@/components/bank/BankConnection";
+import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import { 
   User, 
   Bell, 
@@ -626,6 +628,10 @@ export default function Settings() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Settings */}
         <div className="lg:col-span-2 space-y-6">
+          {/* Bank Connection */}
+          <ErrorBoundary>
+            <BankConnection />
+          </ErrorBoundary>
           {/* Profile Settings */}
           <Card className="card-gradient">
             <CardHeader>

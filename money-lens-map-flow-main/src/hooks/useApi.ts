@@ -16,6 +16,8 @@ export const queryKeys = {
   mapMerchants: (period?: string) => ['mapMerchants', period] as const,
   heatmapData: (period?: string) => ['heatmapData', period] as const,
   locationData: (period?: string) => ['locationData', period] as const,
+  leaderboard: (period?: string, type?: string) => ['leaderboard', period, type] as const,
+  friends: ['friends'] as const,
   settings: ['settings'] as const,
   notificationSettings: ['notificationSettings'] as const,
   mapSettings: ['mapSettings'] as const,
@@ -360,5 +362,22 @@ export const useUpdateMapSettings = () => {
     onError: (error: any) => {
       toast.error(error.message || 'Failed to update map settings');
     },
+  });
+};
+
+// Leaderboard Hooks
+export const useLeaderboard = (period?: string, type?: string) => {
+  return useQuery({
+    queryKey: queryKeys.leaderboard(period, type),
+    queryFn: () => apiClient.getLeaderboard(period, type),
+    select: (data) => data.data,
+  });
+};
+
+export const useFriends = () => {
+  return useQuery({
+    queryKey: queryKeys.friends,
+    queryFn: () => apiClient.getFriends(),
+    select: (data) => data.data,
   });
 };

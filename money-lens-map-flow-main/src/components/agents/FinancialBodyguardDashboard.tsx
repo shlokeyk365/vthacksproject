@@ -214,7 +214,7 @@ export const FinancialBodyguardDashboard: React.FC = () => {
           <div className="space-y-3">
             {spendingPatterns.length > 0 ? (
               spendingPatterns.map((pattern, index) => (
-                <div key={index} className="flex items-center justify-between p-3 border rounded">
+                <div key={`dashboard-pattern-${pattern.merchant}-${index}`} className="flex items-center justify-between p-3 border rounded">
                   <div>
                     <div className="font-medium">{pattern.merchant}</div>
                     <div className="text-sm text-muted-foreground">
@@ -251,7 +251,7 @@ export const FinancialBodyguardDashboard: React.FC = () => {
           <CardContent>
             <div className="space-y-2">
               {highRiskMerchants.map((merchant, index) => (
-                <div key={index} className="flex items-center space-x-2 p-2 bg-red-50 border border-red-200 rounded">
+                <div key={`dashboard-risk-${merchant}-${index}`} className="flex items-center space-x-2 p-2 bg-red-50 border border-red-200 rounded">
                   <XCircle className="w-4 h-4 text-red-500" />
                   <span className="text-sm font-medium">{merchant}</span>
                 </div>
@@ -273,7 +273,7 @@ export const FinancialBodyguardDashboard: React.FC = () => {
           <div className="space-y-3">
             {geofences.length > 0 ? (
               geofences.map((geofence, index) => (
-                <div key={index} className="flex items-center justify-between p-3 border rounded">
+                <div key={`dashboard-geofence-${geofence.id}-${index}`} className="flex items-center justify-between p-3 border rounded">
                   <div>
                     <div className="font-medium">{geofence.name}</div>
                     <div className="text-sm text-muted-foreground">
@@ -360,7 +360,7 @@ export const FinancialBodyguardDashboard: React.FC = () => {
           <CardContent>
             <div className="space-y-2">
               {alerts.slice(-5).map((alert) => (
-                <Alert key={alert.id} className={alert.dismissed ? 'opacity-50' : ''}>
+                <Alert key={`dashboard-alert-${alert.id}`} className={alert.dismissed ? 'opacity-50' : ''}>
                   <AlertTriangle className="h-4 w-4" />
                   <AlertDescription>{alert.message}</AlertDescription>
                 </Alert>

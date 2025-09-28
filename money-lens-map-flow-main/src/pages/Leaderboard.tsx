@@ -10,6 +10,8 @@ import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Trophy, Users, TrendingUp, DollarSign, Crown, Medal, Award, UserPlus, Mail, CheckCircle, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import { useLeaderboard, useFriends } from '@/hooks/useApi';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function Leaderboard() {
   const [leaderboardType, setLeaderboardType] = useState<'savings' | 'spending'>('savings');
@@ -17,19 +19,9 @@ export default function Leaderboard() {
   const [inviteEmail, setInviteEmail] = useState('');
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
 
-  // Mock data for demonstration
-  const mockLeaderboardData = [
-    {
-      userId: '1',
-      name: 'You',
-      email: 'you@example.com',
-      budget: 3500,
-      spent: 2847,
-      savings: 653,
-      savingsPercentage: 18.7,
-      remaining: 653
-    }
-  ];
+  // Fetch real data from API
+  const { data: leaderboardData, isLoading: leaderboardLoading, error: leaderboardError } = useLeaderboard(period, leaderboardType);
+  const { data: friendsData, isLoading: friendsLoading } = useFriends();
 
   const getRankIcon = (index: number) => {
     switch (index) {
@@ -158,15 +150,41 @@ export default function Leaderboard() {
                 {leaderboardType === 'savings' ? 'Savings Leaderboard' : 'Spending Leaderboard'}
               </CardTitle>
               <CardDescription>
-                {leaderboardType === 'savings' 
-                  ? 'Ranked by total savings (budget - spent)'
+                {leaderboardType === 'savings'
+                  ? 'Ranked by savings percentage (privacy-focused)'
                   : 'Ranked by lowest spending (most frugal)'
                 }
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {mockLeaderboardData.map((entry, index) => (
+                {leaderboardLoading ? (
+                  <div className="space-y-4">
+                    {[...Array(5)].map((_, i) => (
+                      <div key={i} className="flex items-center gap-4 p-4 border rounded-lg">
+                        <Skeleton className="w-8 h-8 rounded-full" />
+                        <div className="flex-1">
+                          <Skeleton className="h-4 w-32 mb-2" />
+                          <Skeleton className="h-3 w-24" />
+                        </div>
+                        <Skeleton className="h-6 w-16" />
+                      </div>
+                    ))}
+                  </div>
+                ) : leaderboardError ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Trophy className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                    <p>Failed to load leaderboard data</p>
+                    <p className="text-sm">Please try again later</p>
+                  </div>
+                ) : leaderboardData?.leaderboard?.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Users className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                    <p>No leaderboard data available</p>
+                    <p className="text-sm">Check back later for updates</p>
+                  </div>
+                ) : (
+                  leaderboardData?.leaderboard?.map((entry, index) => (
                   <div
                     key={entry.userId}
                     className={`flex items-center gap-4 p-4 border rounded-lg transition-all hover:shadow-md ${
@@ -192,10 +210,10 @@ export default function Leaderboard() {
                       {leaderboardType === 'savings' ? (
                         <div>
                           <div className="font-bold text-lg">
-                            ${entry.savings.toLocaleString()}
+                            {entry.savingsPercentage.toFixed(1)}%
                           </div>
                           <div className="text-sm opacity-75">
-                            {entry.savingsPercentage.toFixed(1)}% saved
+                            of budget saved
                           </div>
                         </div>
                       ) : (
@@ -216,13 +234,8 @@ export default function Leaderboard() {
                       </Badge>
                     )}
                   </div>
-                ))}
-
-                <div className="text-center py-8 text-muted-foreground">
-                  <Users className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>No friends to compare with yet.</p>
-                  <p className="text-sm">Invite some friends to start competing!</p>
-                </div>
+                ))
+                )}
               </div>
             </CardContent>
           </Card>
@@ -233,15 +246,48 @@ export default function Leaderboard() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Users className="w-5 h-5" />
-                Your Friends (0)
+                Your Friends ({friendsData?.length || 0})
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-8 text-muted-foreground">
-                <Users className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p>No friends yet.</p>
-                <p className="text-sm">Send friend requests to start competing!</p>
-              </div>
+              {friendsLoading ? (
+                <div className="space-y-4">
+                  {[...Array(3)].map((_, i) => (
+                    <div key={i} className="flex items-center gap-4 p-4 border rounded-lg">
+                      <Skeleton className="w-10 h-10 rounded-full" />
+                      <div className="flex-1">
+                        <Skeleton className="h-4 w-32 mb-2" />
+                        <Skeleton className="h-3 w-24" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : friendsData?.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Users className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                  <p>No friends yet.</p>
+                  <p className="text-sm">Send friend requests to start competing!</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {friendsData?.map((friend) => (
+                    <div key={friend.id} className="flex items-center gap-4 p-4 border rounded-lg hover:bg-muted/50">
+                      <Avatar className="w-10 h-10">
+                        <AvatarFallback>
+                          {friend.name.split(' ').map(n => n[0]).join('')}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1">
+                        <div className="font-medium">{friend.name}</div>
+                        <div className="text-sm text-muted-foreground">{friend.email}</div>
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        Active member
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

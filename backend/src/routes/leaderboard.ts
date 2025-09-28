@@ -7,7 +7,7 @@ import { ApiResponse, AuthenticatedRequest } from '../types';
 const router = express.Router();
 const prisma = new PrismaClient();
 
-// Get leaderboard data (simplified version without friends for now)
+// Get leaderboard data with fake users for demo
 router.get('/', authenticate, async (req: AuthenticatedRequest, res, next) => {
   try {
     const userId = req.user!.id;
@@ -17,57 +17,65 @@ router.get('/', authenticate, async (req: AuthenticatedRequest, res, next) => {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
 
-    // For now, just show the current user's data
-    // In a real implementation, you'd fetch friends and compare
-    const [user, totalSpent] = await Promise.all([
-      prisma.user.findUnique({
-        where: { id: userId },
-        select: {
-          id: true,
-          firstName: true,
-          lastName: true,
-          email: true,
-          monthlyBudgetGoal: true
-        }
-      }),
-      prisma.transaction.aggregate({
-        where: {
-          userId,
-          date: { gte: startDate },
-          status: 'COMPLETED'
-        },
-        _sum: { amount: true }
+    // Get all users for leaderboard (including fake users)
+    const users = await prisma.user.findMany({
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        monthlyBudgetGoal: true
+      }
+    });
+
+    // Calculate spending for each user
+    const leaderboardData = await Promise.all(
+      users.map(async (user) => {
+        const totalSpent = await prisma.transaction.aggregate({
+          where: {
+            userId: user.id,
+            date: { gte: startDate },
+            status: 'COMPLETED'
+          },
+          _sum: { amount: true }
+        });
+
+        const spent = Number(totalSpent._sum.amount || 0);
+        const budget = Number(user.monthlyBudgetGoal || 3500);
+        const savings = Math.max(budget - spent, 0);
+        const savingsPercentage = budget > 0 ? (savings / budget) * 100 : 0;
+
+        return {
+          userId: user.id,
+          name: `${user.firstName} ${user.lastName}`,
+          email: user.email,
+          budget,
+          spent,
+          savings,
+          savingsPercentage,
+          remaining: Math.max(budget - spent, 0),
+          isCurrentUser: user.id === userId
+        };
       })
-    ]);
+    );
 
-    if (!user) {
-      throw new AppError('User not found', 404);
-    }
+    // Sort by savings percentage (descending) for privacy
+    leaderboardData.sort((a, b) => b.savingsPercentage - a.savingsPercentage);
 
-    const spent = Number(totalSpent._sum.amount || 0);
-    const budget = Number(user.monthlyBudgetGoal || 3500);
-    const savings = Math.max(budget - spent, 0);
-    const savingsPercentage = budget > 0 ? (savings / budget) * 100 : 0;
-
-    const leaderboardData = [{
-      userId: user.id,
-      name: `${user.firstName} ${user.lastName}`,
-      email: user.email,
-      budget,
-      spent,
-      savings,
-      savingsPercentage,
-      remaining: Math.max(budget - spent, 0)
-    }];
+    // Add rank to each entry
+    const rankedLeaderboard = leaderboardData.map((entry, index) => ({
+      ...entry,
+      rank: index + 1
+    }));
 
     const response: ApiResponse = {
       success: true,
       data: {
-        leaderboard: leaderboardData,
+        leaderboard: rankedLeaderboard,
         period: days,
         type,
-        totalFriends: 0,
-        message: 'Add friends to see the full leaderboard!'
+        totalFriends: users.length - 1, // All users except current user
+        message: 'Leaderboard with demo users!'
       },
       message: 'Leaderboard data retrieved successfully'
     };
@@ -120,10 +128,31 @@ router.put('/friends/requests/:requestId', authenticate, async (req: Authenticat
 
 router.get('/friends', authenticate, async (req: AuthenticatedRequest, res, next) => {
   try {
+    const userId = req.user!.id;
+    
+    // Get all other users as "friends" for demo
+    const friends = await prisma.user.findMany({
+      where: {
+        id: { not: userId }
+      },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        monthlyBudgetGoal: true
+      }
+    });
+
     const response: ApiResponse = {
       success: true,
-      data: [],
-      message: 'No friends yet'
+      data: friends.map(friend => ({
+        id: friend.id,
+        name: `${friend.firstName} ${friend.lastName}`,
+        email: friend.email,
+        budget: friend.monthlyBudgetGoal
+      })),
+      message: 'Friends retrieved successfully'
     };
     res.status(200).json(response);
   } catch (error) {

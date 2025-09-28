@@ -18,6 +18,7 @@ import mapRoutes from './routes/map';
 import settingsRoutes from './routes/settings';
 import dataRoutes from './routes/data';
 import leaderboardRoutes from './routes/leaderboard';
+import plaidRoutes from './routes/plaid';
 
 // Import middleware
 import { errorHandler } from './middleware/errorHandler';
@@ -81,6 +82,7 @@ app.use('/api/map', mapRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/data', dataRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
+app.use('/api/plaid', plaidRoutes);
 
 // WebSocket connection handling
 io.on('connection', (socket) => {

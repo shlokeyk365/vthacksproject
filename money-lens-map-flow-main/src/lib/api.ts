@@ -445,6 +445,39 @@ class ApiClient {
     return this.request(`/leaderboard?${params.toString()}`);
   }
 
+  async getFriends() {
+    return this.request('/leaderboard/friends');
+  }
+
+  // Bank Integration (Mock)
+  async getAvailableBanks() {
+    return this.request('/plaid/banks');
+  }
+
+  async connectBank(bankId: string) {
+    return this.request('/plaid/connect', {
+      method: 'POST',
+      body: JSON.stringify({ bankId }),
+    });
+  }
+
+  async getPlaidTransactions(startDate?: string, endDate?: string) {
+    const params = new URLSearchParams();
+    if (startDate) params.append('start_date', startDate);
+    if (endDate) params.append('end_date', endDate);
+    return this.request(`/plaid/transactions?${params.toString()}`);
+  }
+
+  async getPlaidAccounts() {
+    return this.request('/plaid/accounts');
+  }
+
+  async removePlaidConnection() {
+    return this.request('/plaid/connection', {
+      method: 'DELETE',
+    });
+  }
+
   // Settings
   async getSettings() {
     return this.request('/settings');
@@ -527,6 +560,7 @@ export const {
   getHeatmapData,
   getLocationData,
   getLeaderboard,
+  getFriends,
   getSettings,
   updateSettings,
   getNotificationSettings,
