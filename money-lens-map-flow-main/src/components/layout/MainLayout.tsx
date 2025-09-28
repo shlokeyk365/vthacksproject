@@ -41,7 +41,7 @@ export function MainLayout() {
         
         <div className="flex-1 flex flex-col min-h-screen">
           {/* Header */}
-          <header className="bg-card border-b border-border px-4 sm:px-6 py-4 flex items-center gap-3 sm:gap-4">
+          <header className="bg-card border-b border-border px-4 sm:px-6 lg:px-8 py-4 flex items-center gap-3 sm:gap-4">
             <SidebarTrigger />
             
                    <div className="flex-1 max-w-md">
@@ -92,8 +92,10 @@ export function MainLayout() {
                  )}
 
                  {/* Main Content */}
-                 <main className="flex-1 bg-background">
-                   <Outlet />
+                 <main className="flex-1 bg-background p-4 sm:p-6 lg:p-8 xl:p-10 max-w-none">
+                   <div className="max-w-7xl mx-auto">
+                     <Outlet />
+                   </div>
                  </main>
                </div>
              </div>

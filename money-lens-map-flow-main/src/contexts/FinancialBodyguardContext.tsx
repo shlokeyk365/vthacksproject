@@ -40,6 +40,11 @@ interface FinancialBodyguardContextType {
   clearAlerts: () => void;
   alerts: Alert[];
   
+  // Blocking Notifications
+  showBlockingNotification: (notification: Omit<BlockingNotification, 'id' | 'isVisible'>) => void;
+  dismissBlockingNotification: (id: string) => void;
+  currentBlockingNotification: BlockingNotification | null;
+  
   // AI Insights
   getAIInsights: () => AIInsight[];
   getAIPredictions: () => AIPrediction[];
@@ -55,6 +60,19 @@ interface Alert {
   dismissed: boolean;
 }
 
+interface BlockingNotification {
+  id: string;
+  title: string;
+  message: string;
+  severity: 'critical' | 'danger' | 'high' | 'warning';
+  isVisible: boolean;
+  onConfirm: () => void;
+  onDismiss?: () => void;
+  confirmText?: string;
+  dismissText?: string;
+  showDismiss?: boolean;
+}
+
 const FinancialBodyguardContext = createContext<FinancialBodyguardContextType | undefined>(undefined);
 
 export const FinancialBodyguardProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
@@ -63,6 +81,7 @@ export const FinancialBodyguardProvider: React.FC<{ children: ReactNode }> = ({ 
   const [currentLocation, setCurrentLocation] = useState<Location | null>(null);
   const [lastRiskAssessment, setLastRiskAssessment] = useState<RiskAssessment | null>(null);
   const [alerts, setAlerts] = useState<Alert[]>([]);
+  const [currentBlockingNotification, setCurrentBlockingNotification] = useState<BlockingNotification | null>(null);
   
   // Initialize agents
   const [bodyguard] = useState(() => new FinancialBodyguard());
@@ -87,6 +106,63 @@ export const FinancialBodyguardProvider: React.FC<{ children: ReactNode }> = ({ 
   const handleGeofenceEnter = (geofence: Geofence) => {
     console.log('Entered geofence:', geofence);
     showAlert(`Entered ${geofence.name}`, 'info');
+    
+    // Check for high-risk areas and trigger Apple-style notifications
+    if (geofence.id === 'current_location_high_risk') {
+      // Critical risk - show Apple-style blocking notification
+      showBlockingNotification({
+        title: '⚠️ High Risk Location Detected!',
+        message: 'You\'ve entered a high-risk spending zone! MoneyLens has detected unusual financial activity in this area. This location has been flagged for potential overspending risks.',
+        severity: 'critical',
+        onConfirm: () => {
+          console.log('User confirmed to proceed with caution in high-risk area');
+          showAlert('Proceeding with enhanced monitoring', 'warning');
+        },
+        onDismiss: () => {
+          console.log('User chose to avoid the high-risk area');
+          showAlert('Smart choice! Avoiding high-risk spending area', 'success');
+        },
+        confirmText: 'Proceed with Caution',
+        dismissText: 'Turn Back',
+        showDismiss: true
+      });
+    } else if (geofence.id === 'downtown_blacksburg') {
+      // High risk - show Apple-style blocking notification
+      showBlockingNotification({
+        title: '🏪 Downtown Blacksburg - High Spending Zone',
+        message: 'You\'ve entered downtown Blacksburg, a high-spending area with many restaurants and shops. Consider setting a daily spending limit to avoid overspending.',
+        severity: 'high',
+        onConfirm: () => {
+          console.log('User confirmed to proceed in downtown area');
+          showAlert('Proceeding with spending monitoring', 'info');
+        },
+        onDismiss: () => {
+          console.log('User chose to avoid downtown area');
+          showAlert('Avoiding downtown spending area', 'info');
+        },
+        confirmText: 'Set Spending Limit',
+        dismissText: 'Avoid Area',
+        showDismiss: true
+      });
+    } else if (geofence.id === 'squires_student_center') {
+      // Medium risk - show Apple-style blocking notification
+      showBlockingNotification({
+        title: '🏛️ Squires Student Center',
+        message: 'You\'ve entered Squires Student Center. This area has multiple dining options and shops. Consider setting a budget for your visit.',
+        severity: 'warning',
+        onConfirm: () => {
+          console.log('User confirmed to proceed in Squires');
+          showAlert('Proceeding with budget monitoring', 'info');
+        },
+        onDismiss: () => {
+          console.log('User chose to avoid Squires');
+          showAlert('Avoiding Squires area', 'info');
+        },
+        confirmText: 'Set Budget',
+        dismissText: 'Continue',
+        showDismiss: true
+      });
+    }
     
     // If it's a high-risk merchant, assess risk
     if (geofence.type === 'merchant' && geofence.merchantId) {
@@ -264,6 +340,21 @@ export const FinancialBodyguardProvider: React.FC<{ children: ReactNode }> = ({ 
     showAlert('AI analysis started', 'info');
   };
 
+  // Show blocking notification
+  const showBlockingNotification = (notification: Omit<BlockingNotification, 'id' | 'isVisible'>) => {
+    const blockingNotification: BlockingNotification = {
+      ...notification,
+      id: Date.now().toString(),
+      isVisible: true
+    };
+    setCurrentBlockingNotification(blockingNotification);
+  };
+
+  // Dismiss blocking notification
+  const dismissBlockingNotification = (id: string) => {
+    setCurrentBlockingNotification(null);
+  };
+
   // Auto-start location tracking when agent is activated
   useEffect(() => {
     if (isActive && !isTracking) {
@@ -294,6 +385,9 @@ export const FinancialBodyguardProvider: React.FC<{ children: ReactNode }> = ({ 
     showAlert,
     clearAlerts,
     alerts,
+    showBlockingNotification,
+    dismissBlockingNotification,
+    currentBlockingNotification,
     getAIInsights,
     getAIPredictions,
     getAutonomousActions,

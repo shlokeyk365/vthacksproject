@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
-import { MapPin, Bell, Play, Square, Map } from 'lucide-react';
+import { MapPin, Bell, Play, Square, Map, AlertTriangle } from 'lucide-react';
 import { useNotifications } from '../../contexts/NotificationContext';
+import { useFinancialBodyguard } from '../../contexts/FinancialBodyguardContext';
 
 export const DemoNotificationTrigger: React.FC = () => {
   const { addNotification } = useNotifications();
+  const { showBlockingNotification } = useFinancialBodyguard();
   const [isActive, setIsActive] = useState(false);
 
   const demoNotifications = [
@@ -53,13 +55,59 @@ export const DemoNotificationTrigger: React.FC = () => {
   ];
 
   const triggerNotification = (notification: typeof demoNotifications[0]) => {
-    addNotification({
-      type: notification.type,
-      title: notification.title,
-      message: notification.message,
-      category: 'system',
-      actionUrl: '/bodyguard'
-    });
+    // Check if this is a high-risk notification that should trigger Apple-style blocking
+    if (notification.id === 'current_location_high_risk' || 
+        notification.id === 'downtown_blacksburg' ||
+        (notification.type === 'error' && notification.title.includes('High Risk'))) {
+      
+      // Determine severity and button text based on notification
+      let severity: 'critical' | 'danger' | 'high' | 'warning' = 'critical';
+      let confirmText = 'Proceed with Caution';
+      let dismissText = 'Turn Back';
+      
+      if (notification.id === 'downtown_blacksburg') {
+        severity = 'high';
+        confirmText = 'Set Spending Limit';
+        dismissText = 'Avoid Area';
+      }
+      
+      // Show Apple-style blocking notification
+      showBlockingNotification({
+        title: notification.title,
+        message: notification.message + `\n\nLocation: ${notification.location}`,
+        severity,
+        onConfirm: () => {
+          console.log('User confirmed to proceed in high-risk area');
+          addNotification({
+            type: 'success',
+            title: 'Proceeding with Enhanced Monitoring',
+            message: 'MoneyLens will closely monitor your spending in this area.',
+            category: 'system'
+          });
+        },
+        onDismiss: () => {
+          console.log('User chose to avoid the high-risk area');
+          addNotification({
+            type: 'info',
+            title: 'Smart Choice!',
+            message: 'Avoiding high-risk spending area.',
+            category: 'system'
+          });
+        },
+        confirmText,
+        dismissText,
+        showDismiss: true
+      });
+    } else {
+      // Regular notification for non-critical scenarios
+      addNotification({
+        type: notification.type,
+        title: notification.title,
+        message: notification.message,
+        category: 'system',
+        actionUrl: '/bodyguard'
+      });
+    }
   };
 
   const startDemo = () => {
@@ -156,8 +204,9 @@ export const DemoNotificationTrigger: React.FC = () => {
           <ol className="text-sm text-blue-800 space-y-1">
             <li>1. Click "Start Demo Sequence" to trigger a realistic notification flow</li>
             <li>2. Or click individual notification buttons to test specific scenarios</li>
-            <li>3. Notifications will appear as toast messages and in the notification dropdown</li>
-            <li>4. The main demo notification simulates arriving at Owens Ballroom</li>
+            <li>3. <strong>High-risk notifications</strong> (like "High Risk Location" or "Downtown Blacksburg") will show <strong>blocking spending alerts</strong></li>
+            <li>4. Regular notifications appear as toast messages and in the notification dropdown</li>
+            <li>5. The main demo notification simulates arriving at Owens Ballroom</li>
           </ol>
         </div>
       </CardContent>

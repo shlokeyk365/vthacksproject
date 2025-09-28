@@ -8,6 +8,7 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import { FinancialBodyguardProvider } from "./contexts/FinancialBodyguardContext";
 import { MapboxProvider } from "./contexts/MapboxContext";
 import { NotificationProvider } from "./contexts/NotificationContext";
+import { AppleStyleNotificationManager } from "./components/agents/AppleStyleNotificationManager";
 import { LoginForm } from "./components/auth/LoginForm";
 import { MainLayout } from "./components/layout/MainLayout";
 import Dashboard from "./pages/Dashboard";
@@ -98,6 +99,7 @@ const App = () => {
                     },
                   }}
                 />
+                <AppleStyleNotificationManager />
                 <AppRoutes />
               </TooltipProvider>
             </NotificationProvider>

@@ -3,10 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Plus, Target, Map, CreditCard, BarChart3, Download, Bell, AlertTriangle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useNotifications } from "@/contexts/NotificationContext";
+import { useFinancialBodyguard } from "@/contexts/FinancialBodyguardContext";
 
 export function QuickActions() {
   const navigate = useNavigate();
   const { addNotification } = useNotifications();
+  const { showBlockingNotification } = useFinancialBodyguard();
 
   const triggerDemoNotification = () => {
     addNotification({
@@ -19,12 +21,60 @@ export function QuickActions() {
   };
 
   const triggerHighRiskNotification = () => {
-    addNotification({
-      type: 'error',
+    showBlockingNotification({
       title: '⚠️ High Risk Location Detected!',
-      message: 'You\'ve entered a high-risk spending zone! MoneyLens has detected unusual financial activity in this area.',
-      category: 'system',
-      actionUrl: '/bodyguard'
+      message: 'You\'ve entered a high-risk spending zone! MoneyLens has detected unusual financial activity in this area. This location has been flagged for potential overspending risks.',
+      severity: 'critical',
+      onConfirm: () => {
+        console.log('User confirmed to proceed with caution in high-risk area');
+        addNotification({
+          type: 'success',
+          title: 'Proceeding with Enhanced Monitoring',
+          message: 'MoneyLens will closely monitor your spending in this area.',
+          category: 'system'
+        });
+      },
+      onDismiss: () => {
+        console.log('User chose to avoid the high-risk area');
+        addNotification({
+          type: 'info',
+          title: 'Smart Choice!',
+          message: 'Avoiding high-risk spending area.',
+          category: 'system'
+        });
+      },
+      confirmText: 'Proceed with Caution',
+      dismissText: 'Turn Back',
+      showDismiss: true
+    });
+  };
+
+  const triggerSpendingAlert = () => {
+    showBlockingNotification({
+      title: '💰 Spending Alert Demo',
+      message: 'This is a demonstration of the blocking spending alert system. It prevents app interaction until you take action, helping you make informed financial decisions.',
+      severity: 'warning',
+      onConfirm: () => {
+        console.log('User confirmed spending alert');
+        addNotification({
+          type: 'success',
+          title: 'Spending Alert Confirmed',
+          message: 'You\'ve successfully interacted with the spending alert system.',
+          category: 'system'
+        });
+      },
+      onDismiss: () => {
+        console.log('User dismissed spending alert');
+        addNotification({
+          type: 'info',
+          title: 'Spending Alert Dismissed',
+          message: 'You\'ve dismissed the spending alert.',
+          category: 'system'
+        });
+      },
+      confirmText: 'Continue',
+      dismissText: 'Cancel',
+      showDismiss: true
     });
   };
 
@@ -64,6 +114,12 @@ export function QuickActions() {
       icon: AlertTriangle,
       variant: "destructive" as const,
       onClick: triggerHighRiskNotification,
+    },
+    {
+      label: "Spending Alert",
+      icon: Bell,
+      variant: "outline" as const,
+      onClick: triggerSpendingAlert,
     },
   ];
 

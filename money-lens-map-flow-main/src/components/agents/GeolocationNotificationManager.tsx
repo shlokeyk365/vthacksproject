@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { GeolocationNotificationAgent, GeolocationNotification } from '../../agents/GeolocationNotificationAgent';
 import { useNotifications } from '../../contexts/NotificationContext';
+import { useFinancialBodyguard } from '../../contexts/FinancialBodyguardContext';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
@@ -18,6 +19,7 @@ export const GeolocationNotificationManager: React.FC<GeolocationNotificationMan
   const [currentLocation, setCurrentLocation] = useState<{ lat: number; lng: number; accuracy?: number } | null>(null);
   const [demoMode, setDemoMode] = useState(false);
   const { addNotification } = useNotifications();
+  const { showBlockingNotification } = useFinancialBodyguard();
 
   // Initialize the agent
   useEffect(() => {
@@ -32,33 +34,76 @@ export const GeolocationNotificationManager: React.FC<GeolocationNotificationMan
   const handleGeolocationNotification = useCallback((notification: GeolocationNotification) => {
     setNotifications(prev => [notification, ...prev.slice(0, 49)]); // Keep last 50
     
-    // Convert to app notification
-    addNotification({
-      type: notification.severity === 'critical' ? 'error' : 
-            notification.severity === 'high' ? 'warning' : 
-            notification.severity === 'medium' ? 'info' : 'info',
-      title: notification.title,
-      message: notification.message,
-      category: 'system',
-      actionUrl: notification.actionable ? '/map' : undefined
-    });
+    // Check for high-risk areas and trigger Apple-style notifications
+    if (notification.severity === 'critical' || 
+        (notification.severity === 'high' && notification.title.includes('High Risk')) ||
+        (notification.severity === 'high' && notification.title.includes('High Spending'))) {
+      
+      // Determine severity for Apple-style notification
+      let appleSeverity: 'critical' | 'danger' | 'high' | 'warning' = 'warning';
+      let confirmText = 'Continue';
+      let dismissText = 'Go Back';
+      
+      if (notification.severity === 'critical') {
+        appleSeverity = 'critical';
+        confirmText = 'Proceed with Caution';
+        dismissText = 'Turn Back';
+      } else if (notification.severity === 'high') {
+        appleSeverity = 'high';
+        confirmText = 'Set Spending Limit';
+        dismissText = 'Avoid Area';
+      }
+      
+      // Show Apple-style blocking notification
+      showBlockingNotification({
+        title: notification.title,
+        message: notification.message + (notification.suggestedAction ? `\n\n${notification.suggestedAction}` : ''),
+        severity: appleSeverity,
+        onConfirm: () => {
+          console.log('User confirmed to proceed in high-risk area');
+          toast.success('Proceeding with enhanced monitoring', {
+            description: 'MoneyLens will closely monitor your spending in this area.'
+          });
+        },
+        onDismiss: () => {
+          console.log('User chose to avoid the high-risk area');
+          toast.success('Smart choice!', {
+            description: 'Avoiding high-risk spending area.'
+          });
+        },
+        confirmText,
+        dismissText,
+        showDismiss: true
+      });
+    } else {
+      // Regular notification for non-critical areas
+      addNotification({
+        type: notification.severity === 'critical' ? 'error' : 
+              notification.severity === 'high' ? 'warning' : 
+              notification.severity === 'medium' ? 'info' : 'info',
+        title: notification.title,
+        message: notification.message,
+        category: 'system',
+        actionUrl: notification.actionable ? '/map' : undefined
+      });
 
-    // Show toast
-    const toastType = notification.severity === 'critical' ? 'error' : 
-                     notification.severity === 'high' ? 'warning' : 
-                     notification.severity === 'medium' ? 'info' : 'info';
-    
-    toast[toastType](notification.title, {
-      description: notification.message,
-      duration: 8000,
-      style: {
-        borderRadius: '0.5rem',
-        padding: '0.75rem 1rem',
-        margin: '0.5rem',
-        boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
-      },
-    });
-  }, [addNotification]);
+      // Show toast
+      const toastType = notification.severity === 'critical' ? 'error' : 
+                       notification.severity === 'high' ? 'warning' : 
+                       notification.severity === 'medium' ? 'info' : 'info';
+      
+      toast[toastType](notification.title, {
+        description: notification.message,
+        duration: 8000,
+        style: {
+          borderRadius: '0.5rem',
+          padding: '0.75rem 1rem',
+          margin: '0.5rem',
+          boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
+        },
+      });
+    }
+  }, [addNotification, showBlockingNotification]);
 
   // Start location tracking
   const startTracking = useCallback(async () => {
@@ -108,6 +153,30 @@ export const GeolocationNotificationManager: React.FC<GeolocationNotificationMan
     agent.simulateLocation(currentLocation);
     setCurrentLocation(currentLocation);
   }, [agent]);
+
+  // Test spending alert directly
+  const testSpendingAlert = useCallback(() => {
+    showBlockingNotification({
+      title: '⚠️ High Risk Location Detected!',
+      message: 'You\'ve entered a high-risk spending zone! MoneyLens has detected unusual financial activity in this area. This location has been flagged for potential overspending risks.\n\nEnable enhanced monitoring and consider setting strict spending limits for this location.',
+      severity: 'critical',
+      onConfirm: () => {
+        console.log('User confirmed to proceed with caution in high-risk area');
+        toast.success('Proceeding with enhanced monitoring', {
+          description: 'MoneyLens will closely monitor your spending in this area.'
+        });
+      },
+      onDismiss: () => {
+        console.log('User chose to avoid the high-risk area');
+        toast.success('Smart choice!', {
+          description: 'Avoiding high-risk spending area.'
+        });
+      },
+      confirmText: 'Proceed with Caution',
+      dismissText: 'Turn Back',
+      showDismiss: true
+    });
+  }, [showBlockingNotification]);
 
   // Demo location buttons
   const demoLocations = [
@@ -192,6 +261,10 @@ export const GeolocationNotificationManager: React.FC<GeolocationNotificationMan
               <Button onClick={testCurrentLocation} variant="destructive" size="sm">
                 <AlertTriangle className="w-4 h-4 mr-2" />
                 Test High Risk
+              </Button>
+              <Button onClick={testSpendingAlert} variant="destructive" size="sm">
+                <Bell className="w-4 h-4 mr-2" />
+                Test Spending Alert
               </Button>
             </div>
           </div>

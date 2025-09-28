@@ -5,6 +5,7 @@ import { SampleDataLoader } from '@/components/agents/SampleDataLoader';
 import { AIInsightsDashboard } from '@/components/agents/AIInsightsDashboard';
 import { TransactionSimulator } from '@/components/agents/TransactionSimulator';
 import { GeolocationNotificationManager } from '@/components/agents/GeolocationNotificationManager';
+import { SpendingAlertDemo } from '@/components/agents/SpendingAlertDemo';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export const FinancialBodyguardPage: React.FC = () => {
@@ -18,12 +19,13 @@ export const FinancialBodyguardPage: React.FC = () => {
       </div>
 
       <Tabs defaultValue="activator" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="activator">Quick Start</TabsTrigger>
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
           <TabsTrigger value="ai-insights">AI Insights</TabsTrigger>
           <TabsTrigger value="simulator">Transaction Simulator</TabsTrigger>
           <TabsTrigger value="geolocation">Location Notifications</TabsTrigger>
+          <TabsTrigger value="apple-notifications">Spending Alerts</TabsTrigger>
         </TabsList>
         
         <TabsContent value="activator" className="space-y-6">
@@ -45,6 +47,10 @@ export const FinancialBodyguardPage: React.FC = () => {
         
         <TabsContent value="geolocation">
           <GeolocationNotificationManager />
+        </TabsContent>
+        
+        <TabsContent value="apple-notifications">
+          <SpendingAlertDemo />
         </TabsContent>
       </Tabs>
     </div>
