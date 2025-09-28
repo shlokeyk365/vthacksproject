@@ -4,6 +4,7 @@ import { FinancialBodyguardActivator } from '@/components/agents/FinancialBodygu
 import { SampleDataLoader } from '@/components/agents/SampleDataLoader';
 import { AIInsightsDashboard } from '@/components/agents/AIInsightsDashboard';
 import { TransactionSimulator } from '@/components/agents/TransactionSimulator';
+import { GeolocationNotificationManager } from '@/components/agents/GeolocationNotificationManager';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export const FinancialBodyguardPage: React.FC = () => {
@@ -17,11 +18,12 @@ export const FinancialBodyguardPage: React.FC = () => {
       </div>
 
       <Tabs defaultValue="activator" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="activator">Quick Start</TabsTrigger>
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
           <TabsTrigger value="ai-insights">AI Insights</TabsTrigger>
           <TabsTrigger value="simulator">Transaction Simulator</TabsTrigger>
+          <TabsTrigger value="geolocation">Location Notifications</TabsTrigger>
         </TabsList>
         
         <TabsContent value="activator" className="space-y-6">
@@ -39,6 +41,10 @@ export const FinancialBodyguardPage: React.FC = () => {
         
         <TabsContent value="simulator" className="w-full">
           <TransactionSimulator />
+        </TabsContent>
+        
+        <TabsContent value="geolocation">
+          <GeolocationNotificationManager />
         </TabsContent>
       </Tabs>
     </div>
