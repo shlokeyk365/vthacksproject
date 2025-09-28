@@ -16,7 +16,7 @@ export const getBrandColor = (merchantName: string, category: string): string =>
     return '#FFD700'; // Shell yellow
   }
   if (merchant.includes('target')) {
-    return '#CC0000'; // Target red
+    return '#3B82F6'; // Target blue (same as other merchants)
   }
   if (merchant.includes('walmart')) {
     return '#004C91'; // Walmart blue

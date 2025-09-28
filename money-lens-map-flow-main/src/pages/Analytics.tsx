@@ -1220,12 +1220,20 @@ export default function Analytics() {
                   <BarChart data={formattedMerchants} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                     <XAxis 
                       dataKey="name"
-                      tick={{ fontSize: 12 }}
+                      tick={{ fontSize: 9 }}
                       axisLine={{ stroke: '#e5e7eb' }}
                       tickLine={{ stroke: '#e5e7eb' }}
                       angle={-45}
                       textAnchor="end"
-                      height={60}
+                      height={100}
+                      interval={0}
+                      tickFormatter={(value) => {
+                        // Truncate long names and add ellipsis
+                        if (value && value.length > 12) {
+                          return value.substring(0, 12) + '...';
+                        }
+                        return value;
+                      }}
                     />
                     <YAxis 
                       tick={{ fontSize: 12 }}
@@ -1244,7 +1252,7 @@ export default function Analytics() {
                         boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
                         padding: '8px 12px'
                       }}
-                      formatter={(value, name) => [`$${value}`, 'Amount Spent']}
+                      formatter={(value, name) => [`$${Number(value).toFixed(2)}`, 'Amount Spent']}
                     />
                     <Bar 
                       dataKey="amount" 

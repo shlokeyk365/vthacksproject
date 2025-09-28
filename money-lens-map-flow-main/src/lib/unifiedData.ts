@@ -301,22 +301,36 @@ export const processTransactionsForCharts = (transactions: UnifiedTransaction[])
   };
 };
 
-// Brand color utility (simplified version)
+// Professional color utility with muted, cohesive colors
 function getBrandColor(merchant: string, category: string): string {
   const colors = {
-    'Amazon': '#FF9900',
-    'Target': '#CC0000',
-    'Starbucks': '#00704A',
-    'McDonald\'s': '#FFC72C',
-    'Shell': '#FFD700',
-    'Exxon': '#FF0000',
-    'Uber': '#000000',
-    'Lyft': '#FF00BF',
-    'Netflix': '#E50914',
-    'Spotify': '#1DB954'
+    'Amazon': '#6366F1', // Indigo
+    'Target': '#8B5CF6', // Purple
+    'Starbucks': '#059669', // Emerald
+    'McDonald\'s': '#DC2626', // Red
+    'Shell': '#EA580C', // Orange
+    'Exxon': '#B91C1C', // Dark red
+    'Uber': '#1F2937', // Gray
+    'Lyft': '#7C3AED', // Violet
+    'Netflix': '#BE185D', // Pink
+    'Spotify': '#16A34A', // Green
+    'Best Buy': '#2563EB', // Blue
+    'Nike': '#0891B2', // Cyan
+    'Whole Foods': '#65A30D', // Lime
+    'Kroger': '#7C2D12', // Orange
+    'Walmart': '#1D4ED8', // Blue
+    'CVS Pharmacy': '#9333EA', // Purple
+    'Walgreens': '#C2410C', // Orange
+    'Doctor\'s Office': '#374151', // Gray
+    'Electric Company': '#B45309', // Amber
+    'Water Company': '#0369A1', // Sky
+    'Internet Provider': '#7C2D12', // Stone
+    'Phone Company': '#BE185D', // Rose
+    'Movie Theater': '#1E40AF', // Blue
+    'Trader Joe\'s': '#059669' // Emerald
   };
   
-  return colors[merchant as keyof typeof colors] || '#3B82F6';
+  return colors[merchant as keyof typeof colors] || '#6B7280'; // Default gray
 }
 
 // Export the unified dataset
