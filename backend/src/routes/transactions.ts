@@ -230,7 +230,7 @@ router.post('/simulate', authenticate, async (req: AuthenticatedRequest, res, ne
       }
     }
 
-    // Check each spending cap
+    // Check each spending cap - only show violations for caps that directly apply to this transaction
     for (const cap of caps) {
       let periodStart: Date;
       
@@ -252,19 +252,6 @@ router.post('/simulate', authenticate, async (req: AuthenticatedRequest, res, ne
           continue;
       }
 
-      // Build where clause for this cap
-      const whereClause: any = {
-        userId,
-        date: { gte: periodStart },
-        isSimulated: false
-      };
-
-      if (cap.type === 'CATEGORY' && cap.category) {
-        whereClause.category = cap.category;
-      } else if (cap.type === 'MERCHANT' && cap.merchant) {
-        whereClause.merchant = cap.merchant;
-      }
-
       // Check if this cap applies to the transaction
       let appliesToTransaction = false;
       if (cap.type === 'GLOBAL') {
@@ -275,7 +262,21 @@ router.post('/simulate', authenticate, async (req: AuthenticatedRequest, res, ne
         appliesToTransaction = true;
       }
 
+      // Only check caps that directly apply to this transaction
       if (appliesToTransaction) {
+        // Build where clause for this cap
+        const whereClause: any = {
+          userId,
+          date: { gte: periodStart },
+          isSimulated: false
+        };
+
+        if (cap.type === 'CATEGORY' && cap.category) {
+          whereClause.category = cap.category;
+        } else if (cap.type === 'MERCHANT' && cap.merchant) {
+          whereClause.merchant = cap.merchant;
+        }
+
         const currentSpending = await prisma.transaction.aggregate({
           where: whereClause,
           _sum: { amount: true }
