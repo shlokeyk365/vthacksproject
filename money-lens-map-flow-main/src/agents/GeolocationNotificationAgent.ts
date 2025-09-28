@@ -392,7 +392,7 @@ export class GeolocationNotificationAgent {
   }
 
   // Check if agent is active
-  isActive(): boolean {
+  getIsActive(): boolean {
     return this.isActive;
   }
 
