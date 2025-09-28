@@ -258,7 +258,7 @@ export const TransactionSimulatorResults: React.FC<{
   return (
     <div className="w-full overflow-hidden">
       {/* Single Row: All 4 boxes */}
-      <div className="flex w-full">
+      <div className="flex w-full gap-4">
         {/* Recent Transactions */}
         <Card className="flex-1 flex flex-col min-w-0">
           <CardHeader className="pb-3">
