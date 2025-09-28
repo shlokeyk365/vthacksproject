@@ -12,6 +12,8 @@ import { StatsCard } from "@/components/dashboard/StatsCard";
 import { RecentTransactions } from "@/components/dashboard/RecentTransactions";
 import { SpendingChart } from "@/components/dashboard/SpendingChart";
 import { QuickActions } from "@/components/dashboard/QuickActions";
+import { BudgetStatus } from "@/components/dashboard/BudgetStatus";
+import { SmartAlerts } from "@/components/dashboard/SmartAlerts";
 import { DemoNotificationTrigger } from "@/components/agents/DemoNotificationTrigger";
 import { useDashboardStats } from "@/hooks/useApi";
 import { useFontScaling } from "@/hooks/useFontScaling";
@@ -156,6 +158,16 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         <motion.div className="xl:col-span-2 space-y-6" variants={itemVariants}>
           <SpendingChart />
+          
+          {/* Budget Status and Smart Alerts side by side */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <BudgetStatus 
+              monthlyBudget={stats.monthlyBudget} 
+              totalSpent={stats.totalSpent} 
+            />
+            <SmartAlerts />
+          </div>
+          
           <RecentTransactions />
         </motion.div>
         
@@ -165,52 +177,6 @@ export default function Dashboard() {
           {/* Demo Notification Trigger */}
           <DemoNotificationTrigger />
           
-          {/* Budget Status */}
-          <div className="card-gradient p-6 rounded-lg">
-            <h3 className="text-lg font-semibold mb-4">Budget Status</h3>
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span className="text-sm">Monthly Budget</span>
-                <span className="font-semibold">${stats.monthlyBudget.toLocaleString()}</span>
-              </div>
-              <div className="w-full bg-muted rounded-full h-2">
-                <div 
-                  className="bg-primary h-2 rounded-full" 
-                  style={{ width: `${Math.min((stats.totalSpent / stats.monthlyBudget) * 100, 100)}%` }}
-                ></div>
-              </div>
-              <div className="flex justify-between text-sm text-muted-foreground">
-                <span>${stats.totalSpent.toLocaleString()} spent</span>
-                <span>${stats.budgetRemaining.toLocaleString()} remaining</span>
-              </div>
-            </div>
-          </div>
-          
-          {/* Alerts */}
-          <div className="card-gradient p-6 rounded-lg">
-            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 text-warning" />
-              Smart Alerts
-            </h3>
-            <div className="space-y-3">
-              <div className="p-3 bg-warning/10 rounded-lg border border-warning/20">
-                <p className="text-sm font-medium text-warning">
-                  High Dining Spending
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  You've spent 150% more on dining this month
-                </p>
-              </div>
-              <div className="p-3 bg-success/10 rounded-lg border border-success/20">
-                <p className="text-sm font-medium text-success">
-                  Transportation Under Budget
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  You're $85 under your transportation budget
-                </p>
-              </div>
-            </div>
-          </div>
         </motion.div>
       </div>
     </motion.div>
